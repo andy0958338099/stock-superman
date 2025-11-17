@@ -3,177 +3,523 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>股市大亨 LINE Bot</title>
+    <meta name="description" content="股市大亨 LINE Bot - 專業台股技術分析 × AI 走勢預測，即時 KD、MACD 指標，DeepSeek AI 預測未來 10 日走勢，讓你輕鬆掌握股市脈動！">
+    <meta name="keywords" content="股市大亨,LINE Bot,台股,技術分析,AI預測,KD指標,MACD,股票,投資">
+    <meta property="og:title" content="股市大亨 LINE Bot - 專業台股分析 × AI 預測">
+    <meta property="og:description" content="輸入股票代號，立即獲得專業技術分析 + AI 走勢預測！">
+    <meta property="og:type" content="website">
+    <title>股市大亨 LINE Bot - 專業台股分析 × AI 預測</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang TC', 'Microsoft JhengHei', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1DB446 0%, #06C755 50%, #00B900 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 20px;
+            position: relative;
+            overflow-x: hidden;
         }
-        
+
+        /* 動態背景效果 */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+            animation: pulse 4s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
         .container {
             background: white;
-            border-radius: 20px;
-            padding: 40px;
-            max-width: 600px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            border-radius: 24px;
+            padding: 48px 40px;
+            max-width: 680px;
+            width: 100%;
+            box-shadow: 0 24px 80px rgba(0, 0, 0, 0.25);
             text-align: center;
+            position: relative;
+            z-index: 1;
+            animation: slideUp 0.6s ease-out;
         }
-        
-        h1 {
-            color: #333;
-            font-size: 2.5em;
-            margin-bottom: 10px;
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
-        
-        .emoji {
-            font-size: 4em;
-            margin-bottom: 20px;
-        }
-        
-        .subtitle {
-            color: #666;
-            font-size: 1.2em;
-            margin-bottom: 30px;
-        }
-        
-        .features {
-            text-align: left;
-            margin: 30px 0;
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 10px;
-        }
-        
-        .feature {
-            margin: 15px 0;
+
+        .logo {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 24px;
+            background: linear-gradient(135deg, #1DB446 0%, #06C755 100%);
+            border-radius: 28px;
             display: flex;
             align-items: center;
+            justify-content: center;
+            font-size: 64px;
+            box-shadow: 0 8px 24px rgba(29, 180, 70, 0.3);
+            animation: float 3s ease-in-out infinite;
         }
-        
-        .feature-icon {
-            font-size: 1.5em;
-            margin-right: 10px;
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
         }
-        
+
+        h1 {
+            color: #1a1a1a;
+            font-size: 2.8em;
+            margin-bottom: 12px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1.3em;
+            margin-bottom: 24px;
+            font-weight: 500;
+        }
+
+        .highlight {
+            color: #1DB446;
+            font-weight: 700;
+        }
+
         .status {
-            display: inline-block;
-            padding: 10px 20px;
-            background: #10b981;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
             color: white;
-            border-radius: 20px;
-            font-weight: bold;
-            margin: 20px 0;
+            border-radius: 24px;
+            font-weight: 700;
+            margin: 24px 0;
+            font-size: 1.05em;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
         }
-        
-        .info {
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: white;
+            border-radius: 50%;
+            animation: blink 1.5s ease-in-out infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .cta-section {
+            margin: 32px 0;
+            padding: 32px;
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+            border-radius: 16px;
+            border: 2px solid #1DB446;
+        }
+
+        .cta-title {
+            font-size: 1.5em;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 16px;
+        }
+
+        .line-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 32px;
+            background: #06C755;
+            color: white;
+            text-decoration: none;
+            border-radius: 12px;
+            font-size: 1.2em;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 16px rgba(6, 199, 85, 0.4);
+            margin: 16px 0;
+        }
+
+        .line-button:hover {
+            background: #00B900;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 24px rgba(6, 199, 85, 0.5);
+        }
+
+        .line-id {
+            display: inline-block;
+            padding: 12px 20px;
+            background: white;
+            border: 2px dashed #1DB446;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 1.1em;
+            font-weight: 700;
+            color: #1DB446;
+            margin-top: 12px;
+        }
+
+        .features {
+            text-align: left;
+            margin: 32px 0;
+            padding: 28px;
+            background: #f8fafc;
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .features-title {
+            font-size: 1.4em;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .feature {
+            margin: 16px 0;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px;
+            background: white;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .feature:hover {
+            transform: translateX(4px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .feature-icon {
+            font-size: 1.8em;
+            flex-shrink: 0;
+        }
+
+        .feature-content {
+            flex: 1;
+        }
+
+        .feature-title {
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 4px;
+            font-size: 1.05em;
+        }
+
+        .feature-desc {
             color: #666;
             font-size: 0.9em;
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid #e5e7eb;
+            line-height: 1.5;
         }
-        
-        a {
-            color: #667eea;
-            text-decoration: none;
-            font-weight: bold;
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin: 32px 0;
         }
-        
-        a:hover {
-            text-decoration: underline;
+
+        .stat-card {
+            padding: 20px;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
         }
-        
+
+        .stat-number {
+            font-size: 2em;
+            font-weight: 800;
+            color: #1DB446;
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 0.85em;
+            color: #666;
+            font-weight: 600;
+        }
+
         .tech-stack {
             display: flex;
             flex-wrap: wrap;
             gap: 10px;
             justify-content: center;
-            margin-top: 20px;
+            margin-top: 24px;
         }
-        
+
         .tech-badge {
-            background: #e5e7eb;
-            padding: 5px 15px;
-            border-radius: 15px;
+            background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
+            padding: 8px 16px;
+            border-radius: 20px;
             font-size: 0.85em;
-            color: #555;
+            color: #475569;
+            font-weight: 600;
+            border: 1px solid #cbd5e1;
+        }
+
+        .demo-section {
+            margin: 32px 0;
+            padding: 24px;
+            background: #fefce8;
+            border-radius: 16px;
+            border: 2px solid #fbbf24;
+        }
+
+        .demo-title {
+            font-size: 1.2em;
+            font-weight: 700;
+            color: #92400e;
+            margin-bottom: 12px;
+        }
+
+        .demo-steps {
+            text-align: left;
+            color: #78350f;
+            line-height: 1.8;
+        }
+
+        .demo-steps li {
+            margin: 8px 0;
+            padding-left: 8px;
+        }
+
+        .info {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 2px solid #e5e7eb;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 640px) {
+            .container {
+                padding: 32px 24px;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+
+            .subtitle {
+                font-size: 1.1em;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+            }
+
+            .line-button {
+                font-size: 1.1em;
+                padding: 14px 28px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="emoji">🚀📈</div>
-        <h1>股市大亨 LINE Bot</h1>
-        <p class="subtitle">台股技術分析 × AI 走勢預測</p>
-        
-        <div class="status">✅ 系統運作中</div>
-        
+        <!-- Logo -->
+        <div class="logo">📈</div>
+
+        <!-- 標題 -->
+        <h1>股市大亨</h1>
+        <p class="subtitle">
+            專業<span class="highlight">台股技術分析</span> × <span class="highlight">AI 走勢預測</span>
+        </p>
+
+        <!-- 系統狀態 -->
+        <div class="status">
+            <span class="status-dot"></span>
+            系統運作中
+        </div>
+
+        <!-- CTA 區域 -->
+        <div class="cta-section">
+            <div class="cta-title">🎯 立即加入，開始你的投資之旅！</div>
+            <p style="color: #666; margin-bottom: 20px; line-height: 1.6;">
+                只需<strong>一秒鐘</strong>，輸入股票代號，立即獲得：<br>
+                ✓ 專業技術指標分析<br>
+                ✓ AI 預測未來 10 日走勢<br>
+                ✓ 精美視覺化圖表
+            </p>
+            <a href="https://lin.ee/evT2jXv" target="_blank" class="line-button">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
+                    <path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/>
+                </svg>
+                加入好友
+            </a>
+            <div class="line-id">LINE ID: @754zptsk</div>
+        </div>
+
+        <!-- 數據統計 -->
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number">3秒</div>
+                <div class="stat-label">極速回應</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">24/7</div>
+                <div class="stat-label">全天候服務</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">100%</div>
+                <div class="stat-label">免費使用</div>
+            </div>
+        </div>
+
+        <!-- 核心功能 -->
         <div class="features">
+            <div class="features-title">🚀 核心功能</div>
+
             <div class="feature">
                 <span class="feature-icon">📊</span>
-                <span>即時台股資料（FinMind API）</span>
+                <div class="feature-content">
+                    <div class="feature-title">即時台股資料</div>
+                    <div class="feature-desc">串接 FinMind API，提供最新股價、成交量等完整資訊</div>
+                </div>
             </div>
+
             <div class="feature">
                 <span class="feature-icon">📈</span>
-                <span>技術指標分析（KD、MACD、MA）</span>
+                <div class="feature-content">
+                    <div class="feature-title">專業技術指標</div>
+                    <div class="feature-desc">KD 指標、MACD、移動平均線，多空趨勢一目了然</div>
+                </div>
             </div>
+
             <div class="feature">
                 <span class="feature-icon">🤖</span>
-                <span>AI 走勢預測（DeepSeek）</span>
+                <div class="feature-content">
+                    <div class="feature-title">AI 走勢預測</div>
+                    <div class="feature-desc">DeepSeek AI 分析歷史數據，預測未來 10 日漲跌機率</div>
+                </div>
             </div>
+
             <div class="feature">
                 <span class="feature-icon">🎨</span>
-                <span>專業視覺化圖表</span>
+                <div class="feature-content">
+                    <div class="feature-title">精美視覺化圖表</div>
+                    <div class="feature-desc">專業 K 線圖、MACD 柱狀圖，清晰呈現技術面資訊</div>
+                </div>
             </div>
+
             <div class="feature">
                 <span class="feature-icon">⚡</span>
-                <span>12 小時智慧快取</span>
+                <div class="feature-content">
+                    <div class="feature-title">智慧快取系統</div>
+                    <div class="feature-desc">12 小時快取機制，確保資料新鮮度與回應速度</div>
+                </div>
+            </div>
+
+            <div class="feature">
+                <span class="feature-icon">🔒</span>
+                <div class="feature-content">
+                    <div class="feature-title">安全可靠</div>
+                    <div class="feature-desc">Netlify + Supabase 架構，企業級穩定性與安全性</div>
+                </div>
             </div>
         </div>
-        
-        <div class="tech-stack">
-            <span class="tech-badge">Netlify</span>
-            <span class="tech-badge">Supabase</span>
-            <span class="tech-badge">FinMind</span>
-            <span class="tech-badge">DeepSeek</span>
-            <span class="tech-badge">LINE Bot</span>
-            <span class="tech-badge">Chart.js</span>
+
+        <!-- 使用示範 -->
+        <div class="demo-section">
+            <div class="demo-title">💡 使用超簡單！</div>
+            <ol class="demo-steps">
+                <li><strong>加入好友</strong> - 掃描 QR Code 或搜尋 LINE ID: @754zptsk</li>
+                <li><strong>輸入股票代號</strong> - 例如：2330（台積電）、2317（鴻海）</li>
+                <li><strong>立即獲得分析</strong> - 3 秒內收到完整技術分析 + AI 預測</li>
+            </ol>
         </div>
-        
+
+        <!-- 技術架構 -->
+        <div class="tech-stack">
+            <span class="tech-badge">🚀 Netlify Functions</span>
+            <span class="tech-badge">🗄️ Supabase</span>
+            <span class="tech-badge">📊 FinMind API</span>
+            <span class="tech-badge">🤖 DeepSeek AI</span>
+            <span class="tech-badge">💬 LINE Messaging API</span>
+            <span class="tech-badge">📈 Chart.js</span>
+        </div>
+
+        <!-- 底部資訊 -->
         <div class="info">
-            <p>這是一個 LINE Bot 服務，請在 LINE 中加入好友使用。</p>
-            <p style="margin-top: 10px;">
-                <strong>使用方式：</strong>直接傳送股票代號（例如：2330）
+            <p><strong>🎯 適合對象：</strong></p>
+            <p style="margin-top: 8px;">
+                ✓ 想快速了解股票技術面的投資人<br>
+                ✓ 需要 AI 輔助判斷的交易者<br>
+                ✓ 希望隨時隨地查詢股票的上班族<br>
+                ✓ 想學習技術分析的新手投資人
             </p>
-            <p style="margin-top: 20px;">
-                <a href="https://github.com/yourusername/Stock-Superman" target="_blank">📖 查看文件</a>
+            <p style="margin-top: 20px; font-size: 0.85em; color: #999;">
+                ⚠️ 本服務僅供參考，不構成投資建議。投資有風險，請謹慎評估。
             </p>
         </div>
     </div>
-    
+
     <script>
         // 檢查 API 狀態
         fetch('/.netlify/functions/line-webhook', {
             method: 'GET'
         }).then(response => {
-            console.log('API Status:', response.status);
+            console.log('✅ API Status:', response.status);
+            if (response.status !== 200) {
+                updateStatus('warning');
+            }
         }).catch(error => {
-            console.error('API Error:', error);
-            document.querySelector('.status').textContent = '⚠️ 系統維護中';
-            document.querySelector('.status').style.background = '#f59e0b';
+            console.error('❌ API Error:', error);
+            updateStatus('error');
+        });
+
+        function updateStatus(type) {
+            const statusEl = document.querySelector('.status');
+            if (type === 'warning') {
+                statusEl.innerHTML = '<span class="status-dot"></span>系統維護中';
+                statusEl.style.background = 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';
+            } else if (type === 'error') {
+                statusEl.innerHTML = '<span class="status-dot"></span>系統異常';
+                statusEl.style.background = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
+            }
+        }
+
+        // 平滑滾動
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
         });
     </script>
 </body>
 </html>
-
