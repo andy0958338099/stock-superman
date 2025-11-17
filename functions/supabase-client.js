@@ -137,28 +137,53 @@ async function saveStockCache(cacheData) {
  */
 async function deleteStockCache(stockId = null) {
   try {
-    let query = supabase.from('stock_cache').delete();
-
     if (stockId) {
       // 刪除特定股票快取
-      query = query.eq('stock_id', stockId);
-    }
+      const { data, error } = await supabase
+        .from('stock_cache')
+        .delete()
+        .eq('stock_id', stockId)
+        .select();
 
-    const { data, error, count } = await query.select();
+      if (error) throw error;
 
-    if (error) throw error;
+      const deletedCount = data ? data.length : 0;
+      console.log(`✅ 已刪除股票 ${stockId} 的快取（${deletedCount} 筆）`);
 
-    const deletedCount = data ? data.length : 0;
-
-    if (stockId) {
-      console.log(`✅ 已刪除股票 ${stockId} 的快取`);
       return {
         success: true,
         count: deletedCount,
         message: `已刪除股票 ${stockId} 的快取（${deletedCount} 筆）`
       };
     } else {
+      // 刪除所有快取：先查詢所有記錄，再刪除
+      const { data: allData, error: selectError } = await supabase
+        .from('stock_cache')
+        .select('stock_id');
+
+      if (selectError) throw selectError;
+
+      if (!allData || allData.length === 0) {
+        console.log('⚠️ 沒有快取可以刪除');
+        return {
+          success: true,
+          count: 0,
+          message: '沒有快取可以刪除'
+        };
+      }
+
+      // 刪除所有記錄（使用 neq 搭配一個不可能的值來刪除所有）
+      const { data, error } = await supabase
+        .from('stock_cache')
+        .delete()
+        .neq('stock_id', '')  // 刪除所有 stock_id 不等於空字串的記錄（即所有記錄）
+        .select();
+
+      if (error) throw error;
+
+      const deletedCount = data ? data.length : 0;
       console.log(`✅ 已刪除所有快取（${deletedCount} 筆）`);
+
       return {
         success: true,
         count: deletedCount,
