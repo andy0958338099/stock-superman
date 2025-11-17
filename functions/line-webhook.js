@@ -282,7 +282,7 @@ async function handleStockQuery(replyToken, stockId) {
       summaryText += `AI 預測：↗️${aiResult.probability_up}% ➡️${aiResult.probability_flat}% ↘️${aiResult.probability_down}%`;
     }
 
-    // 8. 儲存快取
+    // 8. 儲存快取（儲存三張圖的 URL）
     await saveStockCache({
       stock_id: stockId,
       result_json: {
@@ -291,21 +291,24 @@ async function handleStockQuery(replyToken, stockId) {
         kd_analysis: kdAnalysis,
         macd_analysis: macdAnalysis,
         ai_result: aiResult,
+        price_image_url: chartInfo.priceImageUrl,
+        kd_image_url: chartInfo.kdImageUrl,
+        macd_image_url: chartInfo.macdImageUrl,
         timestamp: new Date().toISOString()
       },
-      image_url: chartInfo.imageUrl,
+      image_url: chartInfo.kdImageUrl, // 主要使用 KD 圖
       image_path: null,
       result_summary: summaryText
     });
 
     console.log('✅ 快取已儲存');
 
-    // 9. 建立並發送 Flex Message
+    // 9. 建立並發送 Flex Message（使用 KD/MACD 圖）
     const flexMessage = createFlexMessage(
       stockId,
       stockInfo.stock_name,
       latestData,
-      chartInfo.imageUrl,
+      chartInfo.kdImageUrl, // 使用 KD 圖作為主圖
       kdAnalysis,
       macdAnalysis,
       aiResult
