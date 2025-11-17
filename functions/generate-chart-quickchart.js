@@ -17,8 +17,8 @@ async function generateIndicatorChart(stockId, rawData, stockName = '') {
   try {
     console.log(`📊 開始生成圖表：${stockId}`);
 
-    // 取最近 60 天資料
-    const recentData = rawData.slice(-60);
+    // 取最近 30 天資料
+    const recentData = rawData.slice(-30);
     const dates = recentData.map(d => d.date.substring(5)); // MM-DD
     const close = recentData.map(d => d.close);
     const high = recentData.map(d => d.high);
@@ -186,7 +186,7 @@ async function generateIndicatorChart(stockId, rawData, stockName = '') {
               maxRotation: 45,
               minRotation: 45,
               autoSkip: true,
-              maxTicksLimit: 8,
+              maxTicksLimit: 6,
               padding: 5
             },
             border: {
@@ -273,7 +273,7 @@ async function generateIndicatorChart(stockId, rawData, stockName = '') {
               maxRotation: 45,
               minRotation: 45,
               autoSkip: true,
-              maxTicksLimit: 8,
+              maxTicksLimit: 6,
               padding: 5
             },
             border: {
