@@ -115,11 +115,18 @@ async function generateIndicatorChart(stockId, rawData, stockName = '') {
       }
     };
 
-    // 使用 QuickChart.io 生成圖表
-    const quickChartUrl = 'https://quickchart.io/chart';
-    const chartUrl = `${quickChartUrl}?c=${encodeURIComponent(JSON.stringify(chartConfig))}&width=800&height=500&backgroundColor=white`;
+    // 使用 QuickChart.io POST API 生成短網址
+    console.log('📤 呼叫 QuickChart API...');
 
-    console.log('✅ 圖表 URL 已生成');
+    const response = await axios.post('https://quickchart.io/chart/create', {
+      chart: chartConfig,
+      width: 800,
+      height: 500,
+      backgroundColor: 'white'
+    });
+
+    const chartUrl = response.data.url;
+    console.log('✅ 圖表短網址已生成:', chartUrl);
 
     // 分析 KD 和 MACD
     const latestK = K[K.length - 1];
