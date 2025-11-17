@@ -207,42 +207,19 @@ async function generateIndicatorChart(stockId, rawData, stockName = '') {
       }
     };
 
-    // === 圖表 3：MACD 指標（高可讀性版）===
+    // === 圖表 3：MACD Histogram（只顯示柱狀圖）===
     const macdChartConfig = {
       type: 'bar',
       data: {
         labels: dates,
         datasets: [
           {
-            label: 'Histogram',
+            label: 'MACD Histogram',
             data: Histogram,
-            backgroundColor: Histogram.map(v => v >= 0 ? 'rgba(76, 175, 80, 0.7)' : 'rgba(244, 67, 54, 0.7)'),
+            backgroundColor: Histogram.map(v => v >= 0 ? 'rgba(76, 175, 80, 0.8)' : 'rgba(244, 67, 54, 0.8)'),
             borderWidth: 0,
-            type: 'bar',
-            order: 2,
-            barPercentage: 0.8
-          },
-          {
-            label: 'MACD',
-            data: MACD,
-            borderColor: 'rgb(33, 150, 243)',
-            backgroundColor: 'rgba(33, 150, 243, 0.1)',
-            borderWidth: 2.5,
-            pointRadius: 0,
-            type: 'line',
-            order: 1,
-            tension: 0.2
-          },
-          {
-            label: 'Signal',
-            data: Signal,
-            borderColor: 'rgb(255, 152, 0)',
-            backgroundColor: 'rgba(255, 152, 0, 0.1)',
-            borderWidth: 2.5,
-            pointRadius: 0,
-            type: 'line',
-            order: 1,
-            tension: 0.2
+            barPercentage: 0.9,
+            categoryPercentage: 0.95
           }
         ]
       },
@@ -252,20 +229,12 @@ async function generateIndicatorChart(stockId, rawData, stockName = '') {
         plugins: {
           title: {
             display: true,
-            text: `${stockId} ${stockName} - MACD`,
+            text: `${stockId} ${stockName} - MACD Histogram`,
             font: { size: 16, weight: 'bold' },
             padding: { top: 5, bottom: 5 }
           },
           legend: {
-            display: true,
-            position: 'bottom',
-            labels: {
-              font: { size: 10 },
-              padding: 8,
-              boxWidth: 15,
-              boxHeight: 10,
-              usePointStyle: false
-            }
+            display: false
           }
         },
         scales: {
@@ -277,7 +246,7 @@ async function generateIndicatorChart(stockId, rawData, stockName = '') {
               font: { size: 10, weight: 'bold' },
               color: '#333',
               padding: 5,
-              maxTicksLimit: 6,
+              maxTicksLimit: 5,
               callback: function(value) {
                 return value.toFixed(2);
               }
@@ -285,7 +254,8 @@ async function generateIndicatorChart(stockId, rawData, stockName = '') {
             grid: {
               color: 'rgba(0, 0, 0, 0.1)',
               lineWidth: 1,
-              drawBorder: true
+              drawBorder: true,
+              drawTicks: true
             },
             border: {
               display: true,
@@ -337,13 +307,13 @@ async function generateIndicatorChart(stockId, rawData, stockName = '') {
       axios.post('https://quickchart.io/chart/create', {
         chart: kdChartConfig,
         width: 800,
-        height: 280,
+        height: 250,
         backgroundColor: 'white'
       }),
       axios.post('https://quickchart.io/chart/create', {
         chart: macdChartConfig,
         width: 800,
-        height: 280,
+        height: 200,
         backgroundColor: 'white'
       })
     ]);

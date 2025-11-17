@@ -32,20 +32,21 @@ const client = new line.Client(config);
  * @param {string} stockId - 股票代號
  * @param {string} stockName - 股票名稱
  * @param {object} latestData - 最新股價資料
- * @param {string} imageUrl - 圖表 URL
+ * @param {string} kdImageUrl - KD 圖表 URL
+ * @param {string} macdImageUrl - MACD 圖表 URL
  * @param {object} kdAnalysis - KD 分析結果
  * @param {object} macdAnalysis - MACD 分析結果
  * @param {object} aiResult - AI 分析結果（可為 null）
  * @returns {object} - Flex Message 物件
  */
-function createFlexMessage(stockId, stockName, latestData, imageUrl, kdAnalysis, macdAnalysis, aiResult) {
+function createFlexMessage(stockId, stockName, latestData, kdImageUrl, macdImageUrl, kdAnalysis, macdAnalysis, aiResult) {
   const title = `${stockId} ${stockName}`;
   const priceInfo = `收盤價：${latestData.close} | ${latestData.date}`;
-  
+
   // 建立技術指標摘要
   const kdSummary = `KD：${kdAnalysis.signal} (K=${kdAnalysis.K}, D=${kdAnalysis.D})`;
   const macdSummary = `MACD：${macdAnalysis.signal}`;
-  
+
   // AI 分析摘要
   let aiSummary = '';
   if (aiResult) {
@@ -55,15 +56,31 @@ function createFlexMessage(stockId, stockName, latestData, imageUrl, kdAnalysis,
   } else {
     aiSummary = '⚠️ AI 分析暫時不可用';
   }
-  
+
   const flexMessage = {
     type: 'bubble',
     hero: {
-      type: 'image',
-      url: imageUrl,
-      size: 'full',
-      aspectRatio: '4:5',
-      aspectMode: 'cover'
+      type: 'box',
+      layout: 'vertical',
+      contents: [
+        {
+          type: 'image',
+          url: kdImageUrl,
+          size: 'full',
+          aspectMode: 'fit',
+          aspectRatio: '16:10'
+        },
+        {
+          type: 'image',
+          url: macdImageUrl,
+          size: 'full',
+          aspectMode: 'fit',
+          aspectRatio: '16:8'
+        }
+      ],
+      spacing: 'none',
+      margin: 'none',
+      paddingAll: '0px'
     },
     body: {
       type: 'box',
@@ -167,7 +184,7 @@ function createFlexMessage(stockId, stockName, latestData, imageUrl, kdAnalysis,
       ]
     }
   };
-  
+
   return flexMessage;
 }
 
@@ -303,12 +320,13 @@ async function handleStockQuery(replyToken, stockId) {
 
     console.log('✅ 快取已儲存');
 
-    // 9. 建立並發送 Flex Message（使用 MACD 圖）
+    // 9. 建立並發送 Flex Message（使用 KD + MACD 圖）
     const flexMessage = createFlexMessage(
       stockId,
       stockInfo.stock_name,
       latestData,
-      chartInfo.macdImageUrl, // 使用 MACD 圖作為主圖
+      chartInfo.kdImageUrl,    // KD 圖（上方）
+      chartInfo.macdImageUrl,  // MACD 圖（下方）
       kdAnalysis,
       macdAnalysis,
       aiResult
