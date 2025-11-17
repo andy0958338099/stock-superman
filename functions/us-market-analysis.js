@@ -67,11 +67,26 @@ async function analyzeUSMarket() {
 
     console.log('✅ 所有資料抓取完成，開始計算技術指標...');
 
+    // 檢查資料是否有效
+    console.log(`📊 資料筆數檢查：`);
+    console.log(`  - S&P 500: ${sp500Data.length} 筆`);
+    console.log(`  - NASDAQ: ${nasdaqData.length} 筆`);
+    console.log(`  - SOXX: ${soxxData.length} 筆`);
+    console.log(`  - TSM ADR: ${tsmAdrData.length} 筆`);
+    console.log(`  - 台股加權: ${twiiData.length} 筆`);
+    console.log(`  - USD/TWD: ${usdTwdData.length} 筆`);
+    console.log(`  - VIX: ${vixData.length} 筆`);
+
     // 計算美股指標
+    console.log('📊 計算 S&P 500 指標...');
     const sp500Analysis = calculateIndicators(sp500Data, 'S&P 500');
+    console.log('📊 計算 NASDAQ 指標...');
     const nasdaqAnalysis = calculateIndicators(nasdaqData, 'NASDAQ');
+    console.log('📊 計算 SOXX 指標...');
     const soxxAnalysis = calculateIndicators(soxxData, 'SOXX');
+    console.log('📊 計算 TSM ADR 指標...');
     const tsmAdrAnalysis = calculateIndicators(tsmAdrData, 'TSM ADR');
+    console.log('📊 計算台股加權指標...');
     const twiiAnalysis = calculateIndicators(twiiData, '台股加權');
 
     // 取得最新匯率和 VIX
@@ -130,11 +145,25 @@ async function analyzeUSMarket() {
  */
 function calculateIndicators(priceData, name) {
   try {
+    console.log(`  📈 ${name}: 開始計算指標（總資料: ${priceData.length} 筆）`);
+
     // 取最近 60 天資料計算指標
     const recentData = priceData.slice(-60);
 
     if (!recentData || recentData.length < 20) {
-      throw new Error(`${name} 資料不足，無法計算指標`);
+      console.error(`  ❌ ${name}: 資料不足（只有 ${recentData.length} 筆）`);
+      throw new Error(`${name} 資料不足，無法計算指標（需要至少 20 筆，目前只有 ${recentData.length} 筆）`);
+    }
+
+    console.log(`  📊 ${name}: 使用最近 ${recentData.length} 筆資料計算指標`);
+
+    // 檢查資料格式
+    const firstData = recentData[0];
+    console.log(`  📊 ${name}: 第一筆資料 = ${JSON.stringify(firstData)}`);
+
+    if (!firstData.close || !firstData.high || !firstData.low) {
+      console.error(`  ❌ ${name}: 資料格式錯誤，缺少必要欄位`);
+      throw new Error(`${name} 資料格式錯誤`);
     }
 
     // 計算 KD（返回 { K: [], D: [], RSV: [] }）
@@ -187,7 +216,7 @@ function calculateIndicators(priceData, name) {
       macdStatus = '空頭';
     }
 
-    return {
+    const result = {
       name,
       price: latestPrice.close.toFixed(2),
       date: latestPrice.date,
@@ -209,8 +238,15 @@ function calculateIndicators(priceData, name) {
       },
       trend
     };
+
+    console.log(`  ✅ ${name}: 計算完成`);
+    console.log(`     價格: ${result.price}, KD: ${result.kd.K}/${result.kd.D}, 趨勢: ${result.trend}`);
+
+    return result;
+
   } catch (error) {
-    console.error(`計算 ${name} 指標失敗:`, error);
+    console.error(`  ❌ 計算 ${name} 指標失敗:`, error.message);
+    console.error(`  錯誤堆疊:`, error.stack);
     throw error;
   }
 }
