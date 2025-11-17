@@ -68,7 +68,7 @@ function createFlexMessage(stockId, stockName, latestData, kdImageUrl, macdImage
           url: kdImageUrl,
           size: 'full',
           aspectMode: 'fit',
-          aspectRatio: '16:10',
+          aspectRatio: '16:11',
           margin: 'none'
         },
         {
@@ -76,7 +76,7 @@ function createFlexMessage(stockId, stockName, latestData, kdImageUrl, macdImage
           url: macdImageUrl,
           size: 'full',
           aspectMode: 'fit',
-          aspectRatio: '16:8',
+          aspectRatio: '16:9',
           margin: 'none'
         }
       ],

@@ -17,8 +17,8 @@ async function generateIndicatorChart(stockId, rawData, stockName = '') {
   try {
     console.log(`📊 開始生成圖表：${stockId}`);
 
-    // 取最近 30 天資料
-    const recentData = rawData.slice(-30);
+    // 取最近 20 天資料
+    const recentData = rawData.slice(-20);
     const dates = recentData.map(d => d.date.substring(5)); // MM-DD
     const close = recentData.map(d => d.close);
     const high = recentData.map(d => d.high);
@@ -301,19 +301,19 @@ async function generateIndicatorChart(stockId, rawData, stockName = '') {
       axios.post('https://quickchart.io/chart/create', {
         chart: priceChartConfig,
         width: 800,
-        height: 300,
+        height: 420,
         backgroundColor: 'white'
       }),
       axios.post('https://quickchart.io/chart/create', {
         chart: kdChartConfig,
         width: 800,
-        height: 250,
+        height: 350,
         backgroundColor: 'white'
       }),
       axios.post('https://quickchart.io/chart/create', {
         chart: macdChartConfig,
         width: 800,
-        height: 200,
+        height: 280,
         backgroundColor: 'white'
       })
     ]);
