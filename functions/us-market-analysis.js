@@ -129,77 +129,90 @@ async function analyzeUSMarket() {
  * @returns {object} - 技術指標分析結果
  */
 function calculateIndicators(priceData, name) {
-  // 取最近 60 天資料計算指標
-  const recentData = priceData.slice(-60);
-  
-  // 計算 KD
-  const kdData = calculateKD(recentData);
-  const latestKD = kdData[kdData.length - 1];
-  
-  // 計算 MACD
-  const macdData = calculateMACD(recentData);
-  const latestMACD = macdData[macdData.length - 1];
-  
-  // 計算 MA
-  const ma5 = calculateMA(recentData, 5);
-  const ma10 = calculateMA(recentData, 10);
-  const ma20 = calculateMA(recentData, 20);
-  
-  const latestPrice = recentData[recentData.length - 1];
-  const latestMA5 = ma5[ma5.length - 1];
-  const latestMA10 = ma10[ma10.length - 1];
-  const latestMA20 = ma20[ma20.length - 1];
+  try {
+    // 取最近 60 天資料計算指標
+    const recentData = priceData.slice(-60);
 
-  // 判斷趨勢
-  let trend = '盤整';
-  if (latestPrice.close > latestMA5 && latestMA5 > latestMA10 && latestMA10 > latestMA20) {
-    trend = '多頭';
-  } else if (latestPrice.close < latestMA5 && latestMA5 < latestMA10 && latestMA10 < latestMA20) {
-    trend = '空頭';
+    if (!recentData || recentData.length < 20) {
+      throw new Error(`${name} 資料不足，無法計算指標`);
+    }
+
+    // 計算 KD（返回 { K: [], D: [], RSV: [] }）
+    const kdResult = calculateKD(recentData);
+    const latestKValue = kdResult.K[kdResult.K.length - 1];
+    const latestDValue = kdResult.D[kdResult.D.length - 1];
+
+    // 計算 MACD（返回 { MACD: [], Signal: [], Histogram: [] }）
+    const macdResult = calculateMACD(recentData);
+    const latestMACDValue = macdResult.MACD[macdResult.MACD.length - 1];
+    const latestSignalValue = macdResult.Signal[macdResult.Signal.length - 1];
+    const latestHistogramValue = macdResult.Histogram[macdResult.Histogram.length - 1];
+
+    // 計算 MA（返回數值陣列）
+    const closes = recentData.map(d => d.close);
+    const ma5 = calculateMA(closes, 5);
+    const ma10 = calculateMA(closes, 10);
+    const ma20 = calculateMA(closes, 20);
+
+    const latestPrice = recentData[recentData.length - 1];
+    const latestMA5 = ma5[ma5.length - 1];
+    const latestMA10 = ma10[ma10.length - 1];
+    const latestMA20 = ma20[ma20.length - 1];
+
+    // 判斷趨勢
+    let trend = '盤整';
+    if (latestPrice.close > latestMA5 && latestMA5 > latestMA10 && latestMA10 > latestMA20) {
+      trend = '多頭';
+    } else if (latestPrice.close < latestMA5 && latestMA5 < latestMA10 && latestMA10 < latestMA20) {
+      trend = '空頭';
+    }
+
+    // 判斷 KD 狀態
+    let kdStatus = '中性';
+    if (latestKValue > 80 && latestDValue > 80) {
+      kdStatus = '超買';
+    } else if (latestKValue < 20 && latestDValue < 20) {
+      kdStatus = '超賣';
+    } else if (latestKValue > latestDValue) {
+      kdStatus = '偏多';
+    } else {
+      kdStatus = '偏空';
+    }
+
+    // 判斷 MACD 狀態
+    let macdStatus = '中性';
+    if (latestHistogramValue > 0 && latestMACDValue > latestSignalValue) {
+      macdStatus = '多頭';
+    } else if (latestHistogramValue < 0 && latestMACDValue < latestSignalValue) {
+      macdStatus = '空頭';
+    }
+
+    return {
+      name,
+      price: latestPrice.close.toFixed(2),
+      date: latestPrice.date,
+      kd: {
+        K: latestKValue.toFixed(2),
+        D: latestDValue.toFixed(2),
+        status: kdStatus
+      },
+      macd: {
+        macd: latestMACDValue.toFixed(2),
+        signal: latestSignalValue.toFixed(2),
+        histogram: latestHistogramValue.toFixed(2),
+        status: macdStatus
+      },
+      ma: {
+        ma5: latestMA5.toFixed(2),
+        ma10: latestMA10.toFixed(2),
+        ma20: latestMA20.toFixed(2)
+      },
+      trend
+    };
+  } catch (error) {
+    console.error(`計算 ${name} 指標失敗:`, error);
+    throw error;
   }
-
-  // 判斷 KD 狀態
-  let kdStatus = '中性';
-  if (latestKD.K > 80 && latestKD.D > 80) {
-    kdStatus = '超買';
-  } else if (latestKD.K < 20 && latestKD.D < 20) {
-    kdStatus = '超賣';
-  } else if (latestKD.K > latestKD.D) {
-    kdStatus = '偏多';
-  } else {
-    kdStatus = '偏空';
-  }
-
-  // 判斷 MACD 狀態
-  let macdStatus = '中性';
-  if (latestMACD.histogram > 0 && latestMACD.macd > latestMACD.signal) {
-    macdStatus = '多頭';
-  } else if (latestMACD.histogram < 0 && latestMACD.macd < latestMACD.signal) {
-    macdStatus = '空頭';
-  }
-
-  return {
-    name,
-    price: latestPrice.close.toFixed(2),
-    date: latestPrice.date,
-    kd: {
-      K: latestKD.K.toFixed(2),
-      D: latestKD.D.toFixed(2),
-      status: kdStatus
-    },
-    macd: {
-      macd: latestMACD.macd.toFixed(2),
-      signal: latestMACD.signal.toFixed(2),
-      histogram: latestMACD.histogram.toFixed(2),
-      status: macdStatus
-    },
-    ma: {
-      ma5: latestMA5.toFixed(2),
-      ma10: latestMA10.toFixed(2),
-      ma20: latestMA20.toFixed(2)
-    },
-    trend
-  };
 }
 
 module.exports = {
