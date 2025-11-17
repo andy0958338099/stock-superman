@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="股市大亨 LINE Bot - 專業台股技術分析 × AI 走勢預測，即時 KD、MACD 指標，DeepSeek AI 預測未來 10 日走勢，讓你輕鬆掌握股市脈動！">
-    <meta name="keywords" content="股市大亨,LINE Bot,台股,技術分析,AI預測,KD指標,MACD,股票,投資">
-    <meta property="og:title" content="股市大亨 LINE Bot - 專業台股分析 × AI 預測">
-    <meta property="og:description" content="輸入股票代號，立即獲得專業技術分析 + AI 走勢預測！">
+    <meta name="description" content="股市大亨 LINE Bot - 專業台股技術分析，即時 KD、MACD 指標，預測未來 10 日走勢，讓你輕鬆掌握股市脈動！">
+    <meta name="keywords" content="股市大亨,LINE Bot,台股,技術分析,KD指標,MACD,股票,投資">
+    <meta property="og:title" content="股市大亨 LINE Bot - 專業台股技術分析">
+    <meta property="og:description" content="輸入股票代號，立即獲得專業技術分析 + 走勢預測！">
     <meta property="og:type" content="website">
-    <title>股市大亨 LINE Bot - 專業台股分析 × AI 預測</title>
+    <title>股市大亨 LINE Bot - 專業台股技術分析</title>
     <style>
         * {
             margin: 0;
@@ -354,22 +354,16 @@
         <!-- 標題 -->
         <h1>股市大亨</h1>
         <p class="subtitle">
-            專業<span class="highlight">台股技術分析</span> × <span class="highlight">AI 走勢預測</span>
+            專業<span class="highlight">台股技術分析</span> × <span class="highlight">走勢預測</span>
         </p>
-
-        <!-- 系統狀態 -->
-        <div class="status">
-            <span class="status-dot"></span>
-            系統運作中
-        </div>
 
         <!-- CTA 區域 -->
         <div class="cta-section">
             <div class="cta-title">🎯 立即加入，開始你的投資之旅！</div>
             <p style="color: #666; margin-bottom: 20px; line-height: 1.6;">
                 只需<strong>一秒鐘</strong>，輸入股票代號，立即獲得：<br>
-                ✓ 專業技術指標分析<br>
-                ✓ AI 預測未來 10 日走勢<br>
+                ✓ 專業技術指標分析（KD、MACD）<br>
+                ✓ 預期最近 10 日走勢<br>
                 ✓ 精美視覺化圖表
             </p>
             <a href="https://lin.ee/evT2jXv" target="_blank" class="line-button">
@@ -405,7 +399,7 @@
                 <span class="feature-icon">📊</span>
                 <div class="feature-content">
                     <div class="feature-title">即時台股資料</div>
-                    <div class="feature-desc">串接 FinMind API，提供最新股價、成交量等完整資訊</div>
+                    <div class="feature-desc">提供最新股價、成交量等完整資訊</div>
                 </div>
             </div>
 
@@ -418,10 +412,10 @@
             </div>
 
             <div class="feature">
-                <span class="feature-icon">🤖</span>
+                <span class="feature-icon">📊</span>
                 <div class="feature-content">
-                    <div class="feature-title">AI 走勢預測</div>
-                    <div class="feature-desc">DeepSeek AI 分析歷史數據，預測未來 10 日漲跌機率</div>
+                    <div class="feature-title">預期最近10日走勢</div>
+                    <div class="feature-desc">分析歷史數據，預測未來 10 日漲跌機率</div>
                 </div>
             </div>
 
@@ -436,8 +430,8 @@
             <div class="feature">
                 <span class="feature-icon">⚡</span>
                 <div class="feature-content">
-                    <div class="feature-title">智慧快取系統</div>
-                    <div class="feature-desc">12 小時快取機制，確保資料新鮮度與回應速度</div>
+                    <div class="feature-title">快速回應</div>
+                    <div class="feature-desc">智慧快取機制，確保資料新鮮度與回應速度</div>
                 </div>
             </div>
 
@@ -445,7 +439,7 @@
                 <span class="feature-icon">🔒</span>
                 <div class="feature-content">
                     <div class="feature-title">安全可靠</div>
-                    <div class="feature-desc">Netlify + Supabase 架構，企業級穩定性與安全性</div>
+                    <div class="feature-desc">企業級架構，穩定性與安全性有保障</div>
                 </div>
             </div>
         </div>
@@ -455,19 +449,16 @@
             <div class="demo-title">💡 使用超簡單！</div>
             <ol class="demo-steps">
                 <li><strong>加入好友</strong> - 掃描 QR Code 或搜尋 LINE ID: @754zptsk</li>
-                <li><strong>輸入股票代號</strong> - 例如：2330（台積電）、2317（鴻海）</li>
-                <li><strong>立即獲得分析</strong> - 3 秒內收到完整技術分析 + AI 預測</li>
+                <li><strong>輸入股票代號</strong> - 例如：2330（台積電）、3003（健和興）</li>
+                <li><strong>立即獲得分析</strong> - 3 秒內收到完整技術分析 + 走勢預測</li>
             </ol>
         </div>
 
         <!-- 技術架構 -->
         <div class="tech-stack">
-            <span class="tech-badge">🚀 Netlify Functions</span>
-            <span class="tech-badge">🗄️ Supabase</span>
-            <span class="tech-badge">📊 FinMind API</span>
-            <span class="tech-badge">🤖 DeepSeek AI</span>
             <span class="tech-badge">💬 LINE Messaging API</span>
-            <span class="tech-badge">📈 Chart.js</span>
+            <span class="tech-badge">📊 即時股價資料</span>
+            <span class="tech-badge">📈 專業圖表</span>
         </div>
 
         <!-- 底部資訊 -->
@@ -475,7 +466,7 @@
             <p><strong>🎯 適合對象：</strong></p>
             <p style="margin-top: 8px;">
                 ✓ 想快速了解股票技術面的投資人<br>
-                ✓ 需要 AI 輔助判斷的交易者<br>
+                ✓ 需要技術指標輔助判斷的交易者<br>
                 ✓ 希望隨時隨地查詢股票的上班族<br>
                 ✓ 想學習技術分析的新手投資人
             </p>
