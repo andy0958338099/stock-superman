@@ -99,7 +99,7 @@ async function generateIndicatorChart(stockId, rawData, stockName = '') {
       }
     };
 
-    // === 圖表 2：KD 指標（優化版）===
+    // === 圖表 2：KD 指標（高可讀性版）===
     const kdChartConfig = {
       type: 'line',
       data: {
@@ -110,20 +110,20 @@ async function generateIndicatorChart(stockId, rawData, stockName = '') {
             data: K,
             borderColor: 'rgb(255, 193, 7)',
             backgroundColor: 'rgba(255, 193, 7, 0.15)',
-            borderWidth: 3,
+            borderWidth: 2.5,
             pointRadius: 0,
             fill: true,
-            tension: 0.1
+            tension: 0.2
           },
           {
             label: 'D',
             data: D,
             borderColor: 'rgb(156, 39, 176)',
             backgroundColor: 'rgba(156, 39, 176, 0.15)',
-            borderWidth: 3,
+            borderWidth: 2.5,
             pointRadius: 0,
             fill: true,
-            tension: 0.1
+            tension: 0.2
           }
         ]
       },
@@ -133,18 +133,19 @@ async function generateIndicatorChart(stockId, rawData, stockName = '') {
         plugins: {
           title: {
             display: true,
-            text: `${stockId} ${stockName} - KD 指標`,
-            font: { size: 20, weight: 'bold' },
-            padding: { top: 10, bottom: 20 }
+            text: `${stockId} ${stockName} - KD`,
+            font: { size: 16, weight: 'bold' },
+            padding: { top: 5, bottom: 5 }
           },
           legend: {
             display: true,
-            position: 'top',
-            align: 'end',
+            position: 'bottom',
             labels: {
-              font: { size: 14, weight: 'bold' },
-              padding: 15,
-              usePointStyle: true
+              font: { size: 10 },
+              padding: 8,
+              boxWidth: 15,
+              boxHeight: 10,
+              usePointStyle: false
             }
           }
         },
@@ -157,58 +158,56 @@ async function generateIndicatorChart(stockId, rawData, stockName = '') {
             max: 100,
             ticks: {
               stepSize: 20,
-              font: { size: 13, weight: 'bold' },
+              font: { size: 10, weight: 'bold' },
               color: '#333',
+              padding: 5,
               callback: function(value) {
                 return value;
               }
             },
-            title: {
-              display: true,
-              text: 'KD 值',
-              font: { size: 15, weight: 'bold' },
-              color: '#333'
-            },
             grid: {
-              color: 'rgba(0, 0, 0, 0.08)',
-              lineWidth: 1
+              color: 'rgba(0, 0, 0, 0.1)',
+              lineWidth: 1,
+              drawBorder: true
             },
             border: {
               display: true,
-              color: '#333',
-              width: 2
+              color: '#666',
+              width: 1.5
             }
           },
           x: {
-            grid: { display: false },
+            grid: {
+              display: true,
+              color: 'rgba(0, 0, 0, 0.05)'
+            },
             ticks: {
-              font: { size: 11 },
+              font: { size: 9 },
               maxRotation: 45,
               minRotation: 45,
               autoSkip: true,
-              maxTicksLimit: 10,
-              includeBounds: true
+              maxTicksLimit: 8,
+              padding: 5
             },
             border: {
               display: true,
-              color: '#333',
-              width: 2
-            },
-            offset: true
+              color: '#666',
+              width: 1.5
+            }
           }
         },
         layout: {
           padding: {
-            left: 10,
-            right: 50,
-            top: 10,
-            bottom: 15
+            left: 5,
+            right: 15,
+            top: 5,
+            bottom: 5
           }
         }
       }
     };
 
-    // === 圖表 3：MACD 指標（優化版）===
+    // === 圖表 3：MACD 指標（高可讀性版）===
     const macdChartConfig = {
       type: 'bar',
       data: {
@@ -220,29 +219,30 @@ async function generateIndicatorChart(stockId, rawData, stockName = '') {
             backgroundColor: Histogram.map(v => v >= 0 ? 'rgba(76, 175, 80, 0.7)' : 'rgba(244, 67, 54, 0.7)'),
             borderWidth: 0,
             type: 'bar',
-            order: 2
+            order: 2,
+            barPercentage: 0.8
           },
           {
             label: 'MACD',
             data: MACD,
             borderColor: 'rgb(33, 150, 243)',
             backgroundColor: 'rgba(33, 150, 243, 0.1)',
-            borderWidth: 3,
+            borderWidth: 2.5,
             pointRadius: 0,
             type: 'line',
             order: 1,
-            tension: 0.1
+            tension: 0.2
           },
           {
             label: 'Signal',
             data: Signal,
             borderColor: 'rgb(255, 152, 0)',
             backgroundColor: 'rgba(255, 152, 0, 0.1)',
-            borderWidth: 3,
+            borderWidth: 2.5,
             pointRadius: 0,
             type: 'line',
             order: 1,
-            tension: 0.1
+            tension: 0.2
           }
         ]
       },
@@ -252,18 +252,19 @@ async function generateIndicatorChart(stockId, rawData, stockName = '') {
         plugins: {
           title: {
             display: true,
-            text: `${stockId} ${stockName} - MACD 指標`,
-            font: { size: 20, weight: 'bold' },
-            padding: { top: 10, bottom: 20 }
+            text: `${stockId} ${stockName} - MACD`,
+            font: { size: 16, weight: 'bold' },
+            padding: { top: 5, bottom: 5 }
           },
           legend: {
             display: true,
-            position: 'top',
-            align: 'end',
+            position: 'bottom',
             labels: {
-              font: { size: 14, weight: 'bold' },
-              padding: 15,
-              usePointStyle: true
+              font: { size: 10 },
+              padding: 8,
+              boxWidth: 15,
+              boxHeight: 10,
+              usePointStyle: false
             }
           }
         },
@@ -273,52 +274,51 @@ async function generateIndicatorChart(stockId, rawData, stockName = '') {
             display: true,
             position: 'left',
             ticks: {
-              font: { size: 13, weight: 'bold' },
+              font: { size: 10, weight: 'bold' },
               color: '#333',
+              padding: 5,
+              maxTicksLimit: 6,
               callback: function(value) {
                 return value.toFixed(2);
               }
             },
-            title: {
-              display: true,
-              text: 'MACD 值',
-              font: { size: 15, weight: 'bold' },
-              color: '#333'
-            },
             grid: {
-              color: 'rgba(0, 0, 0, 0.08)',
-              lineWidth: 1
+              color: 'rgba(0, 0, 0, 0.1)',
+              lineWidth: 1,
+              drawBorder: true
             },
             border: {
               display: true,
-              color: '#333',
-              width: 2
+              color: '#666',
+              width: 1.5
             }
           },
           x: {
-            grid: { display: false },
+            grid: {
+              display: true,
+              color: 'rgba(0, 0, 0, 0.05)'
+            },
             ticks: {
-              font: { size: 11 },
+              font: { size: 9 },
               maxRotation: 45,
               minRotation: 45,
               autoSkip: true,
-              maxTicksLimit: 10,
-              includeBounds: true
+              maxTicksLimit: 8,
+              padding: 5
             },
             border: {
               display: true,
-              color: '#333',
-              width: 2
-            },
-            offset: true
+              color: '#666',
+              width: 1.5
+            }
           }
         },
         layout: {
           padding: {
-            left: 10,
-            right: 50,
-            top: 10,
-            bottom: 15
+            left: 5,
+            right: 15,
+            top: 5,
+            bottom: 5
           }
         }
       }
@@ -331,19 +331,19 @@ async function generateIndicatorChart(stockId, rawData, stockName = '') {
       axios.post('https://quickchart.io/chart/create', {
         chart: priceChartConfig,
         width: 800,
-        height: 240,
+        height: 300,
         backgroundColor: 'white'
       }),
       axios.post('https://quickchart.io/chart/create', {
         chart: kdChartConfig,
         width: 800,
-        height: 210,
+        height: 280,
         backgroundColor: 'white'
       }),
       axios.post('https://quickchart.io/chart/create', {
         chart: macdChartConfig,
         width: 800,
-        height: 210,
+        height: 280,
         backgroundColor: 'white'
       })
     ]);
