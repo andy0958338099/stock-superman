@@ -28,32 +28,19 @@ if (!config.channelAccessToken || !config.channelSecret) {
 
 const client = new line.Client(config);
 
-// 管理者 User ID（從環境變數讀取）
-const ADMIN_USER_ID = process.env.LINE_ADMIN_USER_ID || '';
-
 /**
- * 檢查是否為管理者
- * @param {string} userId - LINE User ID
- * @returns {boolean}
- */
-function isAdmin(userId) {
-  if (!ADMIN_USER_ID) return false;
-  return userId === ADMIN_USER_ID;
-}
-
-/**
- * 處理管理者指令
+ * 處理快取管理指令
  * @param {string} replyToken - LINE reply token
  * @param {string} text - 指令文字
- * @returns {Promise<boolean>} - 是否為管理者指令
+ * @returns {Promise<boolean>} - 是否為快取管理指令
  */
-async function handleAdminCommand(replyToken, text) {
+async function handleCacheCommand(replyToken, text) {
   // 刪除所有快取：清除快取
   if (text === '清除快取' || text === '刪除快取' || text === 'clear cache') {
     const result = await deleteStockCache(null);
     await client.replyMessage(replyToken, {
       type: 'text',
-      text: `🔧 管理者指令執行完成\n\n${result.message}`
+      text: `🔧 快取管理\n\n${result.message}`
     });
     return true;
   }
@@ -65,7 +52,7 @@ async function handleAdminCommand(replyToken, text) {
     const result = await deleteStockCache(stockId);
     await client.replyMessage(replyToken, {
       type: 'text',
-      text: `🔧 管理者指令執行完成\n\n${result.message}`
+      text: `🔧 快取管理\n\n${result.message}`
     });
     return true;
   }
@@ -468,13 +455,11 @@ exports.handler = async function(event, context) {
       // 2. 記錄 reply token
       await recordReplyToken(replyToken);
 
-      // 3. 檢查管理者指令（隱藏功能）
-      if (isAdmin(userId)) {
-        const isAdminCmd = await handleAdminCommand(replyToken, text);
-        if (isAdminCmd) {
-          console.log('✅ 管理者指令執行完成');
-          continue;
-        }
+      // 3. 檢查快取管理指令
+      const isCacheCmd = await handleCacheCommand(replyToken, text);
+      if (isCacheCmd) {
+        console.log('✅ 快取管理指令執行完成');
+        continue;
       }
 
       // 4. 解析股票代號
@@ -489,7 +474,10 @@ exports.handler = async function(event, context) {
                 '• 即時台股資料\n' +
                 '• KD、MACD 技術指標\n' +
                 '• 預期最近10日走勢\n' +
-                '• 智慧快取機制'
+                '• 智慧快取機制\n\n' +
+                '🔧 快取管理：\n' +
+                '• 輸入「清除快取」刪除所有快取\n' +
+                '• 輸入「刪除快取 2330」刪除特定股票快取'
         });
         continue;
       }
