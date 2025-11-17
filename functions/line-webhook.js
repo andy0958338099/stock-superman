@@ -50,7 +50,7 @@ function createFlexMessage(stockId, stockName, latestData, kdImageUrl, macdImage
   // AI 分析摘要
   let aiSummary = '';
   if (aiResult) {
-    aiSummary = `📊 AI 預測（10日）\n` +
+    aiSummary = `📊 預期最近10日走勢\n` +
                 `↗️ 上漲 ${aiResult.probability_up}% | ➡️ 持平 ${aiResult.probability_flat}% | ↘️ 下跌 ${aiResult.probability_down}%\n` +
                 `💡 ${aiResult.trend_summary || ''}`;
   } else {
@@ -59,31 +59,6 @@ function createFlexMessage(stockId, stockName, latestData, kdImageUrl, macdImage
 
   const flexMessage = {
     type: 'bubble',
-    hero: {
-      type: 'box',
-      layout: 'vertical',
-      contents: [
-        {
-          type: 'image',
-          url: kdImageUrl,
-          size: 'full',
-          aspectMode: 'fit',
-          aspectRatio: '16:11',
-          margin: 'none'
-        },
-        {
-          type: 'image',
-          url: macdImageUrl,
-          size: 'full',
-          aspectMode: 'fit',
-          aspectRatio: '16:9',
-          margin: 'none'
-        }
-      ],
-      spacing: 'none',
-      margin: 'none',
-      paddingAll: '0px'
-    },
     body: {
       type: 'box',
       layout: 'vertical',
@@ -168,20 +143,34 @@ function createFlexMessage(stockId, stockName, latestData, kdImageUrl, macdImage
               color: '#333333'
             }
           ]
-        }
-      ]
-    },
-    footer: {
-      type: 'box',
-      layout: 'vertical',
-      spacing: 'sm',
-      contents: [
+        },
         {
-          type: 'text',
-          text: '💡 資料來源：FinMind | AI：DeepSeek',
-          size: 'xxs',
-          color: '#aaaaaa',
-          align: 'center'
+          type: 'separator',
+          margin: 'lg'
+        },
+        {
+          type: 'box',
+          layout: 'vertical',
+          margin: 'lg',
+          spacing: 'none',
+          contents: [
+            {
+              type: 'image',
+              url: kdImageUrl,
+              size: 'full',
+              aspectMode: 'fit',
+              aspectRatio: '16:11',
+              margin: 'none'
+            },
+            {
+              type: 'image',
+              url: macdImageUrl,
+              size: 'full',
+              aspectMode: 'fit',
+              aspectRatio: '16:9',
+              margin: 'none'
+            }
+          ]
         }
       ]
     }
