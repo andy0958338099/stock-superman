@@ -118,10 +118,10 @@ async function saveStockCache(cacheData) {
         image_path: cacheData.image_path,
         result_summary: cacheData.result_summary,
         updated_at: new Date().toISOString()
-      }], { 
-        onConflict: 'stock_id' 
+      }], {
+        onConflict: 'stock_id'
       });
-    
+
     if (error) throw error;
     return true;
   } catch (error) {
@@ -130,11 +130,57 @@ async function saveStockCache(cacheData) {
   }
 }
 
+/**
+ * 刪除指定股票的快取
+ * @param {string} stockId - 股票代號（可選，若為 null 則刪除所有快取）
+ * @returns {Promise<object>} - { success: boolean, count: number, message: string }
+ */
+async function deleteStockCache(stockId = null) {
+  try {
+    let query = supabase.from('stock_cache').delete();
+
+    if (stockId) {
+      // 刪除特定股票快取
+      query = query.eq('stock_id', stockId);
+    }
+
+    const { data, error, count } = await query.select();
+
+    if (error) throw error;
+
+    const deletedCount = data ? data.length : 0;
+
+    if (stockId) {
+      console.log(`✅ 已刪除股票 ${stockId} 的快取`);
+      return {
+        success: true,
+        count: deletedCount,
+        message: `已刪除股票 ${stockId} 的快取（${deletedCount} 筆）`
+      };
+    } else {
+      console.log(`✅ 已刪除所有快取（${deletedCount} 筆）`);
+      return {
+        success: true,
+        count: deletedCount,
+        message: `已刪除所有快取（${deletedCount} 筆）`
+      };
+    }
+  } catch (error) {
+    console.error('刪除快取失敗:', error);
+    return {
+      success: false,
+      count: 0,
+      message: `刪除失敗：${error.message}`
+    };
+  }
+}
+
 module.exports = {
   supabase,
   isReplyTokenUsed,
   recordReplyToken,
   getStockCache,
-  saveStockCache
+  saveStockCache,
+  deleteStockCache
 };
 

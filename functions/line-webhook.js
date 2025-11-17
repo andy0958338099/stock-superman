@@ -4,11 +4,12 @@
  */
 
 const line = require('@line/bot-sdk');
-const { 
-  isReplyTokenUsed, 
-  recordReplyToken, 
-  getStockCache, 
-  saveStockCache 
+const {
+  isReplyTokenUsed,
+  recordReplyToken,
+  getStockCache,
+  saveStockCache,
+  deleteStockCache
 } = require('./supabase-client');
 const { fetchStockPrice, fetchStockInfo, isValidStockId } = require('./finmind');
 const { generateIndicatorChart } = require('./generate-chart-quickchart');
@@ -26,6 +27,51 @@ if (!config.channelAccessToken || !config.channelSecret) {
 }
 
 const client = new line.Client(config);
+
+// 管理者 User ID（從環境變數讀取）
+const ADMIN_USER_ID = process.env.LINE_ADMIN_USER_ID || '';
+
+/**
+ * 檢查是否為管理者
+ * @param {string} userId - LINE User ID
+ * @returns {boolean}
+ */
+function isAdmin(userId) {
+  if (!ADMIN_USER_ID) return false;
+  return userId === ADMIN_USER_ID;
+}
+
+/**
+ * 處理管理者指令
+ * @param {string} replyToken - LINE reply token
+ * @param {string} text - 指令文字
+ * @returns {Promise<boolean>} - 是否為管理者指令
+ */
+async function handleAdminCommand(replyToken, text) {
+  // 刪除所有快取：清除快取
+  if (text === '清除快取' || text === '刪除快取' || text === 'clear cache') {
+    const result = await deleteStockCache(null);
+    await client.replyMessage(replyToken, {
+      type: 'text',
+      text: `🔧 管理者指令執行完成\n\n${result.message}`
+    });
+    return true;
+  }
+
+  // 刪除特定股票快取：刪除快取 2330
+  const deleteMatch = text.match(/^(?:刪除快取|清除快取|delete cache)\s+(\d{3,5})$/i);
+  if (deleteMatch) {
+    const stockId = deleteMatch[1];
+    const result = await deleteStockCache(stockId);
+    await client.replyMessage(replyToken, {
+      type: 'text',
+      text: `🔧 管理者指令執行完成\n\n${result.message}`
+    });
+    return true;
+  }
+
+  return false;
+}
 
 /**
  * 建立 Flex Message（股票分析結果）
@@ -407,9 +453,10 @@ exports.handler = async function(event, context) {
       }
 
       const replyToken = ev.replyToken;
+      const userId = ev.source.userId;
       const text = ev.message.text.trim();
 
-      console.log(`📝 收到訊息：${text}`);
+      console.log(`📝 收到訊息：${text} (User: ${userId})`);
 
       // 1. 檢查 reply token 是否已使用（去重）
       const isUsed = await isReplyTokenUsed(replyToken);
@@ -421,26 +468,35 @@ exports.handler = async function(event, context) {
       // 2. 記錄 reply token
       await recordReplyToken(replyToken);
 
-      // 3. 解析股票代號
+      // 3. 檢查管理者指令（隱藏功能）
+      if (isAdmin(userId)) {
+        const isAdminCmd = await handleAdminCommand(replyToken, text);
+        if (isAdminCmd) {
+          console.log('✅ 管理者指令執行完成');
+          continue;
+        }
+      }
+
+      // 4. 解析股票代號
       const stockIdMatch = text.match(/\d{3,5}/);
       if (!stockIdMatch) {
         await client.replyMessage(replyToken, {
           type: 'text',
           text: '👋 歡迎使用股市大亨 LINE Bot！\n\n' +
                 '📊 請輸入股票代號查詢分析\n' +
-                '例如：2330、0050、2454\n\n' +
+                '例如：2330、0050、3003\n\n' +
                 '✨ 功能特色：\n' +
-                '• FinMind 即時資料\n' +
+                '• 即時台股資料\n' +
                 '• KD、MACD 技術指標\n' +
-                '• DeepSeek AI 走勢預測\n' +
-                '• 12 小時智慧快取'
+                '• 預期最近10日走勢\n' +
+                '• 智慧快取機制'
         });
         continue;
       }
 
       const stockId = stockIdMatch[0];
 
-      // 4. 驗證股票代號格式
+      // 5. 驗證股票代號格式
       if (!isValidStockId(stockId)) {
         await client.replyMessage(replyToken, {
           type: 'text',
@@ -449,7 +505,7 @@ exports.handler = async function(event, context) {
         continue;
       }
 
-      // 5. 處理股票查詢
+      // 6. 處理股票查詢
       await handleStockQuery(replyToken, stockId);
     }
 
