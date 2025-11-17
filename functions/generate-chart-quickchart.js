@@ -182,25 +182,27 @@ async function generateIndicatorChart(stockId, rawData, stockName = '') {
           x: {
             grid: { display: false },
             ticks: {
-              font: { size: 12 },
+              font: { size: 11 },
               maxRotation: 45,
               minRotation: 45,
               autoSkip: true,
-              maxTicksLimit: 12
+              maxTicksLimit: 10,
+              includeBounds: true
             },
             border: {
               display: true,
               color: '#333',
               width: 2
-            }
+            },
+            offset: true
           }
         },
         layout: {
           padding: {
             left: 10,
-            right: 30,
+            right: 50,
             top: 10,
-            bottom: 10
+            bottom: 15
           }
         }
       }
@@ -296,25 +298,27 @@ async function generateIndicatorChart(stockId, rawData, stockName = '') {
           x: {
             grid: { display: false },
             ticks: {
-              font: { size: 12 },
+              font: { size: 11 },
               maxRotation: 45,
               minRotation: 45,
               autoSkip: true,
-              maxTicksLimit: 12
+              maxTicksLimit: 10,
+              includeBounds: true
             },
             border: {
               display: true,
               color: '#333',
               width: 2
-            }
+            },
+            offset: true
           }
         },
         layout: {
           padding: {
             left: 10,
-            right: 30,
+            right: 50,
             top: 10,
-            bottom: 10
+            bottom: 15
           }
         }
       }
@@ -327,19 +331,19 @@ async function generateIndicatorChart(stockId, rawData, stockName = '') {
       axios.post('https://quickchart.io/chart/create', {
         chart: priceChartConfig,
         width: 800,
-        height: 400,
+        height: 240,
         backgroundColor: 'white'
       }),
       axios.post('https://quickchart.io/chart/create', {
         chart: kdChartConfig,
         width: 800,
-        height: 350,
+        height: 210,
         backgroundColor: 'white'
       }),
       axios.post('https://quickchart.io/chart/create', {
         chart: macdChartConfig,
         width: 800,
-        height: 350,
+        height: 210,
         backgroundColor: 'white'
       })
     ]);
