@@ -135,9 +135,174 @@ function isValidStockId(stockId) {
   return /^\d{3,5}$/.test(stockId);
 }
 
+/**
+ * 抓取美股指數資料
+ * @param {string} symbol - 指數代號（例如：^GSPC, ^IXIC, ^SOX）
+ * @param {string} startDate - 開始日期 YYYY-MM-DD
+ * @param {string} endDate - 結束日期 YYYY-MM-DD
+ * @returns {Promise<Array>} - 指數資料陣列
+ */
+async function fetchUSStockPrice(symbol, startDate = null, endDate = null) {
+  try {
+    // 預設抓取一年資料
+    if (!startDate) {
+      startDate = moment().subtract(1, 'year').format('YYYY-MM-DD');
+    }
+    if (!endDate) {
+      endDate = moment().format('YYYY-MM-DD');
+    }
+
+    const url = `${FINMIND_BASE_URL}/data`;
+    const params = {
+      dataset: 'USStockPrice',
+      data_id: symbol,
+      start_date: startDate,
+      end_date: endDate
+    };
+
+    console.log(`📊 抓取美股資料：${symbol} (${startDate} ~ ${endDate})`);
+
+    const response = await axios.get(url, {
+      params,
+      timeout: 15000,
+      headers: {
+        'User-Agent': 'Stock-Superman-LineBot/1.0'
+      }
+    });
+
+    if (!response.data || !response.data.data || response.data.data.length === 0) {
+      throw new Error(`查無美股代號 ${symbol} 的資料`);
+    }
+
+    // 標準化資料格式
+    const data = response.data.data.map(item => ({
+      date: item.date,
+      open: parseFloat(item.open) || 0,
+      high: parseFloat(item.max || item.high) || 0,
+      low: parseFloat(item.min || item.low) || 0,
+      close: parseFloat(item.close) || 0,
+      volume: parseFloat(item.Trading_Volume || item.volume || 0),
+      stock_id: item.stock_id
+    }));
+
+    // 由舊到新排序
+    data.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    console.log(`✅ 成功抓取美股 ${symbol} ${data.length} 筆資料`);
+    return data;
+
+  } catch (error) {
+    console.error(`抓取美股 ${symbol} 失敗:`, error.message);
+    throw error;
+  }
+}
+
+/**
+ * 抓取匯率資料 (USD/TWD)
+ * @param {string} startDate - 開始日期
+ * @param {string} endDate - 結束日期
+ * @returns {Promise<Array>} - 匯率資料陣列
+ */
+async function fetchExchangeRate(startDate = null, endDate = null) {
+  try {
+    if (!startDate) {
+      startDate = moment().subtract(6, 'months').format('YYYY-MM-DD');
+    }
+    if (!endDate) {
+      endDate = moment().format('YYYY-MM-DD');
+    }
+
+    const url = `${FINMIND_BASE_URL}/data`;
+    const params = {
+      dataset: 'TaiwanExchangeRate',
+      data_id: 'USD',
+      start_date: startDate,
+      end_date: endDate
+    };
+
+    console.log(`📊 抓取匯率資料 USD/TWD`);
+
+    const response = await axios.get(url, {
+      params,
+      timeout: 15000
+    });
+
+    if (!response.data || !response.data.data || response.data.data.length === 0) {
+      throw new Error('查無匯率資料');
+    }
+
+    const data = response.data.data.map(item => ({
+      date: item.date,
+      rate: parseFloat(item.close) || 0
+    }));
+
+    data.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    console.log(`✅ 成功抓取匯率 ${data.length} 筆資料`);
+    return data;
+
+  } catch (error) {
+    console.error('抓取匯率失敗:', error.message);
+    throw error;
+  }
+}
+
+/**
+ * 抓取 VIX 恐慌指數
+ * @param {string} startDate - 開始日期
+ * @param {string} endDate - 結束日期
+ * @returns {Promise<Array>} - VIX 資料陣列
+ */
+async function fetchVIX(startDate = null, endDate = null) {
+  try {
+    if (!startDate) {
+      startDate = moment().subtract(6, 'months').format('YYYY-MM-DD');
+    }
+    if (!endDate) {
+      endDate = moment().format('YYYY-MM-DD');
+    }
+
+    const url = `${FINMIND_BASE_URL}/data`;
+    const params = {
+      dataset: 'USStockPrice',
+      data_id: '^VIX',
+      start_date: startDate,
+      end_date: endDate
+    };
+
+    console.log(`📊 抓取 VIX 指數`);
+
+    const response = await axios.get(url, {
+      params,
+      timeout: 15000
+    });
+
+    if (!response.data || !response.data.data || response.data.data.length === 0) {
+      throw new Error('查無 VIX 資料');
+    }
+
+    const data = response.data.data.map(item => ({
+      date: item.date,
+      close: parseFloat(item.close) || 0
+    }));
+
+    data.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    console.log(`✅ 成功抓取 VIX ${data.length} 筆資料`);
+    return data;
+
+  } catch (error) {
+    console.error('抓取 VIX 失敗:', error.message);
+    throw error;
+  }
+}
+
 module.exports = {
   fetchStockPrice,
   fetchStockInfo,
-  isValidStockId
+  isValidStockId,
+  fetchUSStockPrice,
+  fetchExchangeRate,
+  fetchVIX
 };
 

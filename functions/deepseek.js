@@ -148,7 +148,172 @@ ${dataSummary}
   }
 }
 
+/**
+ * 使用 DeepSeek 進行美股跨市場分析
+ * @param {object} marketData - 包含美股、台股、匯率、VIX 等資料
+ * @returns {Promise<object>} - AI 跨市場分析結果
+ */
+async function analyzeUSMarketWithDeepSeek(marketData) {
+  try {
+    if (!DEEPSEEK_API_KEY) {
+      console.warn('⚠️ DeepSeek API Key 未設定，跳過 AI 分析');
+      return null;
+    }
+
+    console.log('🤖 開始 DeepSeek 美股跨市場分析...');
+
+    const { sp500, nasdaq, soxx, tsmAdr, twii, usdTwd, vix } = marketData;
+
+    // 建立 AI Prompt
+    const prompt = `你是一位跨市場量化分析師，請根據以下數據進行：
+1. 美股主要指數的技術面分析（S&P500、NASDAQ、SOXX）
+2. 台股大盤的技術面分析
+3. 評估美股狀態對台股的短線（3天）與中期（10天）影響
+4. 給出具體投資建議（標註風險）
+
+=== 資料來源 ===
+
+【台股大盤】
+指數：${twii.name}
+收盤：${twii.price}
+日期：${twii.date}
+KD：K=${twii.kd.K}, D=${twii.kd.D} (${twii.kd.status})
+MACD：${twii.macd.macd} / Signal=${twii.macd.signal} / Histogram=${twii.macd.histogram} (${twii.macd.status})
+均線：MA5=${twii.ma.ma5}, MA10=${twii.ma.ma10}, MA20=${twii.ma.ma20}
+趨勢：${twii.trend}
+
+【美股 S&P 500】
+收盤：${sp500.price}
+日期：${sp500.date}
+KD：K=${sp500.kd.K}, D=${sp500.kd.D} (${sp500.kd.status})
+MACD：${sp500.macd.macd} / Signal=${sp500.macd.signal} / Histogram=${sp500.macd.histogram} (${sp500.macd.status})
+趨勢：${sp500.trend}
+
+【美股 NASDAQ】
+收盤：${nasdaq.price}
+日期：${nasdaq.date}
+KD：K=${nasdaq.kd.K}, D=${nasdaq.kd.D} (${nasdaq.kd.status})
+MACD：${nasdaq.macd.macd} / Signal=${nasdaq.macd.signal} / Histogram=${nasdaq.macd.histogram} (${nasdaq.macd.status})
+趨勢：${nasdaq.trend}
+
+【美股 SOXX 半導體】
+收盤：${soxx.price}
+日期：${soxx.date}
+KD：K=${soxx.kd.K}, D=${soxx.kd.D} (${soxx.kd.status})
+MACD：${soxx.macd.macd} / Signal=${soxx.macd.signal} / Histogram=${soxx.macd.histogram} (${soxx.macd.status})
+趨勢：${soxx.trend}
+
+【TSM ADR】
+收盤：$${tsmAdr.price}
+日期：${tsmAdr.date}
+KD：K=${tsmAdr.kd.K}, D=${tsmAdr.kd.D} (${tsmAdr.kd.status})
+MACD：${tsmAdr.macd.macd} / Signal=${tsmAdr.macd.signal} / Histogram=${tsmAdr.macd.histogram} (${tsmAdr.macd.status})
+趨勢：${tsmAdr.trend}
+
+【匯率 USD/TWD】
+匯率：${usdTwd.rate}
+日期：${usdTwd.date}
+
+【VIX 恐慌指數】
+VIX：${vix.close}
+日期：${vix.date}
+
+=== 分析任務 ===
+請以 JSON 格式回覆，包含以下欄位：
+{
+  "us_market_status": "多頭|空頭|盤整",
+  "us_market_summary": "美股市場總結（50字內）",
+  "tw_market_status": "多頭|空頭|盤整",
+  "tw_market_summary": "台股市場總結（50字內）",
+  "correlation_score": 0-100 (美股與台股短線連動性分數),
+  "correlation_analysis": "連動性分析（50字內）",
+  "tw_3day_forecast": {
+    "direction": "上漲|下跌|盤整",
+    "probability": 0-100,
+    "reason": "理由（50字內）"
+  },
+  "tw_10day_forecast": {
+    "direction": "上漲|下跌|盤整",
+    "probability": 0-100,
+    "reason": "理由（50字內）"
+  },
+  "strategy": "多頭策略|空頭策略|等待策略",
+  "recommended_sectors": ["半導體", "金融", "AI", "原物料", "傳產"],
+  "risk_factors": ["外資動向", "匯率波動", "政策風險", "量能不足", "美股回檔"],
+  "key_points": ["重點1", "重點2", "重點3", "重點4", "重點5"],
+  "action_plan": "具體操作建議（100字內）"
+}
+
+注意事項：
+1. 基於技術指標數據進行客觀分析
+2. 評估美股對台股的影響程度
+3. TSM ADR 與台積電本體的差異
+4. 匯率對外資買賣的影響
+5. VIX 反映的市場風險偏好
+6. 給出明確的風險提示`;
+
+    // 呼叫 DeepSeek API
+    const response = await axios.post(
+      DEEPSEEK_API_URL,
+      {
+        model: 'deepseek-chat',
+        messages: [
+          {
+            role: 'system',
+            content: '你是一位專業的跨市場量化分析師，擅長分析美股與台股的連動關係，並基於技術指標給出投資建議。'
+          },
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 2000,
+        response_format: { type: 'json_object' }
+      },
+      {
+        headers: {
+          'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        timeout: 30000
+      }
+    );
+
+    if (!response.data || !response.data.choices || !response.data.choices[0]) {
+      throw new Error('DeepSeek API 回應格式錯誤');
+    }
+
+    const content = response.data.choices[0].message.content;
+    const result = JSON.parse(content);
+
+    console.log('✅ DeepSeek 美股分析完成');
+    console.log(`   美股狀態：${result.us_market_status}`);
+    console.log(`   台股狀態：${result.tw_market_status}`);
+    console.log(`   連動性：${result.correlation_score}分`);
+    console.log(`   策略：${result.strategy}`);
+
+    return {
+      ...result,
+      timestamp: new Date().toISOString(),
+      model: 'deepseek-chat'
+    };
+
+  } catch (error) {
+    if (error.response) {
+      console.error('DeepSeek API 錯誤:', error.response.status, error.response.data);
+    } else if (error.request) {
+      console.error('DeepSeek API 無回應:', error.message);
+    } else {
+      console.error('DeepSeek 錯誤:', error.message);
+    }
+
+    return null;
+  }
+}
+
 module.exports = {
-  analyzeWithDeepSeek
+  analyzeWithDeepSeek,
+  analyzeUSMarketWithDeepSeek
 };
 

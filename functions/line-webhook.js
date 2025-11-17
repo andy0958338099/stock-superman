@@ -15,6 +15,8 @@ const { fetchStockPrice, fetchStockInfo, isValidStockId } = require('./finmind')
 const { generateIndicatorChart } = require('./generate-chart-quickchart');
 const { analyzeWithDeepSeek } = require('./deepseek');
 const { analyzeKD, analyzeMACDSignal, calculateKD, calculateMACD } = require('./indicators');
+const { analyzeUSMarket } = require('./us-market-analysis');
+const { generateUSMarketFlexMessage } = require('./us-market-flex-message');
 
 // LINE Bot 設定
 const config = {
@@ -27,6 +29,37 @@ if (!config.channelAccessToken || !config.channelSecret) {
 }
 
 const client = new line.Client(config);
+
+/**
+ * 處理美股分析指令
+ * @returns {Promise<object>} - LINE 訊息物件
+ */
+async function handleUSMarketCommand() {
+  try {
+    console.log('🌎 開始處理美股分析請求...');
+
+    // 執行美股分析
+    const analysisResult = await analyzeUSMarket();
+
+    // 生成 Flex Message
+    const flexMessage = generateUSMarketFlexMessage(analysisResult);
+
+    return flexMessage;
+
+  } catch (error) {
+    console.error('❌ 美股分析失敗:', error);
+    return {
+      type: 'text',
+      text: '❌ 美股分析失敗\n\n' +
+            '可能原因：\n' +
+            '• 資料來源暫時無法連線\n' +
+            '• API 配額已用完\n' +
+            '• 系統處理超時\n\n' +
+            `錯誤訊息：${error.message}\n\n` +
+            '請稍後再試'
+    };
+  }
+}
 
 /**
  * 處理快取管理指令
@@ -455,21 +488,32 @@ exports.handler = async function(event, context) {
       // 2. 記錄 reply token
       await recordReplyToken(replyToken);
 
-      // 3. 檢查快取管理指令
+      // 3. 檢查美股分析指令
+      if (text === '美股' || text === '美股分析' || text === 'US' || text === 'us market') {
+        console.log('🌎 收到美股分析請求');
+        const usMarketMessage = await handleUSMarketCommand();
+        await client.replyMessage(replyToken, usMarketMessage);
+        console.log('✅ 美股分析完成');
+        continue;
+      }
+
+      // 4. 檢查快取管理指令
       const isCacheCmd = await handleCacheCommand(replyToken, text);
       if (isCacheCmd) {
         console.log('✅ 快取管理指令執行完成');
         continue;
       }
 
-      // 4. 解析股票代號
+      // 5. 解析股票代號
       const stockIdMatch = text.match(/\d{3,5}/);
       if (!stockIdMatch) {
         await client.replyMessage(replyToken, {
           type: 'text',
           text: '👋 歡迎使用股市大亨 LINE Bot！\n\n' +
-                '📊 請輸入股票代號查詢分析\n' +
+                '📊 台股分析：輸入股票代號\n' +
                 '例如：2330、0050、3003\n\n' +
+                '🌎 美股分析：輸入「美股」\n' +
+                '查看 S&P500、NASDAQ、SOXX 與台股連動\n\n' +
                 '✨ 功能特色：\n' +
                 '• 即時台股資料\n' +
                 '• KD、MACD 技術指標\n' +
