@@ -3,6 +3,12 @@
   functions = "functions"
   publish = "public"
 
+# Explicitly disable Next.js plugin
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+  [plugins.inputs]
+    disabled = true
+
 [functions]
   node_bundler = "esbuild"
   external_node_modules = ["canvas", "sharp"]
