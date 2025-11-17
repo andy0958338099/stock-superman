@@ -7,6 +7,7 @@ const axios = require('axios');
 const moment = require('moment');
 
 const FINMIND_BASE_URL = process.env.FINMIND_BASE_URL || 'https://api.finmindtrade.com/api/v4';
+const FINMIND_API_TOKEN = process.env.FINMIND_API_TOKEN || '';
 
 /**
  * 抓取台股日線資料
@@ -33,9 +34,14 @@ async function fetchStockPrice(stockId, startDate = null, endDate = null) {
       end_date: endDate
     };
 
-    console.log(`📊 抓取 FinMind 資料：${stockId} (${startDate} ~ ${endDate})`);
+    // 如果有 API Token，加入參數
+    if (FINMIND_API_TOKEN) {
+      params.token = FINMIND_API_TOKEN;
+    }
 
-    const response = await axios.get(url, { 
+    console.log(`📊 抓取 FinMind 資料：${stockId} (${startDate} ~ ${endDate})${FINMIND_API_TOKEN ? ' [使用 API Token]' : ''}`);
+
+    const response = await axios.get(url, {
       params,
       timeout: 15000,
       headers: {
@@ -160,7 +166,12 @@ async function fetchUSStockPrice(symbol, startDate = null, endDate = null) {
       end_date: endDate
     };
 
-    console.log(`📊 抓取美股資料：${symbol} (${startDate} ~ ${endDate})`);
+    // 如果有 API Token，加入參數
+    if (FINMIND_API_TOKEN) {
+      params.token = FINMIND_API_TOKEN;
+    }
+
+    console.log(`📊 抓取美股資料：${symbol} (${startDate} ~ ${endDate})${FINMIND_API_TOKEN ? ' [使用 API Token]' : ''}`);
 
     const response = await axios.get(url, {
       params,
@@ -220,7 +231,12 @@ async function fetchExchangeRate(startDate = null, endDate = null) {
       end_date: endDate
     };
 
-    console.log(`📊 抓取匯率資料 USD/TWD`);
+    // 如果有 API Token，加入參數
+    if (FINMIND_API_TOKEN) {
+      params.token = FINMIND_API_TOKEN;
+    }
+
+    console.log(`📊 抓取匯率資料 USD/TWD${FINMIND_API_TOKEN ? ' [使用 API Token]' : ''}`);
 
     const response = await axios.get(url, {
       params,
@@ -270,7 +286,12 @@ async function fetchVIX(startDate = null, endDate = null) {
       end_date: endDate
     };
 
-    console.log(`📊 抓取 VIX 指數`);
+    // 如果有 API Token，加入參數
+    if (FINMIND_API_TOKEN) {
+      params.token = FINMIND_API_TOKEN;
+    }
+
+    console.log(`📊 抓取 VIX 指數${FINMIND_API_TOKEN ? ' [使用 API Token]' : ''}`);
 
     const response = await axios.get(url, {
       params,
