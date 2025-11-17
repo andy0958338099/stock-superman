@@ -296,19 +296,19 @@ async function handleStockQuery(replyToken, stockId) {
         macd_image_url: chartInfo.macdImageUrl,
         timestamp: new Date().toISOString()
       },
-      image_url: chartInfo.kdImageUrl, // 主要使用 KD 圖
+      image_url: chartInfo.macdImageUrl, // 主要使用 MACD 圖
       image_path: null,
       result_summary: summaryText
     });
 
     console.log('✅ 快取已儲存');
 
-    // 9. 建立並發送 Flex Message（使用 KD/MACD 圖）
+    // 9. 建立並發送 Flex Message（使用 MACD 圖）
     const flexMessage = createFlexMessage(
       stockId,
       stockInfo.stock_name,
       latestData,
-      chartInfo.kdImageUrl, // 使用 KD 圖作為主圖
+      chartInfo.macdImageUrl, // 使用 MACD 圖作為主圖
       kdAnalysis,
       macdAnalysis,
       aiResult
