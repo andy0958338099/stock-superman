@@ -200,12 +200,87 @@ async function deleteStockCache(stockId = null) {
   }
 }
 
+/**
+ * 取得美股分析快取
+ * @returns {Promise<object|null>} - 快取資料或 null
+ */
+async function getUSMarketCache() {
+  try {
+    const { data, error } = await supabase
+      .from('stock_cache')
+      .select('*')
+      .eq('stock_id', 'US_MARKET')
+      .order('created_at', { ascending: false })
+      .limit(1);
+
+    if (error) throw error;
+
+    if (!data || data.length === 0) {
+      console.log('⚠️ 沒有美股分析快取');
+      return null;
+    }
+
+    const cache = data[0];
+    const cacheTime = new Date(cache.created_at);
+    const now = new Date();
+    const diffHours = (now - cacheTime) / (1000 * 60 * 60);
+
+    // 快取 1 小時
+    if (diffHours > 1) {
+      console.log(`⚠️ 美股分析快取已過期（${diffHours.toFixed(1)} 小時前）`);
+      return null;
+    }
+
+    console.log(`✅ 使用美股分析快取（${diffHours.toFixed(1)} 小時前）`);
+    return cache.analysis_result;
+
+  } catch (error) {
+    console.error('取得美股分析快取失敗:', error);
+    return null;
+  }
+}
+
+/**
+ * 儲存美股分析快取
+ * @param {object} analysisResult - 分析結果
+ * @returns {Promise<boolean>} - 成功回傳 true
+ */
+async function saveUSMarketCache(analysisResult) {
+  try {
+    // 先刪除舊的快取
+    await supabase
+      .from('stock_cache')
+      .delete()
+      .eq('stock_id', 'US_MARKET');
+
+    // 儲存新的快取
+    const { error } = await supabase
+      .from('stock_cache')
+      .insert({
+        stock_id: 'US_MARKET',
+        analysis_result: analysisResult,
+        created_at: new Date().toISOString()
+      });
+
+    if (error) throw error;
+
+    console.log('✅ 美股分析快取已儲存');
+    return true;
+
+  } catch (error) {
+    console.error('儲存美股分析快取失敗:', error);
+    return false;
+  }
+}
+
 module.exports = {
   supabase,
   isReplyTokenUsed,
   recordReplyToken,
   getStockCache,
   saveStockCache,
-  deleteStockCache
+  deleteStockCache,
+  getUSMarketCache,
+  saveUSMarketCache
 };
 

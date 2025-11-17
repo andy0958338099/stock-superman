@@ -6,7 +6,16 @@
 const { fetchStockPrice, fetchUSStockPrice, fetchExchangeRate, fetchVIX } = require('./finmind');
 const { calculateKD, calculateMACD, calculateMA } = require('./indicators');
 const { analyzeUSMarketWithDeepSeek } = require('./deepseek');
+const { getUSMarketCache, saveUSMarketCache } = require('./supabase-client');
 const moment = require('moment');
+
+/**
+ * 延遲函數
+ * @param {number} ms - 延遲毫秒數
+ */
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 /**
  * 抓取並分析美股市場資料
@@ -16,27 +25,45 @@ async function analyzeUSMarket() {
   try {
     console.log('🌎 開始美股市場分析...');
 
+    // 1. 檢查快取
+    const cachedResult = await getUSMarketCache();
+    if (cachedResult) {
+      console.log('✅ 使用快取的美股分析結果');
+      return cachedResult;
+    }
+
+    console.log('📊 快取未命中，開始抓取資料...');
+
     const endDate = moment().format('YYYY-MM-DD');
     const startDate = moment().subtract(6, 'months').format('YYYY-MM-DD');
 
-    // 並行抓取所有資料
-    const [
-      sp500Data,
-      nasdaqData,
-      soxxData,
-      tsmAdrData,
-      twiiData,
-      usdTwdData,
-      vixData
-    ] = await Promise.all([
-      fetchUSStockPrice('^GSPC', startDate, endDate),   // S&P 500
-      fetchUSStockPrice('^IXIC', startDate, endDate),   // NASDAQ
-      fetchUSStockPrice('^SOX', startDate, endDate),    // SOXX 半導體指數
-      fetchUSStockPrice('TSM', startDate, endDate),     // TSM ADR
-      fetchStockPrice('TAIEX', startDate, endDate),     // 台股加權指數
-      fetchExchangeRate(startDate, endDate),            // USD/TWD 匯率
-      fetchVIX(startDate, endDate)                      // VIX 恐慌指數
-    ]);
+    // 2. 序列抓取資料（避免觸發 API 頻率限制）
+    console.log('📊 抓取 S&P 500...');
+    const sp500Data = await fetchUSStockPrice('^GSPC', startDate, endDate);
+    await delay(500); // 延遲 500ms
+
+    console.log('📊 抓取 NASDAQ...');
+    const nasdaqData = await fetchUSStockPrice('^IXIC', startDate, endDate);
+    await delay(500);
+
+    console.log('📊 抓取 SOXX...');
+    const soxxData = await fetchUSStockPrice('^SOX', startDate, endDate);
+    await delay(500);
+
+    console.log('📊 抓取 TSM ADR...');
+    const tsmAdrData = await fetchUSStockPrice('TSM', startDate, endDate);
+    await delay(500);
+
+    console.log('📊 抓取台股加權...');
+    const twiiData = await fetchStockPrice('TAIEX', startDate, endDate);
+    await delay(500);
+
+    console.log('📊 抓取匯率...');
+    const usdTwdData = await fetchExchangeRate(startDate, endDate);
+    await delay(500);
+
+    console.log('📊 抓取 VIX...');
+    const vixData = await fetchVIX(startDate, endDate);
 
     console.log('✅ 所有資料抓取完成，開始計算技術指標...');
 
@@ -69,16 +96,29 @@ async function analyzeUSMarket() {
 
     console.log('✅ 美股市場分析完成');
 
-    return {
+    const result = {
       success: true,
       data: analysisData,
       analysis: aiAnalysis,
       timestamp: moment().format('YYYY-MM-DD HH:mm:ss')
     };
 
+    // 3. 儲存快取
+    await saveUSMarketCache(result);
+
+    return result;
+
   } catch (error) {
     console.error('❌ 美股市場分析失敗:', error);
-    throw error;
+
+    // 提供更詳細的錯誤訊息
+    if (error.message && error.message.includes('FinMind')) {
+      throw new Error('FinMind API 請求失敗，可能是頻率限制或配額用完');
+    } else if (error.message && error.message.includes('DeepSeek')) {
+      throw new Error('DeepSeek AI 分析失敗，請稍後再試');
+    } else {
+      throw error;
+    }
   }
 }
 
