@@ -1,0 +1,33 @@
+{
+  "name": "stock-superman-linebot",
+  "version": "1.0.0",
+  "description": "LINE Bot for Taiwan stock analysis with FinMind API and DeepSeek AI",
+  "main": "index.js",
+  "scripts": {
+    "dev": "netlify dev",
+    "build": "echo 'No build step required'",
+    "test": "node test-local.js",
+    "test:finmind": "node -e \"require('./test-local.js').testFinMind()\"",
+    "deploy": "netlify deploy --prod"
+  },
+  "keywords": ["line-bot", "stock", "finmind", "deepseek", "taiwan-stock"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@line/bot-sdk": "^9.3.0",
+    "@supabase/supabase-js": "^2.45.4",
+    "axios": "^1.7.7",
+    "canvas": "^2.11.2",
+    "chart.js": "^3.9.1",
+    "chartjs-node-canvas": "^4.1.6",
+    "dotenv": "^16.4.5",
+    "moment": "^2.30.1"
+  },
+  "devDependencies": {
+    "netlify-cli": "^17.36.4"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
+

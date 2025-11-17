@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>股市大亨 LINE Bot</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 600px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            text-align: center;
+        }
+        
+        h1 {
+            color: #333;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .emoji {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+        
+        .subtitle {
+            color: #666;
+            font-size: 1.2em;
+            margin-bottom: 30px;
+        }
+        
+        .features {
+            text-align: left;
+            margin: 30px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        
+        .feature {
+            margin: 15px 0;
+            display: flex;
+            align-items: center;
+        }
+        
+        .feature-icon {
+            font-size: 1.5em;
+            margin-right: 10px;
+        }
+        
+        .status {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #10b981;
+            color: white;
+            border-radius: 20px;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        
+        .info {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+        }
+        
+        a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        
+        a:hover {
+            text-decoration: underline;
+        }
+        
+        .tech-stack {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        
+        .tech-badge {
+            background: #e5e7eb;
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-size: 0.85em;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="emoji">🚀📈</div>
+        <h1>股市大亨 LINE Bot</h1>
+        <p class="subtitle">台股技術分析 × AI 走勢預測</p>
+        
+        <div class="status">✅ 系統運作中</div>
+        
+        <div class="features">
+            <div class="feature">
+                <span class="feature-icon">📊</span>
+                <span>即時台股資料（FinMind API）</span>
+            </div>
+            <div class="feature">
+                <span class="feature-icon">📈</span>
+                <span>技術指標分析（KD、MACD、MA）</span>
+            </div>
+            <div class="feature">
+                <span class="feature-icon">🤖</span>
+                <span>AI 走勢預測（DeepSeek）</span>
+            </div>
+            <div class="feature">
+                <span class="feature-icon">🎨</span>
+                <span>專業視覺化圖表</span>
+            </div>
+            <div class="feature">
+                <span class="feature-icon">⚡</span>
+                <span>12 小時智慧快取</span>
+            </div>
+        </div>
+        
+        <div class="tech-stack">
+            <span class="tech-badge">Netlify</span>
+            <span class="tech-badge">Supabase</span>
+            <span class="tech-badge">FinMind</span>
+            <span class="tech-badge">DeepSeek</span>
+            <span class="tech-badge">LINE Bot</span>
+            <span class="tech-badge">Chart.js</span>
+        </div>
+        
+        <div class="info">
+            <p>這是一個 LINE Bot 服務，請在 LINE 中加入好友使用。</p>
+            <p style="margin-top: 10px;">
+                <strong>使用方式：</strong>直接傳送股票代號（例如：2330）
+            </p>
+            <p style="margin-top: 20px;">
+                <a href="https://github.com/yourusername/Stock-Superman" target="_blank">📖 查看文件</a>
+            </p>
+        </div>
+    </div>
+    
+    <script>
+        // 檢查 API 狀態
+        fetch('/.netlify/functions/line-webhook', {
+            method: 'GET'
+        }).then(response => {
+            console.log('API Status:', response.status);
+        }).catch(error => {
+            console.error('API Error:', error);
+            document.querySelector('.status').textContent = '⚠️ 系統維護中';
+            document.querySelector('.status').style.background = '#f59e0b';
+        });
+    </script>
+</body>
+</html>
+
