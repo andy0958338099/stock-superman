@@ -182,7 +182,7 @@ async function handleStockQuery(replyToken, stockId) {
 
     // 1. 檢查快取（12 小時內）
     const cache = await getStockCache(stockId, 12);
-    if (cache && cache.image_url) {
+    if (cache && cache.image_url && cache.image_url.length < 200) {
       console.log('✅ 使用快取資料');
 
       // 從快取建立 Flex Message
@@ -233,9 +233,9 @@ async function handleStockQuery(replyToken, stockId) {
       return;
     }
 
-    // 如果快取存在但 image_url 是 null，忽略快取重新生成
-    if (cache && !cache.image_url) {
-      console.log('⚠️ 快取的圖片 URL 無效，重新生成');
+    // 如果快取存在但 image_url 無效，忽略快取重新生成
+    if (cache && (!cache.image_url || cache.image_url.length >= 200)) {
+      console.log('⚠️ 快取的圖片 URL 無效（null 或超長 URL），重新生成');
     }
 
     // 2. 無快取，開始分析流程
