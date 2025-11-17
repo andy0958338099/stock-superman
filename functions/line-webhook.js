@@ -293,8 +293,8 @@ async function handleStockQuery(replyToken, stockId) {
         ai_result: aiResult,
         timestamp: new Date().toISOString()
       },
-      image_url: chartInfo.url,
-      image_path: chartInfo.path,
+      image_url: chartInfo.imageUrl,
+      image_path: null,
       result_summary: summaryText
     });
 
@@ -305,7 +305,7 @@ async function handleStockQuery(replyToken, stockId) {
       stockId,
       stockInfo.stock_name,
       latestData,
-      chartInfo.url,
+      chartInfo.imageUrl,
       kdAnalysis,
       macdAnalysis,
       aiResult
