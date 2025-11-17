@@ -287,6 +287,114 @@
             border: 1px solid #cbd5e1;
         }
 
+        /* 實際運作展示區塊 */
+        .demo-showcase {
+            margin: 32px 0;
+            padding: 32px;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            border-radius: 20px;
+            border: 2px solid #0ea5e9;
+            box-shadow: 0 4px 20px rgba(14, 165, 233, 0.15);
+        }
+
+        .showcase-title {
+            font-size: 1.5em;
+            font-weight: 700;
+            color: #0c4a6e;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        .showcase-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 32px;
+            align-items: center;
+        }
+
+        .showcase-image {
+            position: relative;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+            background: white;
+            transition: transform 0.3s ease;
+        }
+
+        .showcase-image:hover {
+            transform: scale(1.02);
+        }
+
+        .showcase-image img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .showcase-badge {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 700;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+        }
+
+        .showcase-description {
+            text-align: left;
+        }
+
+        .showcase-description h3 {
+            font-size: 1.3em;
+            color: #0c4a6e;
+            margin-bottom: 16px;
+        }
+
+        .showcase-features {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 20px 0;
+        }
+
+        .showcase-features li {
+            padding: 10px 0;
+            color: #334155;
+            font-size: 0.95em;
+            line-height: 1.6;
+            border-bottom: 1px solid rgba(14, 165, 233, 0.1);
+        }
+
+        .showcase-features li:last-child {
+            border-bottom: none;
+        }
+
+        .showcase-note {
+            background: white;
+            padding: 16px;
+            border-radius: 12px;
+            color: #0c4a6e;
+            font-weight: 600;
+            text-align: center;
+            border: 2px solid #0ea5e9;
+            margin-top: 16px;
+        }
+
+        /* 響應式設計 */
+        @media (max-width: 768px) {
+            .showcase-content {
+                grid-template-columns: 1fr;
+                gap: 24px;
+            }
+
+            .demo-showcase {
+                padding: 20px;
+            }
+        }
+
         .demo-section {
             margin: 32px 0;
             padding: 24px;
@@ -440,6 +548,28 @@
                 <div class="feature-content">
                     <div class="feature-title">安全可靠</div>
                     <div class="feature-desc">企業級架構，穩定性與安全性有保障</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 實際運作展示 -->
+        <div class="demo-showcase">
+            <div class="showcase-title">📱 實際運作展示</div>
+            <div class="showcase-content">
+                <div class="showcase-image">
+                    <img src="demo-screenshot.png" alt="股市大亨實際運作展示 - 3003 健和興技術分析" />
+                    <div class="showcase-badge">真實案例</div>
+                </div>
+                <div class="showcase-description">
+                    <h3>🎯 完整技術分析一次到位</h3>
+                    <ul class="showcase-features">
+                        <li>✅ <strong>即時股價</strong> - 最新收盤價與日期</li>
+                        <li>✅ <strong>KD 指標</strong> - 多頭/空頭判斷，K/D 線數值</li>
+                        <li>✅ <strong>MACD 指標</strong> - 趨勢強弱分析</li>
+                        <li>✅ <strong>預期走勢</strong> - 未來 10 日漲跌機率預測</li>
+                        <li>✅ <strong>視覺化圖表</strong> - KD 線圖 + MACD 柱狀圖</li>
+                    </ul>
+                    <p class="showcase-note">💡 只需輸入股票代號，3 秒內完整分析送達！</p>
                 </div>
             </div>
         </div>
