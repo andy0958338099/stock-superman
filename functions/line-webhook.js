@@ -334,9 +334,12 @@ async function handleStockQuery(replyToken, stockId) {
  * Netlify Function Handler
  */
 exports.handler = async function(event, context) {
+  console.log('🔔 LINE Webhook 被呼叫');
+
   try {
     // 只處理 POST 請求
     if (event.httpMethod !== 'POST') {
+      console.log('❌ 非 POST 請求');
       return {
         statusCode: 405,
         body: JSON.stringify({ error: 'Method Not Allowed' })
@@ -352,6 +355,25 @@ exports.handler = async function(event, context) {
         body: JSON.stringify({ error: 'Unauthorized' })
       };
     }
+
+    console.log('✅ 收到 signature');
+
+    // 驗證 signature（使用 @line/bot-sdk 的內建驗證）
+    const crypto = require('crypto');
+    const hash = crypto
+      .createHmac('SHA256', config.channelSecret)
+      .update(event.body)
+      .digest('base64');
+
+    if (hash !== signature) {
+      console.error('❌ Signature 驗證失敗');
+      return {
+        statusCode: 403,
+        body: JSON.stringify({ error: 'Invalid signature' })
+      };
+    }
+
+    console.log('✅ Signature 驗證成功');
 
     // 解析 body
     const body = JSON.parse(event.body);
