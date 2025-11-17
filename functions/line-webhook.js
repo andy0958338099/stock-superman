@@ -432,8 +432,30 @@ exports.handler = async function(event, context) {
         continue;
       }
 
-      // 5. 處理股票查詢（這裡需要重新設計，避免 reply token 重複使用）
-      await handleStockQuery(replyToken, stockId);
+      // 5. 處理股票查詢（簡化版測試）
+      try {
+        console.log(`🔍 開始查詢股票：${stockId}`);
+
+        // 先回應簡單文字訊息測試
+        await client.replyMessage(replyToken, {
+          type: 'text',
+          text: `✅ 收到股票代號：${stockId}\n\n📊 正在分析中...\n\n（完整功能開發中，目前僅測試連線）`
+        });
+
+        console.log('✅ 已回應訊息');
+
+      } catch (error) {
+        console.error('❌ 回應失敗:', error);
+        // 如果回應失敗，嘗試回應錯誤訊息
+        try {
+          await client.replyMessage(replyToken, {
+            type: 'text',
+            text: `❌ 處理失敗：${error.message}`
+          });
+        } catch (replyError) {
+          console.error('❌ 錯誤訊息回應也失敗:', replyError);
+        }
+      }
     }
 
     return {
