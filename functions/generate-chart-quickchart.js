@@ -149,7 +149,6 @@ async function generateIndicatorChart(stockId, rawData, stockName = '') {
       },
       options: {
         responsive: true,
-        maintainAspectRatio: false,
         plugins: {
           title: {
             display: true,
@@ -232,7 +231,6 @@ async function generateIndicatorChart(stockId, rawData, stockName = '') {
       },
       options: {
         responsive: true,
-        maintainAspectRatio: false,
         plugins: {
           title: {
             display: true,
