@@ -168,10 +168,7 @@ async function generateIndicatorChart(stockId, rawData, stockName = '') {
               stepSize: 20,
               font: { size: 10, weight: 'bold' },
               color: '#333',
-              padding: 5,
-              callback: function(value) {
-                return value;
-              }
+              padding: 5
             },
             grid: {
               color: 'rgba(0, 0, 0, 0.1)',
@@ -254,10 +251,7 @@ async function generateIndicatorChart(stockId, rawData, stockName = '') {
               font: { size: 10, weight: 'bold' },
               color: '#333',
               padding: 5,
-              maxTicksLimit: 5,
-              callback: function(value) {
-                return value.toFixed(2);
-              }
+              maxTicksLimit: 5
             },
             grid: {
               color: 'rgba(0, 0, 0, 0.1)',
