@@ -156,7 +156,6 @@ async function generateIndicatorChart(stockId, rawData, stockName = '') {
       },
       options: {
         responsive: true,
-        maintainAspectRatio: false,
         plugins: {
           title: {
             display: true,
@@ -187,20 +186,12 @@ async function generateIndicatorChart(stockId, rawData, stockName = '') {
               stepSize: 20,
               font: { size: 10, weight: 'bold' },
               color: '#333',
-              padding: 5,
-              callback: function(value) {
-                return value;
-              }
+              padding: 5
             },
             grid: {
               color: 'rgba(0, 0, 0, 0.1)',
               lineWidth: 1,
               drawBorder: true
-            },
-            border: {
-              display: true,
-              color: '#666',
-              width: 1.5
             }
           },
           x: {
@@ -215,11 +206,6 @@ async function generateIndicatorChart(stockId, rawData, stockName = '') {
               autoSkip: true,
               maxTicksLimit: 6,
               padding: 5
-            },
-            border: {
-              display: true,
-              color: '#666',
-              width: 1.5
             }
           }
         },
@@ -252,7 +238,6 @@ async function generateIndicatorChart(stockId, rawData, stockName = '') {
       },
       options: {
         responsive: true,
-        maintainAspectRatio: false,
         plugins: {
           title: {
             display: true,
@@ -273,21 +258,13 @@ async function generateIndicatorChart(stockId, rawData, stockName = '') {
               font: { size: 10, weight: 'bold' },
               color: '#333',
               padding: 5,
-              maxTicksLimit: 5,
-              callback: function(value) {
-                return value.toFixed(2);
-              }
+              maxTicksLimit: 5
             },
             grid: {
               color: 'rgba(0, 0, 0, 0.1)',
               lineWidth: 1,
               drawBorder: true,
               drawTicks: true
-            },
-            border: {
-              display: true,
-              color: '#666',
-              width: 1.5
             }
           },
           x: {
@@ -302,11 +279,6 @@ async function generateIndicatorChart(stockId, rawData, stockName = '') {
               autoSkip: true,
               maxTicksLimit: 6,
               padding: 5
-            },
-            border: {
-              display: true,
-              color: '#666',
-              width: 1.5
             }
           }
         },
