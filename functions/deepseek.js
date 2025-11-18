@@ -9,6 +9,64 @@ const { calculateKD, calculateMACD, calculateMA, analyzeKD, analyzeMACDSignal } 
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
 const DEEPSEEK_API_URL = process.env.DEEPSEEK_API_URL || 'https://api.deepseek.com/v1/chat/completions';
 
+// Retry 設定
+const MAX_RETRIES = 2; // DeepSeek API 較慢，減少重試次數
+const INITIAL_RETRY_DELAY = 2000; // 2 秒
+
+/**
+ * 延遲函數
+ * @param {number} ms - 延遲毫秒數
+ */
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * 帶有 exponential backoff 的 retry 機制（針對 AI API）
+ * @param {Function} fn - 要執行的異步函數
+ * @param {number} maxRetries - 最大重試次數
+ * @param {string} operationName - 操作名稱（用於日誌）
+ * @returns {Promise<any>} - 函數執行結果
+ */
+async function retryWithBackoff(fn, maxRetries = MAX_RETRIES, operationName = 'AI API request') {
+  let lastError;
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error;
+
+      // 如果是最後一次嘗試，直接拋出錯誤
+      if (attempt === maxRetries) {
+        console.error(`❌ ${operationName} 失敗（已重試 ${maxRetries} 次）:`, error.message);
+        throw error;
+      }
+
+      // 計算延遲時間（exponential backoff）
+      const delayMs = INITIAL_RETRY_DELAY * Math.pow(2, attempt - 1);
+
+      // 判斷是否應該重試
+      const shouldRetry =
+        error.code === 'ECONNABORTED' || // 超時
+        error.code === 'ENOTFOUND' ||    // DNS 錯誤
+        error.code === 'ECONNRESET' ||   // 連線重置
+        (error.response && error.response.status >= 500) || // 伺服器錯誤
+        (error.response && error.response.status === 429);   // 頻率限制
+
+      if (!shouldRetry) {
+        console.error(`❌ ${operationName} 失敗（不可重試的錯誤）:`, error.message);
+        throw error;
+      }
+
+      console.warn(`⚠️ ${operationName} 失敗（第 ${attempt}/${maxRetries} 次），${delayMs}ms 後重試...`);
+      await delay(delayMs);
+    }
+  }
+
+  throw lastError;
+}
+
 /**
  * 使用 DeepSeek 分析股票未來 10 天走勢
  * @param {string} stockId - 股票代號
@@ -89,40 +147,42 @@ ${dataSummary}
 4. 理由要具體提及技術指標的訊號
 5. 三個機率總和必須為 100`;
 
-    // 呼叫 DeepSeek API
-    const response = await axios.post(
-      DEEPSEEK_API_URL,
-      {
-        model: 'deepseek-chat',
-        messages: [
-          {
-            role: 'system',
-            content: '你是一位專業的台股技術分析師，擅長使用 KD、MACD、均線等技術指標進行短期走勢預測。'
-          },
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        temperature: 0.7,
-        max_tokens: 1500,
-        response_format: { type: 'json_object' }
-      },
-      {
-        headers: {
-          'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
-          'Content-Type': 'application/json'
+    // 呼叫 DeepSeek API（帶 retry）
+    const result = await retryWithBackoff(async () => {
+      const response = await axios.post(
+        DEEPSEEK_API_URL,
+        {
+          model: 'deepseek-chat',
+          messages: [
+            {
+              role: 'system',
+              content: '你是一位專業的台股技術分析師，擅長使用 KD、MACD、均線等技術指標進行短期走勢預測。'
+            },
+            {
+              role: 'user',
+              content: prompt
+            }
+          ],
+          temperature: 0.7,
+          max_tokens: 1500,
+          response_format: { type: 'json_object' }
         },
-        timeout: 30000
+        {
+          headers: {
+            'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          timeout: 30000
+        }
+      );
+
+      if (!response.data || !response.data.choices || !response.data.choices[0]) {
+        throw new Error('DeepSeek API 回應格式錯誤');
       }
-    );
 
-    if (!response.data || !response.data.choices || !response.data.choices[0]) {
-      throw new Error('DeepSeek API 回應格式錯誤');
-    }
-
-    const content = response.data.choices[0].message.content;
-    const result = JSON.parse(content);
+      const content = response.data.choices[0].message.content;
+      return JSON.parse(content);
+    }, MAX_RETRIES, `DeepSeek 分析 ${stockId}`);
 
     console.log('✅ DeepSeek 分析完成');
     console.log(`   趨勢：UP ${result.probability_up}% / FLAT ${result.probability_flat}% / DOWN ${result.probability_down}%`);
@@ -252,40 +312,42 @@ VIX：${vix.close}
 5. VIX 反映的市場風險偏好
 6. 給出明確的風險提示`;
 
-    // 呼叫 DeepSeek API
-    const response = await axios.post(
-      DEEPSEEK_API_URL,
-      {
-        model: 'deepseek-chat',
-        messages: [
-          {
-            role: 'system',
-            content: '你是一位專業的跨市場量化分析師，擅長分析美股與台股的連動關係，並基於技術指標給出投資建議。'
-          },
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        temperature: 0.7,
-        max_tokens: 2000,
-        response_format: { type: 'json_object' }
-      },
-      {
-        headers: {
-          'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
-          'Content-Type': 'application/json'
+    // 呼叫 DeepSeek API（帶 retry）
+    const result = await retryWithBackoff(async () => {
+      const response = await axios.post(
+        DEEPSEEK_API_URL,
+        {
+          model: 'deepseek-chat',
+          messages: [
+            {
+              role: 'system',
+              content: '你是一位專業的跨市場量化分析師，擅長分析美股與台股的連動關係，並基於技術指標給出投資建議。'
+            },
+            {
+              role: 'user',
+              content: prompt
+            }
+          ],
+          temperature: 0.7,
+          max_tokens: 2000,
+          response_format: { type: 'json_object' }
         },
-        timeout: 30000
+        {
+          headers: {
+            'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          timeout: 30000
+        }
+      );
+
+      if (!response.data || !response.data.choices || !response.data.choices[0]) {
+        throw new Error('DeepSeek API 回應格式錯誤');
       }
-    );
 
-    if (!response.data || !response.data.choices || !response.data.choices[0]) {
-      throw new Error('DeepSeek API 回應格式錯誤');
-    }
-
-    const content = response.data.choices[0].message.content;
-    const result = JSON.parse(content);
+      const content = response.data.choices[0].message.content;
+      return JSON.parse(content);
+    }, MAX_RETRIES, 'DeepSeek 美股分析');
 
     console.log('✅ DeepSeek 美股分析完成');
     console.log(`   美股狀態：${result.us_market_status}`);

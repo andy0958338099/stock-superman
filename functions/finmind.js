@@ -9,6 +9,64 @@ const moment = require('moment');
 const FINMIND_BASE_URL = process.env.FINMIND_BASE_URL || 'https://api.finmindtrade.com/api/v4';
 const FINMIND_API_TOKEN = process.env.FINMIND_API_TOKEN || '';
 
+// Retry 設定
+const MAX_RETRIES = 3;
+const INITIAL_RETRY_DELAY = 1000; // 1 秒
+
+/**
+ * 延遲函數
+ * @param {number} ms - 延遲毫秒數
+ */
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * 帶有 exponential backoff 的 retry 機制
+ * @param {Function} fn - 要執行的異步函數
+ * @param {number} maxRetries - 最大重試次數
+ * @param {string} operationName - 操作名稱（用於日誌）
+ * @returns {Promise<any>} - 函數執行結果
+ */
+async function retryWithBackoff(fn, maxRetries = MAX_RETRIES, operationName = 'API request') {
+  let lastError;
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error;
+
+      // 如果是最後一次嘗試，直接拋出錯誤
+      if (attempt === maxRetries) {
+        console.error(`❌ ${operationName} 失敗（已重試 ${maxRetries} 次）:`, error.message);
+        throw error;
+      }
+
+      // 計算延遲時間（exponential backoff）
+      const delayMs = INITIAL_RETRY_DELAY * Math.pow(2, attempt - 1);
+
+      // 判斷是否應該重試
+      const shouldRetry =
+        error.code === 'ECONNABORTED' || // 超時
+        error.code === 'ENOTFOUND' ||    // DNS 錯誤
+        error.code === 'ECONNRESET' ||   // 連線重置
+        (error.response && error.response.status >= 500) || // 伺服器錯誤
+        (error.response && error.response.status === 429);   // 頻率限制
+
+      if (!shouldRetry) {
+        console.error(`❌ ${operationName} 失敗（不可重試的錯誤）:`, error.message);
+        throw error;
+      }
+
+      console.warn(`⚠️ ${operationName} 失敗（第 ${attempt}/${maxRetries} 次），${delayMs}ms 後重試...`);
+      await delay(delayMs);
+    }
+  }
+
+  throw lastError;
+}
+
 /**
  * 抓取台股日線資料
  * @param {string} stockId - 股票代號（例如：2330）
@@ -17,15 +75,15 @@ const FINMIND_API_TOKEN = process.env.FINMIND_API_TOKEN || '';
  * @returns {Promise<Array>} - 股價資料陣列（由舊到新排序）
  */
 async function fetchStockPrice(stockId, startDate = null, endDate = null) {
-  try {
-    // 預設抓取一年資料
-    if (!startDate) {
-      startDate = moment().subtract(1, 'year').format('YYYY-MM-DD');
-    }
-    if (!endDate) {
-      endDate = moment().format('YYYY-MM-DD');
-    }
+  // 預設抓取一年資料
+  if (!startDate) {
+    startDate = moment().subtract(1, 'year').format('YYYY-MM-DD');
+  }
+  if (!endDate) {
+    endDate = moment().format('YYYY-MM-DD');
+  }
 
+  return retryWithBackoff(async () => {
     const url = `${FINMIND_BASE_URL}/data`;
     const params = {
       dataset: 'TaiwanStockPrice',
@@ -69,19 +127,7 @@ async function fetchStockPrice(stockId, startDate = null, endDate = null) {
 
     console.log(`✅ 成功抓取 ${data.length} 筆資料`);
     return data;
-
-  } catch (error) {
-    if (error.response) {
-      console.error('FinMind API 錯誤:', error.response.status, error.response.data);
-      throw new Error(`FinMind API 回應錯誤：${error.response.status}`);
-    } else if (error.request) {
-      console.error('FinMind API 無回應:', error.message);
-      throw new Error('無法連線到 FinMind API，請稍後再試');
-    } else {
-      console.error('FinMind 錯誤:', error.message);
-      throw error;
-    }
-  }
+  }, MAX_RETRIES, `抓取股票資料 ${stockId}`);
 }
 
 /**
@@ -91,34 +137,35 @@ async function fetchStockPrice(stockId, startDate = null, endDate = null) {
  */
 async function fetchStockInfo(stockId) {
   try {
-    const url = `${FINMIND_BASE_URL}/data`;
-    const params = {
-      dataset: 'TaiwanStockInfo',
-      data_id: stockId
-    };
-
-    const response = await axios.get(url, { 
-      params,
-      timeout: 10000 
-    });
-
-    if (!response.data || !response.data.data || response.data.data.length === 0) {
-      return {
-        stock_id: stockId,
-        stock_name: stockId, // 找不到就用代號
-        industry_category: '未知',
-        market: '未知'
+    return await retryWithBackoff(async () => {
+      const url = `${FINMIND_BASE_URL}/data`;
+      const params = {
+        dataset: 'TaiwanStockInfo',
+        data_id: stockId
       };
-    }
 
-    const info = response.data.data[0];
-    return {
-      stock_id: info.stock_id,
-      stock_name: info.stock_name || stockId,
-      industry_category: info.industry_category || '未知',
-      market: info.type || '未知'
-    };
+      const response = await axios.get(url, {
+        params,
+        timeout: 10000
+      });
 
+      if (!response.data || !response.data.data || response.data.data.length === 0) {
+        return {
+          stock_id: stockId,
+          stock_name: stockId, // 找不到就用代號
+          industry_category: '未知',
+          market: '未知'
+        };
+      }
+
+      const info = response.data.data[0];
+      return {
+        stock_id: info.stock_id,
+        stock_name: info.stock_name || stockId,
+        industry_category: info.industry_category || '未知',
+        market: info.type || '未知'
+      };
+    }, MAX_RETRIES, `抓取股票資訊 ${stockId}`);
   } catch (error) {
     console.error('抓取股票資訊失敗:', error.message);
     // 失敗時回傳基本資訊
@@ -149,15 +196,15 @@ function isValidStockId(stockId) {
  * @returns {Promise<Array>} - 指數資料陣列
  */
 async function fetchUSStockPrice(symbol, startDate = null, endDate = null) {
-  try {
-    // 預設抓取一年資料
-    if (!startDate) {
-      startDate = moment().subtract(1, 'year').format('YYYY-MM-DD');
-    }
-    if (!endDate) {
-      endDate = moment().format('YYYY-MM-DD');
-    }
+  // 預設抓取一年資料
+  if (!startDate) {
+    startDate = moment().subtract(1, 'year').format('YYYY-MM-DD');
+  }
+  if (!endDate) {
+    endDate = moment().format('YYYY-MM-DD');
+  }
 
+  return retryWithBackoff(async () => {
     const url = `${FINMIND_BASE_URL}/data`;
     const params = {
       dataset: 'USStockPrice',
@@ -201,11 +248,7 @@ async function fetchUSStockPrice(symbol, startDate = null, endDate = null) {
 
     console.log(`✅ 成功抓取美股 ${symbol} ${data.length} 筆資料`);
     return data;
-
-  } catch (error) {
-    console.error(`抓取美股 ${symbol} 失敗:`, error.message);
-    throw error;
-  }
+  }, MAX_RETRIES, `抓取美股資料 ${symbol}`);
 }
 
 /**
@@ -215,14 +258,14 @@ async function fetchUSStockPrice(symbol, startDate = null, endDate = null) {
  * @returns {Promise<Array>} - 匯率資料陣列
  */
 async function fetchExchangeRate(startDate = null, endDate = null) {
-  try {
-    if (!startDate) {
-      startDate = moment().subtract(6, 'months').format('YYYY-MM-DD');
-    }
-    if (!endDate) {
-      endDate = moment().format('YYYY-MM-DD');
-    }
+  if (!startDate) {
+    startDate = moment().subtract(6, 'months').format('YYYY-MM-DD');
+  }
+  if (!endDate) {
+    endDate = moment().format('YYYY-MM-DD');
+  }
 
+  return retryWithBackoff(async () => {
     const url = `${FINMIND_BASE_URL}/data`;
     const params = {
       dataset: 'TaiwanExchangeRate',
@@ -256,11 +299,7 @@ async function fetchExchangeRate(startDate = null, endDate = null) {
 
     console.log(`✅ 成功抓取匯率 ${data.length} 筆資料`);
     return data;
-
-  } catch (error) {
-    console.error('抓取匯率失敗:', error.message);
-    throw error;
-  }
+  }, MAX_RETRIES, '抓取匯率資料');
 }
 
 /**
@@ -270,14 +309,14 @@ async function fetchExchangeRate(startDate = null, endDate = null) {
  * @returns {Promise<Array>} - VIX 資料陣列
  */
 async function fetchVIX(startDate = null, endDate = null) {
-  try {
-    if (!startDate) {
-      startDate = moment().subtract(6, 'months').format('YYYY-MM-DD');
-    }
-    if (!endDate) {
-      endDate = moment().format('YYYY-MM-DD');
-    }
+  if (!startDate) {
+    startDate = moment().subtract(6, 'months').format('YYYY-MM-DD');
+  }
+  if (!endDate) {
+    endDate = moment().format('YYYY-MM-DD');
+  }
 
+  return retryWithBackoff(async () => {
     const url = `${FINMIND_BASE_URL}/data`;
     const params = {
       dataset: 'USStockPrice',
@@ -311,11 +350,7 @@ async function fetchVIX(startDate = null, endDate = null) {
 
     console.log(`✅ 成功抓取 VIX ${data.length} 筆資料`);
     return data;
-
-  } catch (error) {
-    console.error('抓取 VIX 失敗:', error.message);
-    throw error;
-  }
+  }, MAX_RETRIES, '抓取 VIX 指數');
 }
 
 module.exports = {
