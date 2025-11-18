@@ -233,21 +233,37 @@ async function fetchUSStockPrice(symbol, startDate = null, endDate = null) {
     }
 
     // 標準化資料格式
-    const data = response.data.data.map(item => ({
-      date: item.date,
-      open: parseFloat(item.open) || 0,
-      high: parseFloat(item.max || item.high) || 0,
-      low: parseFloat(item.min || item.low) || 0,
-      close: parseFloat(item.close) || 0,
-      volume: parseFloat(item.Trading_Volume || item.volume || 0),
-      stock_id: item.stock_id
-    }));
+    const data = response.data.data.map(item => {
+      // 處理不同的欄位名稱（FinMind API 可能使用不同的欄位名）
+      const high = parseFloat(item.high || item.max || item.High || 0);
+      const low = parseFloat(item.low || item.min || item.Low || 0);
+      const open = parseFloat(item.open || item.Open || 0);
+      const close = parseFloat(item.close || item.Close || 0);
+      const volume = parseFloat(item.volume || item.Trading_Volume || item.Volume || 0);
+
+      return {
+        date: item.date,
+        open: open,
+        high: high,
+        low: low,
+        close: close,
+        volume: volume,
+        stock_id: item.stock_id || symbol
+      };
+    });
+
+    // 過濾掉無效資料（close 為 0 或 undefined）
+    const validData = data.filter(item => item.close > 0 && item.high > 0 && item.low > 0);
+
+    if (validData.length === 0) {
+      throw new Error(`${symbol} 資料無效：所有資料的價格都是 0`);
+    }
 
     // 由舊到新排序
-    data.sort((a, b) => new Date(a.date) - new Date(b.date));
+    validData.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-    console.log(`✅ 成功抓取美股 ${symbol} ${data.length} 筆資料`);
-    return data;
+    console.log(`✅ 成功抓取美股 ${symbol} ${validData.length} 筆有效資料（原始 ${data.length} 筆）`);
+    return validData;
   }, MAX_RETRIES, `抓取美股資料 ${symbol}`);
 }
 
