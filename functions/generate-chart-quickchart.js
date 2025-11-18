@@ -138,8 +138,7 @@ async function generateIndicatorChart(stockId, rawData, stockName = '') {
             backgroundColor: 'rgba(255, 193, 7, 0.15)',
             borderWidth: 2.5,
             pointRadius: 0,
-            fill: true,
-            tension: 0.2
+            fill: true
           },
           {
             label: 'D',
@@ -148,8 +147,7 @@ async function generateIndicatorChart(stockId, rawData, stockName = '') {
             backgroundColor: 'rgba(156, 39, 176, 0.15)',
             borderWidth: 2.5,
             pointRadius: 0,
-            fill: true,
-            tension: 0.2
+            fill: true
           }
         ]
       },
