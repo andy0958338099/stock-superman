@@ -31,44 +31,71 @@ async function generateIndicatorChart(stockId, rawData, stockName = '') {
     const ma20 = calculateMA(close, 20);
     const ma60 = calculateMA(close, 60);
 
+    // 🔥 智能過濾 MA 數據集（只包含有效數據 >= 50%）
+    const datasets = [
+      {
+        label: '收盤價',
+        data: close,
+        borderColor: 'rgb(0, 188, 212)',
+        backgroundColor: 'rgba(0, 188, 212, 0.1)',
+        borderWidth: 2.5,
+        pointRadius: 0,
+        fill: true
+      }
+    ];
+
+    // 檢查 MA5（至少 50% 有效值）
+    const ma5ValidCount = ma5.filter(v => v !== null).length;
+    if (ma5ValidCount >= ma5.length * 0.5) {
+      datasets.push({
+        label: 'MA5',
+        data: ma5,
+        borderColor: 'rgb(255, 99, 132)',
+        borderWidth: 1,
+        pointRadius: 0,
+        yAxisID: 'y'
+      });
+      console.log(`✅ MA5 有效值：${ma5ValidCount}/${ma5.length} (${(ma5ValidCount/ma5.length*100).toFixed(1)}%)`);
+    } else {
+      console.log(`⚠️ MA5 有效值不足：${ma5ValidCount}/${ma5.length} (${(ma5ValidCount/ma5.length*100).toFixed(1)}%)，已過濾`);
+    }
+
+    // 檢查 MA20（至少 50% 有效值）
+    const ma20ValidCount = ma20.filter(v => v !== null).length;
+    if (ma20ValidCount >= ma20.length * 0.5) {
+      datasets.push({
+        label: 'MA20',
+        data: ma20,
+        borderColor: 'rgb(33, 150, 243)',
+        borderWidth: 1.5,
+        pointRadius: 0
+      });
+      console.log(`✅ MA20 有效值：${ma20ValidCount}/${ma20.length} (${(ma20ValidCount/ma20.length*100).toFixed(1)}%)`);
+    } else {
+      console.log(`⚠️ MA20 有效值不足：${ma20ValidCount}/${ma20.length} (${(ma20ValidCount/ma20.length*100).toFixed(1)}%)，已過濾`);
+    }
+
+    // 檢查 MA60（至少 50% 有效值）
+    const ma60ValidCount = ma60.filter(v => v !== null).length;
+    if (ma60ValidCount >= ma60.length * 0.5) {
+      datasets.push({
+        label: 'MA60',
+        data: ma60,
+        borderColor: 'rgb(156, 39, 176)',
+        borderWidth: 1.5,
+        pointRadius: 0
+      });
+      console.log(`✅ MA60 有效值：${ma60ValidCount}/${ma60.length} (${(ma60ValidCount/ma60.length*100).toFixed(1)}%)`);
+    } else {
+      console.log(`⚠️ MA60 有效值不足：${ma60ValidCount}/${ma60.length} (${(ma60ValidCount/ma60.length*100).toFixed(1)}%)，已過濾`);
+    }
+
     // === 圖表 1：價格 + MA ===
     const priceChartConfig = {
       type: 'line',
       data: {
         labels: dates,
-        datasets: [
-          {
-            label: '收盤價',
-            data: close,
-            borderColor: 'rgb(0, 188, 212)',
-            backgroundColor: 'rgba(0, 188, 212, 0.1)',
-            borderWidth: 2.5,
-            pointRadius: 0,
-            fill: true
-          },
-          {
-            label: 'MA5',
-            data: ma5,
-            borderColor: 'rgb(255, 99, 132)',
-            borderWidth: 1,
-            pointRadius: 0,
-            yAxisID: 'y'
-          },
-          {
-            label: 'MA20',
-            data: ma20,
-            borderColor: 'rgb(33, 150, 243)',
-            borderWidth: 1.5,
-            pointRadius: 0
-          },
-          {
-            label: 'MA60',
-            data: ma60,
-            borderColor: 'rgb(156, 39, 176)',
-            borderWidth: 1.5,
-            pointRadius: 0
-          }
-        ]
+        datasets: datasets
       },
       options: {
         responsive: true,
