@@ -190,11 +190,6 @@ async function generateIndicatorChart(stockId, rawData, stockName = '') {
               color: 'rgba(0, 0, 0, 0.1)',
               lineWidth: 1,
               drawBorder: true
-            },
-            border: {
-              display: true,
-              color: '#666',
-              width: 1.5
             }
           },
           x: {
@@ -209,11 +204,6 @@ async function generateIndicatorChart(stockId, rawData, stockName = '') {
               autoSkip: true,
               maxTicksLimit: 6,
               padding: 5
-            },
-            border: {
-              display: true,
-              color: '#666',
-              width: 1.5
             }
           }
         },
@@ -272,13 +262,7 @@ async function generateIndicatorChart(stockId, rawData, stockName = '') {
             grid: {
               color: 'rgba(0, 0, 0, 0.1)',
               lineWidth: 1,
-              drawBorder: true,
-              drawTicks: true
-            },
-            border: {
-              display: true,
-              color: '#666',
-              width: 1.5
+              drawBorder: true
             }
           },
           x: {
@@ -293,11 +277,6 @@ async function generateIndicatorChart(stockId, rawData, stockName = '') {
               autoSkip: true,
               maxTicksLimit: 6,
               padding: 5
-            },
-            border: {
-              display: true,
-              color: '#666',
-              width: 1.5
             }
           }
         },
