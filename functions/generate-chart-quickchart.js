@@ -33,7 +33,7 @@ async function generateIndicatorChart(stockId, rawData, stockName = '') {
     const ma60 = rawData.length >= 60 ? calculateMA(rawData.slice(-20).map(d => d.close), 60) : null;
 
     // === 圖表 1：價格 + MA ===
-    // 只包含有效的均線數據
+    // 只包含有效的均線數據（至少有 50% 非 null 值）
     const datasets = [
       {
         label: '收盤價',
@@ -42,34 +42,50 @@ async function generateIndicatorChart(stockId, rawData, stockName = '') {
         backgroundColor: 'rgba(0, 188, 212, 0.1)',
         borderWidth: 2.5,
         pointRadius: 0,
-        fill: true
-      },
-      {
+        fill: true,
+        spanGaps: false
+      }
+    ];
+
+    // 檢查 MA5 是否有足夠的有效數據（至少 50% 非 null）
+    const ma5ValidCount = ma5.filter(v => v !== null).length;
+    if (ma5ValidCount >= ma5.length * 0.5) {
+      datasets.push({
         label: 'MA5',
         data: ma5,
         borderColor: 'rgb(255, 99, 132)',
         borderWidth: 1,
         pointRadius: 0,
-        yAxisID: 'y'
-      },
-      {
+        spanGaps: true  // 允許跨越 null 值
+      });
+    }
+
+    // 檢查 MA20 是否有足夠的有效數據（至少 50% 非 null）
+    const ma20ValidCount = ma20.filter(v => v !== null).length;
+    if (ma20ValidCount >= ma20.length * 0.5) {
+      datasets.push({
         label: 'MA20',
         data: ma20,
         borderColor: 'rgb(33, 150, 243)',
         borderWidth: 1.5,
-        pointRadius: 0
-      }
-    ];
-
-    // 只有當數據足夠時才加入 MA60
-    if (ma60 && ma60.some(v => v !== null)) {
-      datasets.push({
-        label: 'MA60',
-        data: ma60,
-        borderColor: 'rgb(156, 39, 176)',
-        borderWidth: 1.5,
-        pointRadius: 0
+        pointRadius: 0,
+        spanGaps: true  // 允許跨越 null 值
       });
+    }
+
+    // 只有當數據足夠時才加入 MA60（至少 50% 非 null）
+    if (ma60) {
+      const ma60ValidCount = ma60.filter(v => v !== null).length;
+      if (ma60ValidCount >= ma60.length * 0.5) {
+        datasets.push({
+          label: 'MA60',
+          data: ma60,
+          borderColor: 'rgb(156, 39, 176)',
+          borderWidth: 1.5,
+          pointRadius: 0,
+          spanGaps: true  // 允許跨越 null 值
+        });
+      }
     }
 
     const priceChartConfig = {
