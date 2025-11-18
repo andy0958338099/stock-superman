@@ -479,65 +479,6 @@ function generateUSMarketFlexMessage(analysisResult) {
                 margin: 'sm'
               }
             ]
-          },
-
-          // 市場數據
-          {
-            type: 'box',
-            layout: 'vertical',
-            margin: 'xl',
-            spacing: 'sm',
-            contents: [
-              {
-                type: 'text',
-                text: '📊 市場數據',
-                weight: 'bold',
-                size: 'md',
-                color: '#333333'
-              },
-              {
-                type: 'box',
-                layout: 'horizontal',
-                margin: 'md',
-                contents: [
-                  {
-                    type: 'text',
-                    text: 'USD/TWD',
-                    size: 'xs',
-                    color: '#555555',
-                    flex: 1
-                  },
-                  {
-                    type: 'text',
-                    text: usdTwd.rate.toFixed(3),
-                    size: 'xs',
-                    color: '#333333',
-                    align: 'end'
-                  }
-                ]
-              },
-              {
-                type: 'box',
-                layout: 'horizontal',
-                margin: 'sm',
-                contents: [
-                  {
-                    type: 'text',
-                    text: 'VIX 恐慌指數',
-                    size: 'xs',
-                    color: '#555555',
-                    flex: 1
-                  },
-                  {
-                    type: 'text',
-                    text: vix.close.toFixed(2),
-                    size: 'xs',
-                    color: '#333333',
-                    align: 'end'
-                  }
-                ]
-              }
-            ]
           }
         ]
       }
