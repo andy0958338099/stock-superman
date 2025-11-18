@@ -277,60 +277,43 @@ async function handleStockQuery(replyToken, stockId) {
 
     // 1. 檢查快取（12 小時內）
     const cache = await getStockCache(stockId, 12);
-    if (cache && cache.image_url && cache.image_url.length < 200) {
+    if (cache && cache.result_json) {
       console.log('✅ 使用快取資料');
 
-      // 從快取建立 Flex Message
-      const flexMessage = {
-        type: 'bubble',
-        hero: {
-          type: 'image',
-          url: cache.image_url,
-          size: 'full',
-          aspectRatio: '4:5',
-          aspectMode: 'cover'
-        },
-        body: {
-          type: 'box',
-          layout: 'vertical',
-          contents: [
-            {
-              type: 'text',
-              text: `${stockId}（快取）`,
-              weight: 'bold',
-              size: 'xl',
-              color: '#1DB446'
-            },
-            {
-              type: 'text',
-              text: cache.result_summary || '已快取分析結果',
-              size: 'sm',
-              wrap: true,
-              margin: 'md'
-            },
-            {
-              type: 'text',
-              text: `⏰ 快取時間：${new Date(cache.updated_at).toLocaleString('zh-TW')}`,
-              size: 'xs',
-              color: '#999999',
-              margin: 'md'
-            }
-          ]
+      try {
+        const cachedData = cache.result_json;
+
+        // 驗證快取資料的完整性
+        if (cachedData.kd_image_url && cachedData.macd_image_url &&
+            cachedData.stock_info && cachedData.latest_data &&
+            cachedData.kd_analysis && cachedData.macd_analysis) {
+
+          // 使用與第一次查詢相同的 Flex Message 格式
+          const flexMessage = createFlexMessage(
+            stockId,
+            cachedData.stock_info.stock_name,
+            cachedData.latest_data,
+            cachedData.kd_image_url,
+            cachedData.macd_image_url,
+            cachedData.kd_analysis,
+            cachedData.macd_analysis,
+            cachedData.ai_result
+          );
+
+          await client.replyMessage(replyToken, {
+            type: 'flex',
+            altText: `${stockId} ${cachedData.stock_info.stock_name} 分析結果（快取）`,
+            contents: flexMessage
+          });
+
+          console.log(`✅ 已使用快取回覆（快取時間：${new Date(cache.updated_at).toLocaleString('zh-TW')}）`);
+          return;
+        } else {
+          console.log('⚠️ 快取資料不完整，重新生成');
         }
-      };
-
-      await client.replyMessage(replyToken, {
-        type: 'flex',
-        altText: `${stockId} 分析結果（快取）`,
-        contents: flexMessage
-      });
-
-      return;
-    }
-
-    // 如果快取存在但 image_url 無效，忽略快取重新生成
-    if (cache && (!cache.image_url || cache.image_url.length >= 200)) {
-      console.log('⚠️ 快取的圖片 URL 無效（null 或超長 URL），重新生成');
+      } catch (error) {
+        console.error('⚠️ 解析快取資料失敗，重新生成:', error.message);
+      }
     }
 
     // 2. 無快取，開始分析流程
