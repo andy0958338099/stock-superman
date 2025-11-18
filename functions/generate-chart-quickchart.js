@@ -52,8 +52,7 @@ async function generateIndicatorChart(stockId, rawData, stockName = '') {
         data: ma5,
         borderColor: 'rgb(255, 99, 132)',
         borderWidth: 1,
-        pointRadius: 0,
-        yAxisID: 'y'
+        pointRadius: 0
       });
       console.log(`✅ MA5 有效值：${ma5ValidCount}/${ma5.length} (${(ma5ValidCount/ma5.length*100).toFixed(1)}%)`);
     } else {
