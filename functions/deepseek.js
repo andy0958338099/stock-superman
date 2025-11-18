@@ -172,7 +172,7 @@ ${dataSummary}
             'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
             'Content-Type': 'application/json'
           },
-          timeout: 30000
+          timeout: 15000  // 🚀 優化：從 30 秒降至 15 秒（DeepSeek 通常 3-8 秒響應）
         }
       );
 
@@ -337,7 +337,7 @@ VIX：${vix.close}
             'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
             'Content-Type': 'application/json'
           },
-          timeout: 30000
+          timeout: 15000  // 🚀 優化：從 30 秒降至 15 秒（DeepSeek 通常 3-8 秒響應）
         }
       );
 

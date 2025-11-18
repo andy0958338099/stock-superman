@@ -31,6 +31,12 @@ async function generateIndicatorChart(stockId, rawData, stockName = '') {
     const ma20 = calculateMA(close, 20);
     const ma60 = calculateMA(close, 60);
 
+    // 🚀 優化：提取通用函數計算有效值比例
+    const getValidRatio = (data) => {
+      const validCount = data.filter(v => v !== null).length;
+      return { validCount, ratio: validCount / data.length };
+    };
+
     // 🔥 智能過濾 MA 數據集（只包含有效數據 >= 50%）
     const datasets = [
       {
@@ -44,50 +50,28 @@ async function generateIndicatorChart(stockId, rawData, stockName = '') {
       }
     ];
 
-    // 檢查 MA5（至少 50% 有效值）
-    const ma5ValidCount = ma5.filter(v => v !== null).length;
-    if (ma5ValidCount >= ma5.length * 0.5) {
-      datasets.push({
-        label: 'MA5',
-        data: ma5,
-        borderColor: 'rgb(255, 99, 132)',
-        borderWidth: 1,
-        pointRadius: 0
-      });
-      console.log(`✅ MA5 有效值：${ma5ValidCount}/${ma5.length} (${(ma5ValidCount/ma5.length*100).toFixed(1)}%)`);
-    } else {
-      console.log(`⚠️ MA5 有效值不足：${ma5ValidCount}/${ma5.length} (${(ma5ValidCount/ma5.length*100).toFixed(1)}%)，已過濾`);
-    }
+    // 檢查並添加 MA 數據集
+    const maConfigs = [
+      { label: 'MA5', data: ma5, color: 'rgb(255, 99, 132)', width: 1 },
+      { label: 'MA20', data: ma20, color: 'rgb(33, 150, 243)', width: 1.5 },
+      { label: 'MA60', data: ma60, color: 'rgb(156, 39, 176)', width: 1.5 }
+    ];
 
-    // 檢查 MA20（至少 50% 有效值）
-    const ma20ValidCount = ma20.filter(v => v !== null).length;
-    if (ma20ValidCount >= ma20.length * 0.5) {
-      datasets.push({
-        label: 'MA20',
-        data: ma20,
-        borderColor: 'rgb(33, 150, 243)',
-        borderWidth: 1.5,
-        pointRadius: 0
-      });
-      console.log(`✅ MA20 有效值：${ma20ValidCount}/${ma20.length} (${(ma20ValidCount/ma20.length*100).toFixed(1)}%)`);
-    } else {
-      console.log(`⚠️ MA20 有效值不足：${ma20ValidCount}/${ma20.length} (${(ma20ValidCount/ma20.length*100).toFixed(1)}%)，已過濾`);
-    }
-
-    // 檢查 MA60（至少 50% 有效值）
-    const ma60ValidCount = ma60.filter(v => v !== null).length;
-    if (ma60ValidCount >= ma60.length * 0.5) {
-      datasets.push({
-        label: 'MA60',
-        data: ma60,
-        borderColor: 'rgb(156, 39, 176)',
-        borderWidth: 1.5,
-        pointRadius: 0
-      });
-      console.log(`✅ MA60 有效值：${ma60ValidCount}/${ma60.length} (${(ma60ValidCount/ma60.length*100).toFixed(1)}%)`);
-    } else {
-      console.log(`⚠️ MA60 有效值不足：${ma60ValidCount}/${ma60.length} (${(ma60ValidCount/ma60.length*100).toFixed(1)}%)，已過濾`);
-    }
+    maConfigs.forEach(({ label, data, color, width }) => {
+      const { validCount, ratio } = getValidRatio(data);
+      if (ratio >= 0.5) {
+        datasets.push({
+          label,
+          data,
+          borderColor: color,
+          borderWidth: width,
+          pointRadius: 0
+        });
+        console.log(`✅ ${label} 有效值：${validCount}/${data.length} (${(ratio * 100).toFixed(1)}%)`);
+      } else {
+        console.log(`⚠️ ${label} 有效值不足：${validCount}/${data.length} (${(ratio * 100).toFixed(1)}%)，已過濾`);
+      }
+    });
 
     // === 圖表 1：價格 + MA ===
     const priceChartConfig = {
@@ -338,7 +322,9 @@ async function generateIndicatorChart(stockId, rawData, stockName = '') {
       macdImageUrl,
       kdAnalysis,
       macdAnalysis,
-      latestData: recentData[recentData.length - 1]
+      latestData: recentData[recentData.length - 1],
+      // 🚀 優化：返回已計算的指標，避免重複計算
+      indicators: { K, D, MACD, Signal, Histogram }
     };
 
   } catch (error) {

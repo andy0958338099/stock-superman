@@ -348,10 +348,8 @@ async function handleStockQuery(replyToken, stockId) {
     // 4. 生成圖表
     const chartInfo = await generateIndicatorChart(stockId, stockData, stockInfo.stock_name);
 
-    // 5. 計算技術指標分析
-    const recentData = stockData.slice(-60);
-    const { K, D } = calculateKD(recentData);
-    const { MACD, Signal, Histogram } = calculateMACD(recentData);
+    // 5. 🚀 優化：使用圖表生成時已計算的指標，避免重複計算
+    const { K, D, MACD, Signal, Histogram } = chartInfo.indicators;
     const kdAnalysis = analyzeKD(K, D);
     const macdAnalysis = analyzeMACDSignal(MACD, Signal, Histogram);
 
