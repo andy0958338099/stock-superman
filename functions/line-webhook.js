@@ -26,6 +26,9 @@ const {
   updateNewsAnalysis,
   updatePoliticsAnalysis,
   updateUSMarketAnalysis,
+  addDiscussion,
+  updateFinalEvaluation,
+  updateUserFeedback,
   isFeatureUsed,
   logInteraction
 } = require('./conversation-manager');
@@ -39,6 +42,10 @@ const { generatePoliticsFlexMessage } = require('./politics-flex-message');
 const { getIndustryInfo, getUSMarketInfo } = require('./industry-mapping');
 const { analyzeUSMarketWithDeepSeek } = require('./us-market-analyzer');
 const { generateUSCorrelationFlexMessage } = require('./us-correlation-flex-message');
+const { analyzeDiscussionWithDeepSeek } = require('./discussion-analyzer');
+const { generateDiscussionFlexMessage } = require('./discussion-flex-message');
+const { generateComprehensiveEvaluation } = require('./evaluation-analyzer');
+const { generateEvaluationFlexMessage } = require('./evaluation-flex-message');
 
 // LINE Bot 設定
 const config = {
@@ -630,6 +637,213 @@ async function handleUSMarketAnalysis(replyToken, stockId, userId) {
 }
 
 /**
+ * 處理討論訊息
+ * @param {string} replyToken - LINE reply token
+ * @param {string} stockId - 股票代號
+ * @param {string} userMessage - 用戶訊息
+ * @param {string} userId - LINE 用戶 ID
+ */
+async function handleDiscussionMessage(replyToken, stockId, userMessage, userId) {
+  try {
+    console.log(`💬 處理討論訊息：${stockId} - ${userMessage.substring(0, 50)}...`);
+
+    // 1. 取得會話
+    const session = await getOrCreateSession(userId, stockId);
+
+    if (!session) {
+      await client.replyMessage(replyToken, {
+        type: 'text',
+        text: `⚠️ 找不到 ${stockId} 的分析會話\n\n請先查詢股票進行初步分析。`
+      });
+      return;
+    }
+
+    // 2. 檢查討論次數限制
+    if (session.discussion_count >= 5) {
+      await client.replyMessage(replyToken, {
+        type: 'text',
+        text: `⚠️ ${stockId} 的討論已達上限（5 次）\n\n建議您查看總評，獲得綜合建議。`
+      });
+      return;
+    }
+
+    // 3. 先回覆「處理中」訊息
+    await client.replyMessage(replyToken, {
+      type: 'text',
+      text: `💬 正在分析您的觀點...\n\n⏱️ 預計需要 20-40 秒\n請稍候...`
+    });
+
+    // 4. DeepSeek AI 分析討論
+    const discussionResult = await analyzeDiscussionWithDeepSeek(
+      stockId,
+      session.stock_name || stockId,
+      session,
+      userMessage,
+      session.discussion_history || []
+    );
+
+    // 5. 更新會話（新增討論記錄）
+    await addDiscussion(session.id, userMessage, discussionResult.analysis);
+
+    // 6. 記錄互動日誌
+    await logInteraction(userId, session.id, stockId, 'discussion', userMessage, discussionResult);
+
+    // 7. 生成 Flex Message
+    const flexMessage = generateDiscussionFlexMessage(discussionResult);
+
+    // 8. 取得更新後的會話並生成 Quick Reply
+    const updatedSession = await getOrCreateSession(userId, stockId);
+    const quickReply = generateAnalysisQuickReply(stockId, updatedSession);
+
+    // 9. 發送結果（Push Message）
+    await client.pushMessage(userId, {
+      type: 'flex',
+      altText: `${stockId} ${session.stock_name || ''} 討論分析 - 第 ${discussionResult.discussionRound} 輪`,
+      contents: flexMessage,
+      quickReply: quickReply
+    });
+
+    console.log(`✅ 討論分析完成：第 ${discussionResult.discussionRound} 輪`);
+
+  } catch (error) {
+    console.error('❌ handleDiscussionMessage 錯誤:', error);
+
+    // 發送錯誤訊息
+    try {
+      await client.pushMessage(userId, {
+        type: 'text',
+        text: `❌ 討論分析失敗\n\n${error.message}\n\n請稍後再試。`
+      });
+    } catch (pushError) {
+      console.error('發送錯誤訊息失敗:', pushError);
+    }
+  }
+}
+
+/**
+ * 處理總評請求
+ * @param {string} replyToken - LINE reply token
+ * @param {string} stockId - 股票代號
+ * @param {string} userId - LINE 用戶 ID
+ */
+async function handleFinalEvaluation(replyToken, stockId, userId) {
+  try {
+    console.log(`📊 處理總評請求：${stockId}`);
+
+    // 1. 取得會話
+    const session = await getOrCreateSession(userId, stockId);
+
+    if (!session) {
+      await client.replyMessage(replyToken, {
+        type: 'text',
+        text: `⚠️ 找不到 ${stockId} 的分析會話\n\n請先查詢股票進行初步分析。`
+      });
+      return;
+    }
+
+    // 2. 檢查是否已有總評
+    if (session.final_evaluation) {
+      await client.replyMessage(replyToken, {
+        type: 'text',
+        text: `⚠️ 您已經查詢過 ${stockId} 的總評\n\n每支股票的總評僅限查詢一次。`
+      });
+      return;
+    }
+
+    // 3. 先回覆「處理中」訊息
+    await client.replyMessage(replyToken, {
+      type: 'text',
+      text: `📊 正在生成 ${stockId} 的綜合總評...\n\n⏱️ 預計需要 60-90 秒\n正在整合所有分析結果...\n請稍候...`
+    });
+
+    // 4. DeepSeek AI 生成總評
+    const evaluationResult = await generateComprehensiveEvaluation(
+      stockId,
+      session.stock_name || stockId,
+      session
+    );
+
+    // 5. 更新會話
+    await updateFinalEvaluation(session.id, evaluationResult.evaluation);
+
+    // 6. 記錄互動日誌
+    await logInteraction(userId, session.id, stockId, 'final_evaluation', '總評', evaluationResult);
+
+    // 7. 生成 Flex Message
+    const flexMessage = generateEvaluationFlexMessage(evaluationResult);
+
+    // 8. 發送結果（Push Message）
+    await client.pushMessage(userId, {
+      type: 'flex',
+      altText: `${stockId} ${session.stock_name || ''} 綜合總評`,
+      contents: flexMessage
+    });
+
+    console.log(`✅ 總評完成：${stockId}`);
+
+  } catch (error) {
+    console.error('❌ handleFinalEvaluation 錯誤:', error);
+
+    // 發送錯誤訊息
+    try {
+      await client.pushMessage(userId, {
+        type: 'text',
+        text: `❌ 總評生成失敗\n\n${error.message}\n\n請稍後再試。`
+      });
+    } catch (pushError) {
+      console.error('發送錯誤訊息失敗:', pushError);
+    }
+  }
+}
+
+/**
+ * 處理用戶反饋
+ * @param {string} replyToken - LINE reply token
+ * @param {string} stockId - 股票代號
+ * @param {string} feedbackType - 反饋類型（positive / negative）
+ * @param {string} userId - LINE 用戶 ID
+ */
+async function handleUserFeedback(replyToken, stockId, feedbackType, userId) {
+  try {
+    console.log(`👍 處理用戶反饋：${stockId} - ${feedbackType}`);
+
+    // 1. 取得會話
+    const session = await getOrCreateSession(userId, stockId);
+
+    if (!session || !session.final_evaluation) {
+      await client.replyMessage(replyToken, {
+        type: 'text',
+        text: `⚠️ 找不到 ${stockId} 的總評\n\n請先查看總評後再提供反饋。`
+      });
+      return;
+    }
+
+    // 2. 更新反饋
+    await updateUserFeedback(session.id, feedbackType);
+
+    // 3. 記錄互動日誌
+    await logInteraction(userId, session.id, stockId, 'feedback', feedbackType, { feedbackType });
+
+    // 4. 回覆感謝訊息
+    const feedbackText = feedbackType === 'positive' ? '好，肯定' : '不好，我不相信';
+    await client.replyMessage(replyToken, {
+      type: 'text',
+      text: `🙏 感謝您的反饋：${feedbackText}\n\n您的意見將幫助我們改進分析品質。\n\n如需查詢其他股票，請直接輸入股票代號。`
+    });
+
+    console.log(`✅ 反饋記錄完成：${feedbackType}`);
+
+  } catch (error) {
+    console.error('❌ handleUserFeedback 錯誤:', error);
+
+    await client.replyMessage(replyToken, {
+      type: 'text',
+      text: `❌ 反饋記錄失敗\n\n${error.message}`
+    });
+  }
+}
+
+/**
  * 處理股票查詢
  * @param {string} replyToken - LINE reply token
  * @param {string} stockId - 股票代號
@@ -899,6 +1113,33 @@ exports.handler = async function(event, context) {
       const command = parseCommand(text);
       console.log('🎯 解析指令:', command.type, command.stockId || '');
 
+      // 3.5. 檢查是否在討論模式中（如果是未知指令且不是股票代號）
+      if (command.type === 'unknown' && !command.stockId) {
+        // 嘗試找到用戶最近的 active 會話
+        try {
+          const { data: recentSession } = await require('@supabase/supabase-js')
+            .createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
+            .from('conversation_sessions')
+            .select('*')
+            .eq('user_id', userId)
+            .eq('status', 'in_discussion')
+            .gt('expires_at', new Date().toISOString())
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single();
+
+          if (recentSession) {
+            // 用戶在討論模式中，將訊息視為討論內容
+            console.log(`💬 檢測到討論模式：${recentSession.stock_id}`);
+            await handleDiscussionMessage(replyToken, recentSession.stock_id, text, userId);
+            continue;
+          }
+        } catch (error) {
+          // 沒有找到討論會話，繼續正常流程
+          console.log('未找到討論會話，繼續正常流程');
+        }
+      }
+
       // 4. 處理互動式分析指令
       if (command.type === 'news') {
         // 新聞分析：新聞:2330
@@ -931,30 +1172,36 @@ exports.handler = async function(event, context) {
       }
 
       if (command.type === 'discussion_start') {
-        // 討論模式：討論:2330（待實作）
+        // 討論模式：討論:2330
+        console.log(`💬 收到討論請求：${command.stockId}`);
+
+        // 提示用戶輸入討論內容
         await client.replyMessage(replyToken, {
           type: 'text',
-          text: `💬 互動討論功能開發中...\n\n${command.stockId} 的討論模式即將推出！`
+          text: `💬 進入討論模式：${command.stockId}\n\n請直接輸入您對這支股票的看法、疑問或觀點，我會為您分析並提供建議。\n\n例如：\n「我覺得這支股票技術面看起來不錯，但基本面有點擔心...」`
         });
+        continue;
+      }
+
+      if (command.type === 'discussion_message') {
+        // 討論訊息：用戶在討論模式中的訊息
+        console.log(`💬 收到討論訊息：${command.stockId}`);
+        await handleDiscussionMessage(replyToken, command.stockId, command.message, userId);
         continue;
       }
 
       if (command.type === 'final_evaluation') {
-        // 總評：總評:2330（待實作）
-        await client.replyMessage(replyToken, {
-          type: 'text',
-          text: `📊 綜合總評功能開發中...\n\n${command.stockId} 的總評即將推出！`
-        });
+        // 總評：總評:2330
+        console.log(`📊 收到總評請求：${command.stockId}`);
+        await handleFinalEvaluation(replyToken, command.stockId, userId);
         continue;
       }
 
       if (command.type === 'feedback_positive' || command.type === 'feedback_negative') {
-        // 用戶反饋（待實作）
-        const feedback = command.type === 'feedback_positive' ? '肯定' : '不相信';
-        await client.replyMessage(replyToken, {
-          type: 'text',
-          text: `👍 感謝您的反饋：${feedback}\n\n${command.stockId} 的反饋功能開發中...`
-        });
+        // 用戶反饋
+        const feedbackType = command.type === 'feedback_positive' ? 'positive' : 'negative';
+        console.log(`👍 收到用戶反饋：${command.stockId} - ${feedbackType}`);
+        await handleUserFeedback(replyToken, command.stockId, feedbackType, userId);
         continue;
       }
 
