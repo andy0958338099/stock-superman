@@ -42,8 +42,7 @@ async function generateIndicatorChart(stockId, rawData, stockName = '') {
         backgroundColor: 'rgba(0, 188, 212, 0.1)',
         borderWidth: 2.5,
         pointRadius: 0,
-        fill: true,
-        spanGaps: false
+        fill: true
       }
     ];
 
@@ -55,8 +54,7 @@ async function generateIndicatorChart(stockId, rawData, stockName = '') {
         data: ma5,
         borderColor: 'rgb(255, 99, 132)',
         borderWidth: 1,
-        pointRadius: 0,
-        spanGaps: true  // 允許跨越 null 值
+        pointRadius: 0
       });
     }
 
@@ -68,8 +66,7 @@ async function generateIndicatorChart(stockId, rawData, stockName = '') {
         data: ma20,
         borderColor: 'rgb(33, 150, 243)',
         borderWidth: 1.5,
-        pointRadius: 0,
-        spanGaps: true  // 允許跨越 null 值
+        pointRadius: 0
       });
     }
 
@@ -82,8 +79,7 @@ async function generateIndicatorChart(stockId, rawData, stockName = '') {
           data: ma60,
           borderColor: 'rgb(156, 39, 176)',
           borderWidth: 1.5,
-          pointRadius: 0,
-          spanGaps: true  // 允許跨越 null 值
+          pointRadius: 0
         });
       }
     }
