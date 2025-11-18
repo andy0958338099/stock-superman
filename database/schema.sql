@@ -122,6 +122,11 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- 刪除舊的 trigger（如果存在）
+DROP TRIGGER IF EXISTS update_conversation_sessions_updated_at ON conversation_sessions;
+DROP TRIGGER IF EXISTS update_stock_evaluations_updated_at ON stock_evaluations;
+
+-- 創建新的 trigger
 CREATE TRIGGER update_conversation_sessions_updated_at
   BEFORE UPDATE ON conversation_sessions
   FOR EACH ROW

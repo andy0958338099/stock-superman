@@ -4,7 +4,7 @@
  */
 
 const axios = require('axios');
-const { fetchUSStockPrice } = require('./finmind-api');
+const { fetchUSStockPrice } = require('./finmind');
 
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
 const DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions';
