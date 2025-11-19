@@ -225,13 +225,13 @@ async function getUSMarketCache() {
     const now = new Date();
     const diffHours = (now - cacheTime) / (1000 * 60 * 60);
 
-    // 快取 4 小時（美股資料更新頻率較低）
-    if (diffHours > 4) {
+    // 快取 6 小時（統一快取時間）
+    if (diffHours > 6) {
       console.log(`⚠️ 美股分析快取已過期（${diffHours.toFixed(1)} 小時前）`);
       return null;
     }
 
-    console.log(`✅ 使用美股分析快取（${diffHours.toFixed(1)} 小時前，快取有效期 4 小時）`);
+    console.log(`✅ 使用美股分析快取（${diffHours.toFixed(1)} 小時前，快取有效期 6 小時）`);
     return cache.analysis_result;
 
   } catch (error) {

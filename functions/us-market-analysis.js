@@ -125,10 +125,10 @@ async function analyzeUSMarket() {
       timestamp: moment().format('YYYY-MM-DD HH:mm:ss')
     };
 
-    // 3. 儲存快取（4 小時有效）
+    // 3. 儲存快取（6 小時有效，統一快取時間）
     console.log('💾 儲存快取...');
     await saveUSMarketCache(result);
-    console.log('✅ 快取已儲存，4 小時內查詢將秒回');
+    console.log('✅ 快取已儲存，6 小時內查詢將秒回');
 
     return result;
 

@@ -86,7 +86,7 @@ async function handleUSMarketCommand() {
                      '• API 配額暫時用完\n\n' +
                      '💡 建議：\n' +
                      '• 等待 2-3 分鐘後再試\n' +
-                     '• 使用快取資料（4 小時內有效）';
+                     '• 使用快取資料（6 小時內有效）';
     } else if (error.message && error.message.includes('DeepSeek')) {
       errorMessage += '🤖 AI 分析失敗\n\n' +
                      '可能原因：\n' +
@@ -302,8 +302,8 @@ async function handleStockQuery(replyToken, stockId) {
   try {
     console.log(`\n🔍 處理股票查詢：${stockId}`);
 
-    // 1. 檢查快取（12 小時內）
-    const cache = await getStockCache(stockId, 12);
+    // 1. 檢查快取（6 小時內，統一快取時間）
+    const cache = await getStockCache(stockId, 6);
     if (cache && cache.result_json) {
       console.log('✅ 使用快取資料');
 
