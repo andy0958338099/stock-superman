@@ -654,7 +654,10 @@ exports.handler = async function(event, context) {
         continue;
       }
 
-      // 7. 驗證股票代號
+      // 7. 解析股票代號
+      const stockIdMatch = text.match(/\d{3,5}/);
+
+      // 8. 驗證股票代號
       if (!stockIdMatch) {
         await client.replyMessage(replyToken, {
           type: 'text',
@@ -677,7 +680,7 @@ exports.handler = async function(event, context) {
 
       const stockId = stockIdMatch[0];
 
-      // 8. 驗證股票代號格式
+      // 9. 驗證股票代號格式
       if (!isValidStockId(stockId)) {
         await client.replyMessage(replyToken, {
           type: 'text',
@@ -686,7 +689,7 @@ exports.handler = async function(event, context) {
         continue;
       }
 
-      // 9. 處理股票查詢
+      // 10. 處理股票查詢
       await handleStockQuery(replyToken, stockId, userId);
     }
 
