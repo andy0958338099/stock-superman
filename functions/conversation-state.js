@@ -162,7 +162,11 @@ async function markFeatureUsed(userId, stockId, feature, content = null) {
         break;
     }
 
-    return await saveConversationState(userId, stockId, updateData);
+    // 保留所有現有狀態，只更新需要變更的部分
+    return await saveConversationState(userId, stockId, {
+      ...state,
+      ...updateData
+    });
   } catch (error) {
     console.error('❌ 更新功能使用狀態失敗:', error);
     return false;
