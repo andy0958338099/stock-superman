@@ -131,13 +131,27 @@ async function handleDiscussionOpinion(userId, stockId, stockName, userOpinion) 
       discussion_history: discussionHistory
     });
 
-    // 7. 建立回覆訊息
+    // 7. 建立回覆訊息（根據輪次顯示不同的角色）
     const newCount = discussionCount + 1;
-    const replyText = `💬 討論 ${newCount}/5\n\n` +
-                      `【您的看法】\n${userOpinion}\n\n` +
-                      `【AI 分析師回應】\n${analysis}\n\n` +
-                      `━━━━━━━━━━━━━━━\n` +
-                      `💡 ${newCount < 5 ? '您可以繼續討論或查看其他分析' : '討論已達上限，建議查看總評'}`;
+    const roleNames = {
+      1: '傾聽者',
+      2: '質疑者',
+      3: '教練',
+      4: '分析師',
+      5: '決策者'
+    };
+    const roleName = roleNames[newCount] || '分析師';
+
+    let replyText = `💬 討論 ${newCount}/5 - ${roleName}\n\n` +
+                    `【您的看法】\n${userOpinion}\n\n` +
+                    `【資深營業員回應】\n${analysis}\n\n` +
+                    `━━━━━━━━━━━━━━━\n`;
+
+    if (newCount < 5) {
+      replyText += `💡 繼續討論或查看其他分析`;
+    } else {
+      replyText += `✅ 討論完成！建議查看「📊 總評」整合所有分析`;
+    }
 
     // 8. 附加 Quick Reply 按鈕
     const quickReply = buildContinueDiscussionQuickReply(stockId, newCount);
