@@ -124,14 +124,6 @@ function buildDiscussionPromptQuickReply(stockId, round = 1) {
             label: roundExamples[1].label,
             text: roundExamples[1].text
           }
-        },
-        {
-          type: 'action',
-          action: {
-            type: 'message',
-            label: '🔙 返回',
-            text: stockId
-          }
         }
       ]
     }
@@ -214,16 +206,6 @@ function buildContinueDiscussionQuickReply(stockId, discussionCount) {
       type: 'message',
       label: '📊 查看總評',
       text: `總評:${stockId}`
-    }
-  });
-
-  // 返回按鈕
-  items.push({
-    type: 'action',
-    action: {
-      type: 'message',
-      label: '🔙 返回',
-      text: stockId
     }
   });
 
