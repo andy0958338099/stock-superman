@@ -8,9 +8,7 @@
   external_node_modules = ["canvas", "sharp"]
 
 # 美股分析需要較長時間，設定 26 秒超時
-[[functions]]
-  path = "functions/line-webhook.js"
-  node_bundler = "esbuild"
+[functions."line-webhook"]
   timeout = 26
 
 [[redirects]]
