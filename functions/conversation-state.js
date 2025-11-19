@@ -200,6 +200,8 @@ async function clearConversationState(userId, stockId) {
  */
 async function getUserActiveDiscussion(userId) {
   try {
+    console.log(`🔍 查詢用戶討論狀態：${userId}`);
+
     const { data, error } = await supabase
       .from('user_conversation_state')
       .select('*')
@@ -215,10 +217,12 @@ async function getUserActiveDiscussion(userId) {
 
     // 如果沒有資料，返回 null
     if (!data || data.length === 0) {
+      console.log('⚠️ 沒有找到討論等待狀態');
       return null;
     }
 
     // 返回第一筆資料
+    console.log(`✅ 找到討論狀態：${data[0].stock_id} - ${data[0].current_stage}`);
     return data[0];
   } catch (error) {
     console.error('❌ 取得用戶討論狀態失敗:', error);

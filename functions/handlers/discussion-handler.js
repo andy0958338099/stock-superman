@@ -33,8 +33,8 @@ async function handleDiscussionInit(userId, stockId, stockName) {
 
     // 2. 設定討論狀態
     await saveConversationState(userId, stockId, {
-      current_stage: 'discussion_waiting',
-      ...state
+      ...state,
+      current_stage: 'discussion_waiting'  // 確保 current_stage 不會被 state 覆蓋
     });
 
     // 3. 提示用戶輸入意見
@@ -124,8 +124,9 @@ async function handleDiscussionOpinion(userId, stockId, stockName, userOpinion) 
     
     discussionHistory.push(newDiscussionEntry);
 
-    // 6. 更新狀態
+    // 6. 更新狀態（保留所有現有狀態）
     await saveConversationState(userId, stockId, {
+      ...state,
       current_stage: 'discussion',
       discussion_count: discussionCount + 1,
       discussion_history: discussionHistory
