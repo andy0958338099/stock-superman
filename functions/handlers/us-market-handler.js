@@ -68,7 +68,7 @@ async function handleUSMarketAnalysis(userId, stockId, stockName) {
 
     // 5. 建立回覆訊息
     const replyText = `🇺🇸 ${stockName}(${stockId}) 美股關聯分析\n\n` +
-                      `【AI 美股評論員分析】\n${analysis}\n\n` +
+                      `【專家說法】\n${analysis}\n\n` +
                       `━━━━━━━━━━━━━━━\n` +
                       `💡 您可以繼續探索其他分析`;
 

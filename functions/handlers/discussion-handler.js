@@ -51,7 +51,7 @@ async function handleDiscussionInit(userId, stockId, stockName) {
           '• 我擔心這支股票會跌，因為基本面轉弱...',
           '• 我對這支股票的第一印象是...'
         ],
-        hint: '💡 AI 會傾聽您的想法並提供初步反饋'
+        hint: '💡 專家會傾聽您的想法並提供初步反饋'
       },
       2: {
         title: '風險評估',
@@ -61,7 +61,7 @@ async function handleDiscussionInit(userId, stockId, stockName) {
           '• 我認為最大的風險是政策變化...',
           '• 我對這支股票的疑慮是...'
         ],
-        hint: '💡 AI 會質疑您的風險評估並提供不同角度'
+        hint: '💡 專家會質疑您的風險評估並提供不同角度'
       },
       3: {
         title: '機會分析',
@@ -71,7 +71,7 @@ async function handleDiscussionInit(userId, stockId, stockName) {
           '• 我認為最大的機會是市場需求增加...',
           '• 我對這支股票的期待是...'
         ],
-        hint: '💡 AI 會挑戰您的機會分析並提供反思'
+        hint: '💡 專家會挑戰您的機會分析並提供反思'
       },
       4: {
         title: '進出場策略',
@@ -81,7 +81,7 @@ async function handleDiscussionInit(userId, stockId, stockName) {
           '• 我的停損點設在 XXX 元...',
           '• 我的目標價是 XXX 元...'
         ],
-        hint: '💡 AI 會分析您的策略並提供優化建議'
+        hint: '💡 專家會分析您的策略並提供優化建議'
       },
       5: {
         title: '最終決策',
@@ -91,7 +91,7 @@ async function handleDiscussionInit(userId, stockId, stockName) {
           '• 我的投資比例是...',
           '• 我的持有期間是...'
         ],
-        hint: '💡 AI 會總結您的決策並提供最終建議'
+        hint: '💡 專家會總結您的決策並提供最終建議'
       }
     };
 

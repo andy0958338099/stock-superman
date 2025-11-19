@@ -85,7 +85,7 @@ async function handlePoliticsAnalysis(userId, stockId, stockName) {
     // 8. 建立回覆訊息
     const replyText = `🌍 ${stockName}(${stockId}) 政治情勢分析\n\n` +
                       `【產業類別】${industry}\n\n` +
-                      `【AI 評論員分析】\n${analysis}\n\n` +
+                      `【專家說法】\n${analysis}\n\n` +
                       `━━━━━━━━━━━━━━━\n` +
                       `💡 您可以繼續探索其他分析`;
 

@@ -83,7 +83,7 @@ async function handleNewsAnalysis(userId, stockId, stockName) {
 
     // 7. 建立回覆訊息
     const replyText = `📰 ${stockName}(${stockId}) 財經新聞分析\n\n` +
-                      `【AI 專家分析】\n${analysis}\n\n` +
+                      `【專家說法】\n${analysis}\n\n` +
                       `━━━━━━━━━━━━━━━\n` +
                       `💡 您可以繼續探索其他分析`;
 
