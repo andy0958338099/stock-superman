@@ -24,9 +24,11 @@ async function handlePoliticsAnalysis(userId, stockId, stockName) {
     const availability = checkFeatureAvailability(state, 'politics');
     
     if (!availability.available) {
+      const quickReply = buildStockAnalysisQuickReply(stockId, state);
       return {
         type: 'text',
-        text: `⚠️ ${availability.reason}\n\n您可以查看其他分析或查詢新的股票代號。`
+        text: `⚠️ ${availability.reason}\n\n💡 您可以繼續探索其他分析`,
+        quickReply: quickReply?.quickReply
       };
     }
 
@@ -39,16 +41,20 @@ async function handlePoliticsAnalysis(userId, stockId, stockName) {
       newsResults = await searchPoliticalNews(stockId, stockName, industry);
       
       if (!newsResults || newsResults.length === 0) {
+        const quickReply = buildStockAnalysisQuickReply(stockId, state);
         return {
           type: 'text',
-          text: `⚠️ 找不到 ${industry} 產業的相關國際新聞\n\n請稍後再試或查詢其他股票。`
+          text: `⚠️ 找不到 ${industry} 產業的相關國際新聞\n\n請稍後再試或查詢其他股票。\n\n💡 您可以繼續探索其他分析`,
+          quickReply: quickReply?.quickReply
         };
       }
     } catch (searchError) {
       console.error('❌ 政治新聞搜尋失敗:', searchError);
+      const quickReply = buildStockAnalysisQuickReply(stockId, state);
       return {
         type: 'text',
-        text: `❌ 新聞搜尋失敗：${searchError.message}\n\n請檢查 Google Search API 設定。`
+        text: `❌ 新聞搜尋失敗：${searchError.message}\n\n請檢查 Google Search API 設定。\n\n💡 您可以繼續探索其他分析`,
+        quickReply: quickReply?.quickReply
       };
     }
 
@@ -61,10 +67,12 @@ async function handlePoliticsAnalysis(userId, stockId, stockName) {
       analysis = await analyzePoliticalNews(stockId, stockName, industry, newsContent);
     } catch (aiError) {
       console.error('❌ AI 分析失敗:', aiError);
-      // 如果 AI 分析失敗，至少返回新聞列表
+      // 如果 AI 分析失敗，至少返回新聞列表並保持 Quick Reply
+      const quickReply = buildStockAnalysisQuickReply(stockId, state);
       return {
         type: 'text',
-        text: `🌍 ${industry} 產業國際情勢新聞\n\n${newsContent}\n\n⚠️ AI 分析暫時無法使用`
+        text: `🌍 ${industry} 產業國際情勢新聞\n\n${newsContent}\n\n⚠️ AI 分析暫時無法使用\n\n💡 您可以繼續探索其他分析`,
+        quickReply: quickReply?.quickReply
       };
     }
 
@@ -92,10 +100,23 @@ async function handlePoliticsAnalysis(userId, stockId, stockName) {
 
   } catch (error) {
     console.error('❌ 政治分析處理失敗:', error);
-    return {
-      type: 'text',
-      text: `❌ 處理失敗：${error.message}\n\n請稍後再試。`
-    };
+
+    // 即使發生錯誤，也要保持 Quick Reply
+    try {
+      const state = await getConversationState(userId, stockId);
+      const quickReply = buildStockAnalysisQuickReply(stockId, state);
+
+      return {
+        type: 'text',
+        text: `❌ 處理失敗：${error.message}\n\n請稍後再試。\n\n💡 您可以繼續探索其他分析`,
+        quickReply: quickReply?.quickReply
+      };
+    } catch (stateError) {
+      return {
+        type: 'text',
+        text: `❌ 處理失敗：${error.message}\n\n請稍後再試。`
+      };
+    }
   }
 }
 

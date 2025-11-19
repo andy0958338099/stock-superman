@@ -24,9 +24,13 @@ async function handleNewsAnalysis(userId, stockId, stockName) {
     const availability = checkFeatureAvailability(state, 'news');
     
     if (!availability.available) {
+      // 即使功能不可用，也要顯示 Quick Reply
+      const quickReply = buildStockAnalysisQuickReply(stockId, state);
+
       return {
         type: 'text',
-        text: `⚠️ ${availability.reason}\n\n您可以查看其他分析或查詢新的股票代號。`
+        text: `⚠️ ${availability.reason}\n\n💡 您可以繼續探索其他分析`,
+        quickReply: quickReply?.quickReply
       };
     }
 
@@ -36,16 +40,20 @@ async function handleNewsAnalysis(userId, stockId, stockName) {
       newsResults = await searchFinancialNews(stockId, stockName);
       
       if (!newsResults || newsResults.length === 0) {
+        const quickReply = buildStockAnalysisQuickReply(stockId, state);
         return {
           type: 'text',
-          text: `⚠️ 找不到 ${stockName}(${stockId}) 的相關新聞\n\n請稍後再試或查詢其他股票。`
+          text: `⚠️ 找不到 ${stockName}(${stockId}) 的相關新聞\n\n請稍後再試或查詢其他股票。\n\n💡 您可以繼續探索其他分析`,
+          quickReply: quickReply?.quickReply
         };
       }
     } catch (searchError) {
       console.error('❌ 新聞搜尋失敗:', searchError);
+      const quickReply = buildStockAnalysisQuickReply(stockId, state);
       return {
         type: 'text',
-        text: `❌ 新聞搜尋失敗：${searchError.message}\n\n請檢查 Google Search API 設定。`
+        text: `❌ 新聞搜尋失敗：${searchError.message}\n\n請檢查 Google Search API 設定。\n\n💡 您可以繼續探索其他分析`,
+        quickReply: quickReply?.quickReply
       };
     }
 
@@ -58,10 +66,12 @@ async function handleNewsAnalysis(userId, stockId, stockName) {
       analysis = await analyzeFinancialNews(stockId, stockName, newsContent);
     } catch (aiError) {
       console.error('❌ AI 分析失敗:', aiError);
-      // 如果 AI 分析失敗，至少返回新聞列表
+      // 如果 AI 分析失敗，至少返回新聞列表並保持 Quick Reply
+      const quickReply = buildStockAnalysisQuickReply(stockId, state);
       return {
         type: 'text',
-        text: `📰 ${stockName}(${stockId}) 最新財經新聞\n\n${newsContent}\n\n⚠️ AI 分析暫時無法使用`
+        text: `📰 ${stockName}(${stockId}) 最新財經新聞\n\n${newsContent}\n\n⚠️ AI 分析暫時無法使用\n\n💡 您可以繼續探索其他分析`,
+        quickReply: quickReply?.quickReply
       };
     }
 
@@ -88,10 +98,23 @@ async function handleNewsAnalysis(userId, stockId, stockName) {
 
   } catch (error) {
     console.error('❌ 新聞分析處理失敗:', error);
-    return {
-      type: 'text',
-      text: `❌ 處理失敗：${error.message}\n\n請稍後再試。`
-    };
+
+    // 即使發生錯誤，也要保持 Quick Reply
+    try {
+      const state = await getConversationState(userId, stockId);
+      const quickReply = buildStockAnalysisQuickReply(stockId, state);
+
+      return {
+        type: 'text',
+        text: `❌ 處理失敗：${error.message}\n\n請稍後再試。\n\n💡 您可以繼續探索其他分析`,
+        quickReply: quickReply?.quickReply
+      };
+    } catch (stateError) {
+      return {
+        type: 'text',
+        text: `❌ 處理失敗：${error.message}\n\n請稍後再試。`
+      };
+    }
   }
 }
 

@@ -5,7 +5,7 @@
 
 const { analyzeUserOpinion } = require('../deepseek');
 const { getConversationState, saveConversationState, checkFeatureAvailability } = require('../conversation-state');
-const { buildDiscussionPromptQuickReply, buildContinueDiscussionQuickReply } = require('../quick-reply-builder');
+const { buildDiscussionPromptQuickReply, buildContinueDiscussionQuickReply, buildStockAnalysisQuickReply } = require('../quick-reply-builder');
 
 /**
  * 處理討論初始化（用戶點擊「討論」按鈕）
@@ -23,9 +23,11 @@ async function handleDiscussionInit(userId, stockId, stockName) {
     const availability = checkFeatureAvailability(state, 'discussion');
     
     if (!availability.available) {
+      const quickReply = buildStockAnalysisQuickReply(stockId, state);
       return {
         type: 'text',
-        text: `⚠️ ${availability.reason}\n\n您可以查看總評或查詢新的股票代號。`
+        text: `⚠️ ${availability.reason}\n\n💡 您可以繼續探索其他分析`,
+        quickReply: quickReply?.quickReply
       };
     }
 

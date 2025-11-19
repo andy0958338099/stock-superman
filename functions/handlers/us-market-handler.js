@@ -21,11 +21,18 @@ async function handleUSMarketAnalysis(userId, stockId, stockName) {
 
     // 1. 取得美股市場數據（從快取）
     const usMarketData = await getUSMarketCache();
-    
+
     if (!usMarketData || !usMarketData.result_json) {
+      // 取得當前狀態以顯示 Quick Reply
+      const state = await getConversationState(userId, stockId);
+      const quickReply = buildStockAnalysisQuickReply(stockId, state);
+
       return {
         type: 'text',
-        text: `⚠️ 美股市場數據暫時無法取得\n\n請先查詢「美股」取得最新數據，或稍後再試。`
+        text: `⚠️ 美股市場數據暫時無法取得\n\n` +
+              `請先查詢「美股」取得最新數據，或稍後再試。\n\n` +
+              `💡 您可以繼續探索其他分析`,
+        quickReply: quickReply?.quickReply
       };
     }
 
@@ -35,16 +42,21 @@ async function handleUSMarketAnalysis(userId, stockId, stockName) {
       analysis = await analyzeUSMarketRelation(stockId, stockName, usMarketData.result_json);
     } catch (aiError) {
       console.error('❌ AI 分析失敗:', aiError);
-      
-      // 如果 AI 分析失敗，返回基本的美股數據
+
+      // 如果 AI 分析失敗，返回基本的美股數據並保持 Quick Reply
+      const state = await getConversationState(userId, stockId);
+      const quickReply = buildStockAnalysisQuickReply(stockId, state);
       const marketSummary = usMarketData.result_json;
+
       return {
         type: 'text',
         text: `🇺🇸 美股市場概況\n\n` +
               `S&P 500: ${marketSummary.sp500?.price || 'N/A'}\n` +
               `NASDAQ: ${marketSummary.nasdaq?.price || 'N/A'}\n` +
               `SOXX: ${marketSummary.soxx?.price || 'N/A'}\n\n` +
-              `⚠️ AI 關聯分析暫時無法使用`
+              `⚠️ AI 關聯分析暫時無法使用\n\n` +
+              `💡 您可以繼續探索其他分析`,
+        quickReply: quickReply?.quickReply
       };
     }
 
@@ -71,10 +83,24 @@ async function handleUSMarketAnalysis(userId, stockId, stockName) {
 
   } catch (error) {
     console.error('❌ 美股關聯分析處理失敗:', error);
-    return {
-      type: 'text',
-      text: `❌ 處理失敗：${error.message}\n\n請稍後再試。`
-    };
+
+    // 即使發生錯誤，也要保持 Quick Reply
+    try {
+      const state = await getConversationState(userId, stockId);
+      const quickReply = buildStockAnalysisQuickReply(stockId, state);
+
+      return {
+        type: 'text',
+        text: `❌ 處理失敗：${error.message}\n\n請稍後再試。\n\n💡 您可以繼續探索其他分析`,
+        quickReply: quickReply?.quickReply
+      };
+    } catch (stateError) {
+      // 如果連狀態都取不到，就只返回錯誤訊息
+      return {
+        type: 'text',
+        text: `❌ 處理失敗：${error.message}\n\n請稍後再試。`
+      };
+    }
   }
 }
 
