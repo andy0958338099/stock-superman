@@ -18,6 +18,15 @@ const { analyzeKD, analyzeMACDSignal, calculateKD, calculateMACD } = require('./
 const { analyzeUSMarket } = require('./us-market-analysis');
 const { generateUSMarketFlexMessage } = require('./us-market-flex-message');
 
+// 互動式分析功能處理器
+const { handleNewsAnalysis } = require('./handlers/news-handler');
+const { handlePoliticsAnalysis } = require('./handlers/politics-handler');
+const { handleUSMarketAnalysis } = require('./handlers/us-market-handler');
+const { handleDiscussionInit, handleDiscussionOpinion } = require('./handlers/discussion-handler');
+const { handleFinalReview, handleReviewVote } = require('./handlers/final-review-handler');
+const { getConversationState, initConversationState } = require('./conversation-state');
+const { buildStockAnalysisQuickReply } = require('./quick-reply-builder');
+
 // LINE Bot 設定
 const config = {
   channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN,
@@ -297,8 +306,9 @@ function createFlexMessage(stockId, stockName, latestData, kdImageUrl, macdImage
  * 處理股票查詢
  * @param {string} replyToken - LINE reply token
  * @param {string} stockId - 股票代號
+ * @param {string} userId - LINE 用戶 ID
  */
-async function handleStockQuery(replyToken, stockId) {
+async function handleStockQuery(replyToken, stockId, userId) {
   try {
     console.log(`\n🔍 處理股票查詢：${stockId}`);
 
@@ -327,11 +337,28 @@ async function handleStockQuery(replyToken, stockId) {
             cachedData.ai_result
           );
 
-          await client.replyMessage(replyToken, {
-            type: 'flex',
-            altText: `${stockId} ${cachedData.stock_info.stock_name} 分析結果（快取）`,
-            contents: flexMessage
-          });
+          // 取得對話狀態並建立 Quick Reply 按鈕
+          const state = await getConversationState(userId, stockId);
+          const quickReply = buildStockAnalysisQuickReply(stockId, state);
+
+          const replyMessages = [
+            {
+              type: 'flex',
+              altText: `${stockId} ${cachedData.stock_info.stock_name} 分析結果（快取）`,
+              contents: flexMessage
+            }
+          ];
+
+          // 如果有 Quick Reply，添加提示訊息
+          if (quickReply) {
+            replyMessages.push({
+              type: 'text',
+              text: '💡 想深入了解？點擊下方按鈕探索更多分析',
+              quickReply: quickReply.quickReply
+            });
+          }
+
+          await client.replyMessage(replyToken, replyMessages);
 
           console.log(`✅ 已使用快取回覆（快取時間：${new Date(cache.updated_at).toLocaleString('zh-TW')}）`);
           return;
@@ -418,12 +445,35 @@ async function handleStockQuery(replyToken, stockId) {
       aiResult
     );
 
+    // 10. 初始化對話狀態並建立 Quick Reply 按鈕
+    const technicalAnalysisText = `${stockInfo.stock_name}(${stockId})\n` +
+                                  `收盤：${latestData.close}\n` +
+                                  `KD：${kdAnalysis.signal} - ${kdAnalysis.description}\n` +
+                                  `MACD：${macdAnalysis.signal} - ${macdAnalysis.description}`;
+
+    await initConversationState(userId, stockId, technicalAnalysisText);
+    const state = await getConversationState(userId, stockId);
+    const quickReply = buildStockAnalysisQuickReply(stockId, state);
+
+    const replyMessages = [
+      {
+        type: 'flex',
+        altText: `${stockId} ${stockInfo.stock_name} 分析結果`,
+        contents: flexMessage
+      }
+    ];
+
+    // 如果有 Quick Reply，添加提示訊息
+    if (quickReply) {
+      replyMessages.push({
+        type: 'text',
+        text: '💡 想深入了解？點擊下方按鈕探索更多分析',
+        quickReply: quickReply.quickReply
+      });
+    }
+
     // 發送 Flex Message（使用 replyToken 一次性回覆）
-    await client.replyMessage(replyToken, {
-      type: 'flex',
-      altText: `${stockId} ${stockInfo.stock_name} 分析結果`,
-      contents: flexMessage
-    });
+    await client.replyMessage(replyToken, replyMessages);
 
     console.log('✅ 分析完成並已回覆');
 
@@ -517,7 +567,83 @@ exports.handler = async function(event, context) {
       // 2. 記錄 reply token
       await recordReplyToken(replyToken);
 
-      // 3. 檢查美股分析指令
+      // 3. 解析互動式分析指令（格式：功能:股票代號 或 評價:股票代號:評價）
+      const interactiveMatch = text.match(/^(新聞|政治|美股|討論|總評|評價):(\d{3,5})(?::(.+))?$/);
+      if (interactiveMatch) {
+        const [, action, stockId, extra] = interactiveMatch;
+        console.log(`🎯 收到互動式分析請求：${action} - ${stockId}`);
+
+        // 取得股票名稱（從快取或 API）
+        let stockName = stockId;
+        try {
+          const stockInfo = await fetchStockInfo(stockId);
+          stockName = stockInfo?.stock_name || stockId;
+        } catch (e) {
+          console.warn('⚠️ 無法取得股票名稱，使用代號');
+        }
+
+        let replyMessage;
+
+        switch (action) {
+          case '新聞':
+            replyMessage = await handleNewsAnalysis(userId, stockId, stockName);
+            break;
+          case '政治':
+            replyMessage = await handlePoliticsAnalysis(userId, stockId, stockName);
+            break;
+          case '美股':
+            replyMessage = await handleUSMarketAnalysis(userId, stockId, stockName);
+            break;
+          case '討論':
+            replyMessage = await handleDiscussionInit(userId, stockId, stockName);
+            break;
+          case '總評':
+            replyMessage = await handleFinalReview(userId, stockId, stockName);
+            break;
+          case '評價':
+            replyMessage = await handleReviewVote(userId, stockId, extra);
+            break;
+          default:
+            replyMessage = {
+              type: 'text',
+              text: '⚠️ 未知的指令'
+            };
+        }
+
+        await client.replyMessage(replyToken, replyMessage);
+        console.log(`✅ ${action}分析完成`);
+        continue;
+      }
+
+      // 4. 檢查是否在討論模式中（用戶輸入意見）
+      // 需要檢查所有可能的股票代號
+      const stockIdMatch = text.match(/\d{3,5}/);
+      let discussionState = null;
+
+      if (stockIdMatch) {
+        discussionState = await getConversationState(userId, stockIdMatch[0]);
+      }
+
+      if (discussionState && discussionState.current_stage === 'discussion_waiting') {
+        console.log('💬 用戶在討論模式中，處理意見');
+        const stockId = discussionState.stock_id;
+
+        // 取得股票名稱
+        let stockName = stockId;
+        try {
+          const stockInfo = await fetchStockInfo(stockId);
+          stockName = stockInfo?.stock_name || stockId;
+        } catch (e) {
+          console.warn('⚠️ 無法取得股票名稱，使用代號');
+        }
+
+        const replyMessage = await handleDiscussionOpinion(userId, stockId, stockName, text);
+        await client.replyMessage(replyToken, replyMessage);
+        console.log('✅ 討論意見處理完成');
+        continue;
+      }
+
+      // 5. 檢查美股分析指令
       if (text === '美股' || text === '美股分析' || text === 'US' || text === 'us market') {
         console.log('🌎 收到美股分析請求');
         const usMarketMessage = await handleUSMarketCommand();
@@ -567,7 +693,7 @@ exports.handler = async function(event, context) {
       }
 
       // 6. 處理股票查詢
-      await handleStockQuery(replyToken, stockId);
+      await handleStockQuery(replyToken, stockId, userId);
     }
 
     return {

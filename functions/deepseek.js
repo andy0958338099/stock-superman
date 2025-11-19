@@ -374,8 +374,434 @@ VIX：${vix.close}
   }
 }
 
+/**
+ * 財經新聞分析（財經專家角色）
+ * @param {string} stockId - 股票代號
+ * @param {string} stockName - 股票名稱
+ * @param {string} newsContent - 新聞內容
+ * @returns {Promise<string>} - 分析結果
+ */
+async function analyzeFinancialNews(stockId, stockName, newsContent) {
+  try {
+    if (!DEEPSEEK_API_KEY) {
+      throw new Error('DeepSeek API Key 未設定');
+    }
+
+    console.log(`🤖 DeepSeek 財經新聞分析：${stockId}`);
+
+    const prompt = `你是一位資深財經專家，以下是關於 ${stockName}(${stockId}) 的 6 則最新新聞：
+
+${newsContent}
+
+請以財經專家的角度分析這些新聞，給予唯恐天下不亂但不違背事實的結論。
+
+要求：
+1. 分析新聞對股價的潛在影響（正面/負面/中性）
+2. 指出關鍵風險和機會
+3. 語氣要有衝擊力但基於事實
+4. 結論要明確且有態度
+5. 字數控制在 300 字內
+
+請直接輸出分析內容，不要使用 JSON 格式。`;
+
+    const result = await retryWithBackoff(async () => {
+      const response = await axios.post(
+        DEEPSEEK_API_URL,
+        {
+          model: 'deepseek-chat',
+          messages: [
+            {
+              role: 'system',
+              content: '你是一位資深財經專家，擅長從新聞中洞察股市機會與風險，語氣犀利但基於事實。'
+            },
+            {
+              role: 'user',
+              content: prompt
+            }
+          ],
+          temperature: 0.8,
+          max_tokens: 1000
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          timeout: 15000
+        }
+      );
+
+      if (!response.data || !response.data.choices || !response.data.choices[0]) {
+        throw new Error('DeepSeek API 回應格式錯誤');
+      }
+
+      return response.data.choices[0].message.content;
+    }, MAX_RETRIES, `DeepSeek 財經新聞分析 ${stockId}`);
+
+    console.log('✅ DeepSeek 財經新聞分析完成');
+    return result;
+
+  } catch (error) {
+    console.error('❌ DeepSeek 財經新聞分析失敗:', error.message);
+    throw error;
+  }
+}
+
+/**
+ * 政治新聞分析（政治評論員角色）
+ * @param {string} stockId - 股票代號
+ * @param {string} stockName - 股票名稱
+ * @param {string} industry - 產業類別
+ * @param {string} politicalNews - 政治新聞內容
+ * @returns {Promise<string>} - 分析結果
+ */
+async function analyzePoliticalNews(stockId, stockName, industry, politicalNews) {
+  try {
+    if (!DEEPSEEK_API_KEY) {
+      throw new Error('DeepSeek API Key 未設定');
+    }
+
+    console.log(`🤖 DeepSeek 政治新聞分析：${stockId}`);
+
+    const prompt = `你是一位犀利的政治評論員，以下是關於 ${industry} 產業的 6 則國際情勢新聞：
+
+${politicalNews}
+
+請以政治評論員的角度分析這些新聞對 ${stockName}(${stockId}) 的影響，給予語不驚人死不休但不違背事實的結論。
+
+要求：
+1. 分析國際政治對產業的影響
+2. 指出地緣政治風險
+3. 語氣要犀利但基於事實
+4. 結論要有洞察力
+5. 字數控制在 300 字內
+
+請直接輸出分析內容，不要使用 JSON 格式。`;
+
+    const result = await retryWithBackoff(async () => {
+      const response = await axios.post(
+        DEEPSEEK_API_URL,
+        {
+          model: 'deepseek-chat',
+          messages: [
+            {
+              role: 'system',
+              content: '你是一位犀利的政治評論員，擅長分析國際情勢對產業的影響，語不驚人死不休但不違背事實。'
+            },
+            {
+              role: 'user',
+              content: prompt
+            }
+          ],
+          temperature: 0.8,
+          max_tokens: 1000
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          timeout: 15000
+        }
+      );
+
+      if (!response.data || !response.data.choices || !response.data.choices[0]) {
+        throw new Error('DeepSeek API 回應格式錯誤');
+      }
+
+      return response.data.choices[0].message.content;
+    }, MAX_RETRIES, `DeepSeek 政治新聞分析 ${stockId}`);
+
+    console.log('✅ DeepSeek 政治新聞分析完成');
+    return result;
+
+  } catch (error) {
+    console.error('❌ DeepSeek 政治新聞分析失敗:', error.message);
+    throw error;
+  }
+}
+
+/**
+ * 美股關聯分析（美股狂熱評論員角色）
+ * @param {string} stockId - 股票代號
+ * @param {string} stockName - 股票名稱
+ * @param {object} usMarketData - 美股市場數據
+ * @returns {Promise<string>} - 分析結果
+ */
+async function analyzeUSMarketRelation(stockId, stockName, usMarketData) {
+  try {
+    if (!DEEPSEEK_API_KEY) {
+      throw new Error('DeepSeek API Key 未設定');
+    }
+
+    console.log(`🤖 DeepSeek 美股關聯分析：${stockId}`);
+
+    const prompt = `你是一位美股狂熱評論員，以下是美股市場數據：
+
+【美股市場狀態】
+${JSON.stringify(usMarketData, null, 2)}
+
+請分析美股市場與 ${stockName}(${stockId}) 的關聯性。
+
+要求：
+1. 分析美股走勢對該股票的影響
+2. 指出相關產業鏈的連動
+3. 語氣要熱情但基於數據
+4. 結論要有前瞻性
+5. 字數控制在 300 字內
+
+請直接輸出分析內容，不要使用 JSON 格式。`;
+
+    const result = await retryWithBackoff(async () => {
+      const response = await axios.post(
+        DEEPSEEK_API_URL,
+        {
+          model: 'deepseek-chat',
+          messages: [
+            {
+              role: 'system',
+              content: '你是一位美股狂熱評論員，擅長分析美股與台股的連動關係，語氣熱情但基於數據。'
+            },
+            {
+              role: 'user',
+              content: prompt
+            }
+          ],
+          temperature: 0.8,
+          max_tokens: 1000
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          timeout: 15000
+        }
+      );
+
+      if (!response.data || !response.data.choices || !response.data.choices[0]) {
+        throw new Error('DeepSeek API 回應格式錯誤');
+      }
+
+      return response.data.choices[0].message.content;
+    }, MAX_RETRIES, `DeepSeek 美股關聯分析 ${stockId}`);
+
+    console.log('✅ DeepSeek 美股關聯分析完成');
+    return result;
+
+  } catch (error) {
+    console.error('❌ DeepSeek 美股關聯分析失敗:', error.message);
+    throw error;
+  }
+}
+
+/**
+ * 用戶論點分析（中性質疑者角色）
+ * @param {string} stockId - 股票代號
+ * @param {string} stockName - 股票名稱
+ * @param {string} userOpinion - 用戶看法
+ * @param {Array} discussionHistory - 討論歷史
+ * @returns {Promise<string>} - 分析結果
+ */
+async function analyzeUserOpinion(stockId, stockName, userOpinion, discussionHistory = []) {
+  try {
+    if (!DEEPSEEK_API_KEY) {
+      throw new Error('DeepSeek API Key 未設定');
+    }
+
+    console.log(`🤖 DeepSeek 用戶論點分析：${stockId}`);
+
+    let historyContext = '';
+    if (discussionHistory.length > 0) {
+      historyContext = '\n【先前討論】\n' +
+        discussionHistory.map((h, i) =>
+          `第 ${i + 1} 次討論：\n用戶：${h.user}\nAI：${h.ai}`
+        ).join('\n\n');
+    }
+
+    const prompt = `你是一位理性的經濟分析師，用戶對 ${stockName}(${stockId}) 提出以下看法：
+
+"${userOpinion}"
+${historyContext}
+
+請分析用戶論點的合理性，並提出中性質疑及經濟學風險提醒。
+
+要求：
+1. 客觀評估論點的合理性（0-100 分）
+2. 指出可能的盲點
+3. 提醒經濟學風險
+4. 語氣中性但有建設性
+5. 字數控制在 250 字內
+
+請直接輸出分析內容，不要使用 JSON 格式。`;
+
+    const result = await retryWithBackoff(async () => {
+      const response = await axios.post(
+        DEEPSEEK_API_URL,
+        {
+          model: 'deepseek-chat',
+          messages: [
+            {
+              role: 'system',
+              content: '你是一位理性的經濟分析師，擅長客觀評估投資論點，指出盲點並提醒風險。'
+            },
+            {
+              role: 'user',
+              content: prompt
+            }
+          ],
+          temperature: 0.7,
+          max_tokens: 800
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          timeout: 15000
+        }
+      );
+
+      if (!response.data || !response.data.choices || !response.data.choices[0]) {
+        throw new Error('DeepSeek API 回應格式錯誤');
+      }
+
+      return response.data.choices[0].message.content;
+    }, MAX_RETRIES, `DeepSeek 用戶論點分析 ${stockId}`);
+
+    console.log('✅ DeepSeek 用戶論點分析完成');
+    return result;
+
+  } catch (error) {
+    console.error('❌ DeepSeek 用戶論點分析失敗:', error.message);
+    throw error;
+  }
+}
+
+/**
+ * 綜合總評分析（投資顧問角色）
+ * @param {string} stockId - 股票代號
+ * @param {string} stockName - 股票名稱
+ * @param {object} allData - 所有分析數據
+ * @returns {Promise<object>} - 總評結果（維基百科式架構）
+ */
+async function generateFinalReview(stockId, stockName, allData) {
+  try {
+    if (!DEEPSEEK_API_KEY) {
+      throw new Error('DeepSeek API Key 未設定');
+    }
+
+    console.log(`🤖 DeepSeek 綜合總評分析：${stockId}`);
+
+    const {
+      technicalAnalysis,
+      newsAnalysis,
+      politicalAnalysis,
+      usMarketAnalysis,
+      discussionInsights,
+      previousReview
+    } = allData;
+
+    const prompt = `你是一位資深投資顧問，請綜合以下所有資訊對 ${stockName}(${stockId}) 做出完整評估：
+
+【技術分析】
+${technicalAnalysis || '無'}
+
+【新聞分析】
+${newsAnalysis || '無'}
+
+【政治分析】
+${politicalAnalysis || '無'}
+
+【美股分析】
+${usMarketAnalysis || '無'}
+
+【討論洞察】
+${discussionInsights || '無'}
+
+${previousReview ? `【先前總評】\n${previousReview}` : ''}
+
+請以維基百科式的結構化方式，提出勇敢且有決心的投資方向建議。
+
+要求以 JSON 格式回覆：
+{
+  "summary": "摘要（100字內）",
+  "technical_summary": "技術面總結（80字內）",
+  "fundamental_summary": "基本面總結（80字內）",
+  "risk_assessment": "風險評估（100字內）",
+  "opportunity_assessment": "機會評估（100字內）",
+  "final_conclusion": "最終結論（150字內）",
+  "recommendation": "買入|持有|賣出|觀望",
+  "confidence_level": "高|中|低",
+  "target_price_range": "目標價區間（如：100-120）",
+  "stop_loss_price": "停損價位",
+  "time_horizon": "短線|中線|長線",
+  "key_factors": ["關鍵因素1", "關鍵因素2", "關鍵因素3"],
+  "action_plan": "具體操作建議（150字內）"
+}
+
+注意事項：
+1. 綜合所有面向的分析
+2. 明確指出買入/持有/賣出/觀望建議
+3. 說明理由和風險
+4. 給予具體操作建議
+5. 勇敢且有決心，但基於數據`;
+
+    const result = await retryWithBackoff(async () => {
+      const response = await axios.post(
+        DEEPSEEK_API_URL,
+        {
+          model: 'deepseek-chat',
+          messages: [
+            {
+              role: 'system',
+              content: '你是一位資深投資顧問，擅長綜合各方面資訊做出明確的投資建議，勇敢且有決心。'
+            },
+            {
+              role: 'user',
+              content: prompt
+            }
+          ],
+          temperature: 0.7,
+          max_tokens: 2000,
+          response_format: { type: 'json_object' }
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          timeout: 20000 // 總評需要更多時間
+        }
+      );
+
+      if (!response.data || !response.data.choices || !response.data.choices[0]) {
+        throw new Error('DeepSeek API 回應格式錯誤');
+      }
+
+      const content = response.data.choices[0].message.content;
+      return JSON.parse(content);
+    }, MAX_RETRIES, `DeepSeek 綜合總評 ${stockId}`);
+
+    console.log('✅ DeepSeek 綜合總評完成');
+    console.log(`   建議：${result.recommendation}`);
+    console.log(`   信心：${result.confidence_level}`);
+
+    return result;
+
+  } catch (error) {
+    console.error('❌ DeepSeek 綜合總評失敗:', error.message);
+    throw error;
+  }
+}
+
 module.exports = {
   analyzeWithDeepSeek,
-  analyzeUSMarketWithDeepSeek
+  analyzeUSMarketWithDeepSeek,
+  analyzeFinancialNews,
+  analyzePoliticalNews,
+  analyzeUSMarketRelation,
+  analyzeUserOpinion,
+  generateFinalReview
 };
 
