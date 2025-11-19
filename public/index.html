@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="股票超人 LINE Bot - AI 驅動的智能股票分析系統，提供技術分析、新聞解讀、政治情勢、美股關聯、互動討論、綜合總評六大功能！">
-    <meta name="keywords" content="股票超人,LINE Bot,台股,AI分析,技術分析,新聞分析,政治分析,美股,投資">
+    <meta name="description" content="股票超人 LINE Bot - AI 智能股票分析系統，提供技術分析、新聞解讀、政治情勢、互動討論、綜合總評五大功能！">
+    <meta name="keywords" content="股票超人,LINE Bot,台股,AI分析,技術分析,新聞分析,政治分析,投資">
     <meta property="og:title" content="股票超人 LINE Bot - AI 智能股票分析系統">
-    <meta property="og:description" content="六大功能全方位分析，讓您的投資決策更精準！">
+    <meta property="og:description" content="五大功能全方位分析，讓您的投資決策更精準！">
     <meta property="og:type" content="website">
     <title>股票超人 LINE Bot - AI 智能股票分析系統</title>
     <style>
@@ -20,10 +20,7 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang TC', 'Microsoft JhengHei', sans-serif;
             background: linear-gradient(135deg, #1DB446 0%, #06C755 50%, #00B900 100%);
             min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
+            padding: 20px 15px;
             position: relative;
             overflow-x: hidden;
         }
@@ -49,11 +46,12 @@
 
         .container {
             background: white;
-            border-radius: 24px;
-            padding: 48px 40px;
-            max-width: 680px;
+            border-radius: 20px;
+            padding: 30px 25px;
+            max-width: 1200px;
             width: 100%;
-            box-shadow: 0 24px 80px rgba(0, 0, 0, 0.25);
+            margin: 0 auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
             text-align: center;
             position: relative;
             z-index: 1;
@@ -72,36 +70,36 @@
         }
 
         .logo {
-            width: 120px;
-            height: 120px;
-            margin: 0 auto 24px;
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 20px;
             background: linear-gradient(135deg, #1DB446 0%, #06C755 100%);
-            border-radius: 28px;
+            border-radius: 24px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 64px;
-            box-shadow: 0 8px 24px rgba(29, 180, 70, 0.3);
+            font-size: 56px;
+            box-shadow: 0 6px 20px rgba(29, 180, 70, 0.3);
             animation: float 3s ease-in-out infinite;
         }
 
         @keyframes float {
             0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
+            50% { transform: translateY(-8px); }
         }
 
         h1 {
             color: #1a1a1a;
-            font-size: 2.8em;
-            margin-bottom: 12px;
+            font-size: 2.5em;
+            margin-bottom: 10px;
             font-weight: 800;
             letter-spacing: -0.5px;
         }
 
         .subtitle {
             color: #666;
-            font-size: 1.3em;
-            margin-bottom: 24px;
+            font-size: 1.2em;
+            margin-bottom: 20px;
             font-weight: 500;
         }
 
@@ -187,59 +185,143 @@
             margin-top: 12px;
         }
 
-        .features {
-            text-align: left;
-            margin: 32px 0;
-            padding: 28px;
-            background: #f8fafc;
-            border-radius: 16px;
-            border: 1px solid #e2e8f0;
-        }
-
-        .features-title {
-            font-size: 1.4em;
-            font-weight: 700;
-            color: #1a1a1a;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        .feature {
-            margin: 16px 0;
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
-            padding: 12px;
-            background: white;
-            border-radius: 10px;
-            transition: all 0.3s ease;
-        }
-
-        .feature:hover {
-            transform: translateX(4px);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-        }
-
-        .feature-icon {
+        .section-title {
             font-size: 1.8em;
-            flex-shrink: 0;
-        }
-
-        .feature-content {
-            flex: 1;
-        }
-
-        .feature-title {
             font-weight: 700;
             color: #1a1a1a;
-            margin-bottom: 4px;
-            font-size: 1.05em;
+            margin: 30px 0 20px 0;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
         }
 
-        .feature-desc {
+        .section-title::before {
+            content: '';
+            width: 5px;
+            height: 35px;
+            background: linear-gradient(135deg, #1DB446 0%, #06C755 100%);
+            border-radius: 3px;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 25px 0;
+        }
+
+        .feature-card {
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+            border-radius: 15px;
+            padding: 25px;
+            text-align: left;
+            transition: all 0.3s ease;
+            border: 2px solid #bbf7d0;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 30px rgba(29, 180, 70, 0.2);
+            border-color: #1DB446;
+        }
+
+        .feature-card-icon {
+            font-size: 2.5em;
+            margin-bottom: 12px;
+        }
+
+        .feature-card-title {
+            font-size: 1.3em;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 10px;
+        }
+
+        .feature-card-desc {
             color: #666;
+            font-size: 0.95em;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .feature-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .feature-list li {
+            padding: 6px 0;
+            color: #555;
             font-size: 0.9em;
-            line-height: 1.5;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .feature-list li::before {
+            content: '✓';
+            background: linear-gradient(135deg, #1DB446 0%, #06C755 100%);
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            flex-shrink: 0;
+            font-size: 0.85em;
+        }
+
+        .flow-container {
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 25px 0;
+            border: 2px solid #bbf7d0;
+        }
+
+        .flow-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin: 10px 0;
+        }
+
+        .flow-box {
+            background: white;
+            border-radius: 12px;
+            padding: 15px 25px;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.1);
+            font-weight: 600;
+            color: #333;
+            min-width: 140px;
+            text-align: center;
+            font-size: 0.95em;
+            border: 2px solid #e5e7eb;
+        }
+
+        .flow-box.primary {
+            background: linear-gradient(135deg, #1DB446 0%, #06C755 100%);
+            color: white;
+            border-color: #1DB446;
+        }
+
+        .flow-box.secondary {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border-color: #10b981;
+        }
+
+        .flow-arrow {
+            font-size: 1.5em;
+            color: #1DB446;
+            font-weight: 700;
         }
 
         .stats {
@@ -430,9 +512,9 @@
             line-height: 1.6;
         }
 
-        @media (max-width: 640px) {
+        @media (max-width: 768px) {
             .container {
-                padding: 32px 24px;
+                padding: 25px 20px;
             }
 
             h1 {
@@ -451,6 +533,24 @@
                 font-size: 1.1em;
                 padding: 14px 28px;
             }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .flow-box {
+                min-width: 100px;
+                font-size: 0.85em;
+                padding: 12px 18px;
+            }
+
+            .section-title {
+                font-size: 1.5em;
+            }
+
+            .showcase-content {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -460,9 +560,9 @@
         <div class="logo">📈</div>
 
         <!-- 標題 -->
-        <h1>股市大亨</h1>
+        <h1>股票超人</h1>
         <p class="subtitle">
-            專業<span class="highlight">台股技術分析</span> × <span class="highlight">走勢預測</span>
+            AI 智能股票分析系統 - <span class="highlight">五大功能全方位分析</span>
         </p>
 
         <!-- CTA 區域 -->
@@ -499,56 +599,87 @@
             </div>
         </div>
 
-        <!-- 核心功能 -->
-        <div class="features">
-            <div class="features-title">🚀 核心功能</div>
-
-            <div class="feature">
-                <span class="feature-icon">📊</span>
-                <div class="feature-content">
-                    <div class="feature-title">即時台股資料</div>
-                    <div class="feature-desc">提供最新股價、成交量等完整資訊</div>
+        <!-- 五大核心功能 -->
+        <h2 class="section-title">🚀 五大核心功能</h2>
+        <div class="features-grid">
+            <!-- 功能 1: 技術分析 -->
+            <div class="feature-card">
+                <div class="feature-card-icon">📊</div>
+                <div class="feature-card-title">1. 技術分析</div>
+                <div class="feature-card-desc">
+                    專業技術指標分析，預測未來走勢
                 </div>
+                <ul class="feature-list">
+                    <li>即時股價與成交量</li>
+                    <li>KD 指標（多空判斷）</li>
+                    <li>MACD 指標（趨勢強弱）</li>
+                    <li>移動平均線（MA5/MA20）</li>
+                    <li>預測未來 10 日漲跌機率</li>
+                    <li>精美視覺化圖表</li>
+                </ul>
             </div>
 
-            <div class="feature">
-                <span class="feature-icon">📈</span>
-                <div class="feature-content">
-                    <div class="feature-title">專業技術指標</div>
-                    <div class="feature-desc">KD 指標、MACD、移動平均線，多空趨勢一目了然</div>
+            <!-- 功能 2: 新聞分析 -->
+            <div class="feature-card">
+                <div class="feature-card-icon">📰</div>
+                <div class="feature-card-title">2. 新聞分析</div>
+                <div class="feature-card-desc">
+                    AI 解讀最新財經新聞，掌握市場脈動
                 </div>
+                <ul class="feature-list">
+                    <li>搜尋最新財經新聞</li>
+                    <li>專家深度解讀</li>
+                    <li>分析新聞對股價的影響</li>
+                    <li>提供投資建議</li>
+                </ul>
             </div>
 
-            <div class="feature">
-                <span class="feature-icon">📊</span>
-                <div class="feature-content">
-                    <div class="feature-title">預期最近10日走勢</div>
-                    <div class="feature-desc">分析歷史數據，預測未來 10 日漲跌機率</div>
+            <!-- 功能 3: 政治分析 -->
+            <div class="feature-card">
+                <div class="feature-card-icon">🌍</div>
+                <div class="feature-card-title">3. 政治情勢分析</div>
+                <div class="feature-card-desc">
+                    評估國際政治對產業的影響
                 </div>
+                <ul class="feature-list">
+                    <li>自動識別產業類別</li>
+                    <li>搜尋相關國際新聞</li>
+                    <li>專家深度分析</li>
+                    <li>評估地緣政治風險</li>
+                    <li>產業供應鏈影響分析</li>
+                </ul>
             </div>
 
-            <div class="feature">
-                <span class="feature-icon">🎨</span>
-                <div class="feature-content">
-                    <div class="feature-title">精美視覺化圖表</div>
-                    <div class="feature-desc">專業 K 線圖、MACD 柱狀圖，清晰呈現技術面資訊</div>
+            <!-- 功能 4: 互動討論 -->
+            <div class="feature-card">
+                <div class="feature-card-icon">💬</div>
+                <div class="feature-card-title">4. 互動討論模式</div>
+                <div class="feature-card-desc">
+                    與專家深度討論，挑戰您的投資邏輯
                 </div>
+                <ul class="feature-list">
+                    <li>5 輪主題式討論</li>
+                    <li>初步看法 → 風險評估</li>
+                    <li>機會分析 → 進出場策略</li>
+                    <li>最終決策與建議</li>
+                    <li>優化投資決策</li>
+                </ul>
             </div>
 
-            <div class="feature">
-                <span class="feature-icon">⚡</span>
-                <div class="feature-content">
-                    <div class="feature-title">快速回應</div>
-                    <div class="feature-desc">智慧快取機制，確保資料新鮮度與回應速度</div>
+            <!-- 功能 5: 綜合總評 -->
+            <div class="feature-card">
+                <div class="feature-card-icon">📊</div>
+                <div class="feature-card-title">5. 綜合總評</div>
+                <div class="feature-card-desc">
+                    整合所有分析，給出最終投資建議
                 </div>
-            </div>
-
-            <div class="feature">
-                <span class="feature-icon">🔒</span>
-                <div class="feature-content">
-                    <div class="feature-title">安全可靠</div>
-                    <div class="feature-desc">企業級架構，穩定性與安全性有保障</div>
-                </div>
+                <ul class="feature-list">
+                    <li>整合技術、新聞、政治分析</li>
+                    <li>納入討論洞察</li>
+                    <li>資深顧問總結</li>
+                    <li>明確投資建議</li>
+                    <li>信心指數評分</li>
+                </ul>
             </div>
         </div>
 
@@ -584,18 +715,32 @@
             </ol>
         </div>
 
-        <!-- 技術架構 -->
-        <div class="tech-stack">
-            <span class="tech-badge">💬 LINE Messaging API</span>
-            <span class="tech-badge">📊 即時股價資料</span>
-            <span class="tech-badge">📈 專業圖表</span>
-        </div>
-
-        <!-- 功能詳解連結 -->
-        <div style="text-align: center; margin: 40px 0;">
-            <a href="features.html" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 16px 40px; border-radius: 50px; text-decoration: none; font-size: 1.1em; font-weight: 700; box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3); transition: transform 0.3s ease;">
-                📚 查看完整功能架構詳解
-            </a>
+        <!-- 使用流程 -->
+        <h2 class="section-title">📱 使用流程</h2>
+        <div class="flow-container">
+            <div class="flow-row">
+                <div class="flow-box primary">步驟 1<br>輸入股票代號</div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-box primary">步驟 2<br>查看技術分析</div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-box primary">步驟 3<br>選擇分析功能</div>
+            </div>
+            <div class="flow-row">
+                <div class="flow-arrow">↓</div>
+            </div>
+            <div class="flow-row">
+                <div class="flow-box secondary">📰 新聞</div>
+                <div class="flow-box secondary">🌍 政治</div>
+                <div class="flow-box secondary">💬 討論</div>
+            </div>
+            <div class="flow-row">
+                <div class="flow-arrow">↓</div>
+            </div>
+            <div class="flow-row">
+                <div class="flow-box primary">步驟 4<br>查看 📊 總評</div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-box primary">步驟 5<br>做出投資決策</div>
+            </div>
         </div>
 
         <!-- 底部資訊 -->
