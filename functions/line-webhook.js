@@ -351,13 +351,9 @@ async function handleStockQuery(replyToken, stockId, userId) {
             }
           ];
 
-          // 如果有 Quick Reply，添加提示訊息
+          // 如果有 Quick Reply，直接附加到 Flex Message
           if (quickReply) {
-            replyMessages.push({
-              type: 'text',
-              text: '💡 想深入了解？點擊下方按鈕探索更多分析',
-              quickReply: quickReply.quickReply
-            });
+            replyMessages[0].quickReply = quickReply.quickReply;
           }
 
           await client.replyMessage(replyToken, replyMessages);
@@ -466,13 +462,9 @@ async function handleStockQuery(replyToken, stockId, userId) {
       }
     ];
 
-    // 如果有 Quick Reply，添加提示訊息
+    // 如果有 Quick Reply，直接附加到 Flex Message
     if (quickReply) {
-      replyMessages.push({
-        type: 'text',
-        text: '💡 想深入了解？點擊下方按鈕探索更多分析',
-        quickReply: quickReply.quickReply
-      });
+      replyMessages[0].quickReply = quickReply.quickReply;
     }
 
     // 發送 Flex Message（使用 replyToken 一次性回覆）
@@ -570,7 +562,7 @@ exports.handler = async function(event, context) {
       }
 
       // 2. 解析互動式分析指令（格式：功能:股票代號 或 評價:股票代號:評價）
-      const interactiveMatch = text.match(/^(新聞|政治|美股|討論|總評|評價):(\d{3,5})(?::(.+))?$/);
+      const interactiveMatch = text.match(/^(新聞|政治|討論|總評|評價):(\d{3,5})(?::(.+))?$/);
       if (interactiveMatch) {
         const [, action, stockId, extra] = interactiveMatch;
         console.log(`🎯 收到互動式分析請求：${action} - ${stockId}`);
@@ -592,9 +584,6 @@ exports.handler = async function(event, context) {
             break;
           case '政治':
             replyMessage = await handlePoliticsAnalysis(userId, stockId, stockName);
-            break;
-          case '美股':
-            replyMessage = await handleUSMarketAnalysis(userId, stockId, stockName);
             break;
           case '討論':
             replyMessage = await handleDiscussionInit(userId, stockId, stockName);

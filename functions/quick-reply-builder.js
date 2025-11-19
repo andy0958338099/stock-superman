@@ -36,17 +36,7 @@ function buildStockAnalysisQuickReply(stockId, state = null) {
     });
   }
 
-  // 3. 美股按鈕（無限制）
-  items.push({
-    type: 'action',
-    action: {
-      type: 'message',
-      label: '🇺🇸 美股',
-      text: `美股:${stockId}`
-    }
-  });
-
-  // 4. 討論按鈕（最多 5 次）
+  // 3. 討論按鈕（最多 5 次）
   const discussionCount = state?.discussion_count || 0;
   if (discussionCount < 5) {
     items.push({
