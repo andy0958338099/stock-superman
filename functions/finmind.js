@@ -222,7 +222,7 @@ async function fetchUSStockPrice(symbol, startDate = null, endDate = null) {
 
     const response = await axios.get(url, {
       params,
-      timeout: 15000,
+      timeout: 20000, // 增加到 20 秒，避免超時
       headers: {
         'User-Agent': 'Stock-Superman-LineBot/1.0'
       }

@@ -35,6 +35,8 @@ const client = new line.Client(config);
  * @returns {Promise<object>} - LINE 訊息物件
  */
 async function handleUSMarketCommand() {
+  const startTime = Date.now();
+
   try {
     console.log('🌎 開始處理美股分析請求...');
 
@@ -44,46 +46,60 @@ async function handleUSMarketCommand() {
     // 生成 Flex Message
     const flexMessage = generateUSMarketFlexMessage(analysisResult);
 
+    const totalTime = (Date.now() - startTime) / 1000;
+    console.log(`✅ 美股分析請求處理完成（總耗時 ${totalTime.toFixed(2)} 秒）`);
+
     return flexMessage;
 
   } catch (error) {
-    console.error('❌ 美股分析失敗:', error);
+    const totalTime = (Date.now() - startTime) / 1000;
+    console.error(`❌ 美股分析失敗（耗時 ${totalTime.toFixed(2)} 秒）:`, error.message);
     console.error('錯誤堆疊:', error.stack);
 
     let errorMessage = '❌ 美股分析失敗\n\n';
 
     // 更詳細的錯誤分類
-    if (error.message && error.message.includes('資料格式錯誤')) {
-      errorMessage += '可能原因：\n' +
-                     '• 系統處理超時\n' +
-                     '• 網路連線問題\n\n' +
-                     `錯誤訊息：${error.message}\n\n` +
-                     '⏱️ 請稍後再試';
-    } else if (error.message && error.message.includes('資料不足')) {
-      errorMessage += '可能原因：\n' +
-                     '• FinMind API 資料不完整\n' +
-                     '• 資料來源暫時無法連線\n\n' +
-                     `錯誤訊息：${error.message}\n\n` +
-                     '⏱️ 請稍後再試';
-    } else if (error.message && error.message.includes('FinMind')) {
-      errorMessage += '可能原因：\n' +
-                     '• API 請求頻率過高（每分鐘限制）\n' +
-                     '• API 配額已用完（每日限制）\n' +
-                     '• 資料來源暫時無法連線\n\n' +
+    if (error.message && error.message.includes('超時')) {
+      errorMessage += '⏱️ 處理超時\n\n' +
+                     '可能原因：\n' +
+                     '• 資料抓取時間過長\n' +
+                     '• 網路連線不穩定\n\n' +
                      '💡 建議：\n' +
-                     '• 等待 1-2 分鐘後再試\n' +
-                     '• 使用快取結果（1 小時內有效）';
+                     '• 請等待 2-3 分鐘後再試\n' +
+                     '• 如持續發生，請聯繫管理員';
+    } else if (error.message && error.message.includes('資料格式錯誤')) {
+      errorMessage += '📊 資料格式異常\n\n' +
+                     '可能原因：\n' +
+                     '• FinMind API 資料格式變更\n' +
+                     '• 資料欄位缺失\n\n' +
+                     '💡 建議：請稍後再試';
+    } else if (error.message && error.message.includes('資料不足')) {
+      errorMessage += '📉 資料不足\n\n' +
+                     '可能原因：\n' +
+                     '• 資料筆數不足以計算指標\n' +
+                     '• API 返回資料不完整\n\n' +
+                     '💡 建議：請稍後再試';
+    } else if (error.message && error.message.includes('FinMind') || error.message.includes('頻率限制')) {
+      errorMessage += '🚫 API 請求限制\n\n' +
+                     '可能原因：\n' +
+                     '• FinMind API 頻率限制\n' +
+                     '• API 配額暫時用完\n\n' +
+                     '💡 建議：\n' +
+                     '• 等待 2-3 分鐘後再試\n' +
+                     '• 使用快取資料（4 小時內有效）';
     } else if (error.message && error.message.includes('DeepSeek')) {
-      errorMessage += '可能原因：\n' +
-                     '• DeepSeek API 配額用完\n' +
-                     '• API 回應超時\n\n' +
-                     '💡 建議：稍後再試';
+      errorMessage += '🤖 AI 分析失敗\n\n' +
+                     '可能原因：\n' +
+                     '• DeepSeek API 暫時無法使用\n' +
+                     '• API 配額不足\n\n' +
+                     '💡 建議：請稍後再試';
     } else {
-      errorMessage += '可能原因：\n' +
-                     '• 系統處理超時\n' +
+      errorMessage += '⚠️ 系統錯誤\n\n' +
+                     '可能原因：\n' +
+                     '• 系統處理異常\n' +
                      '• 網路連線問題\n\n' +
                      `錯誤訊息：${error.message}\n\n` +
-                     '⏱️ 請稍後再試';
+                     '💡 建議：請稍後再試或聯繫管理員';
     }
 
     return {

@@ -22,17 +22,22 @@ function delay(ms) {
  * @returns {Promise<object>} - 完整的美股分析結果
  */
 async function analyzeUSMarket() {
+  const startTime = Date.now();
+
   try {
     console.log('🌎 開始美股市場分析...');
 
     // 1. 檢查快取
+    console.log('📊 檢查快取...');
     const cachedResult = await getUSMarketCache();
     if (cachedResult) {
-      console.log('✅ 使用快取的美股分析結果');
+      const cacheTime = (Date.now() - startTime) / 1000;
+      console.log(`✅ 使用快取的美股分析結果（耗時 ${cacheTime.toFixed(2)} 秒）`);
       return cachedResult;
     }
 
     console.log('📊 快取未命中，開始抓取資料...');
+    console.log('⏱️ 預計需要 15-25 秒，請稍候...');
 
     const endDate = moment().format('YYYY-MM-DD');
     const startDate = moment().subtract(6, 'months').format('YYYY-MM-DD');
@@ -107,9 +112,11 @@ async function analyzeUSMarket() {
     };
 
     // 使用 DeepSeek 進行跨市場分析
+    console.log('🤖 開始 AI 分析...');
     const aiAnalysis = await analyzeUSMarketWithDeepSeek(analysisData);
 
-    console.log('✅ 美股市場分析完成');
+    const totalTime = (Date.now() - startTime) / 1000;
+    console.log(`✅ 美股市場分析完成（總耗時 ${totalTime.toFixed(2)} 秒）`);
 
     const result = {
       success: true,
@@ -118,21 +125,31 @@ async function analyzeUSMarket() {
       timestamp: moment().format('YYYY-MM-DD HH:mm:ss')
     };
 
-    // 3. 儲存快取
+    // 3. 儲存快取（4 小時有效）
+    console.log('💾 儲存快取...');
     await saveUSMarketCache(result);
+    console.log('✅ 快取已儲存，4 小時內查詢將秒回');
 
     return result;
 
   } catch (error) {
-    console.error('❌ 美股市場分析失敗:', error);
+    const totalTime = (Date.now() - startTime) / 1000;
+    console.error(`❌ 美股市場分析失敗（耗時 ${totalTime.toFixed(2)} 秒）:`, error.message);
+    console.error('錯誤堆疊:', error.stack);
 
     // 提供更詳細的錯誤訊息
-    if (error.message && error.message.includes('FinMind')) {
-      throw new Error('FinMind API 請求失敗，可能是頻率限制或配額用完');
+    if (error.message && error.message.includes('timeout')) {
+      throw new Error('請求超時：資料抓取時間過長，請稍後再試');
+    } else if (error.message && error.message.includes('FinMind')) {
+      throw new Error('FinMind API 請求失敗，可能是頻率限制或配額用完，請等待 1-2 分鐘後再試');
     } else if (error.message && error.message.includes('DeepSeek')) {
       throw new Error('DeepSeek AI 分析失敗，請稍後再試');
+    } else if (error.message && error.message.includes('資料不足')) {
+      throw new Error('資料不足：無法計算技術指標，請稍後再試');
+    } else if (error.code === 'ECONNABORTED') {
+      throw new Error('網路連線超時，請檢查網路狀態後再試');
     } else {
-      throw error;
+      throw new Error(`分析失敗：${error.message || '未知錯誤'}`);
     }
   }
 }
