@@ -33,6 +33,10 @@ async function googleSearch(query, numResults = 6) {
         lr: 'lang_zh-TW', // 繁體中文
         dateRestrict: 'm1' // 最近一個月
       },
+      headers: {
+        'Referer': 'https://stock-superman.netlify.app',
+        'User-Agent': 'Stock-Superman-Bot/1.0'
+      },
       timeout: 10000
     });
 
