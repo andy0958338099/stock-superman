@@ -616,8 +616,8 @@ exports.handler = async function(event, context) {
       }
 
       // 4. 檢查是否在討論模式中（用戶輸入意見）
-      // 需要檢查所有可能的股票代號
-      const stockIdMatch = text.match(/\d{3,5}/);
+      // 需要先解析股票代號以檢查討論狀態
+      let stockIdMatch = text.match(/\d{3,5}/);
       let discussionState = null;
 
       if (stockIdMatch) {
@@ -652,15 +652,14 @@ exports.handler = async function(event, context) {
         continue;
       }
 
-      // 4. 檢查快取管理指令
+      // 6. 檢查快取管理指令
       const isCacheCmd = await handleCacheCommand(replyToken, text);
       if (isCacheCmd) {
         console.log('✅ 快取管理指令執行完成');
         continue;
       }
 
-      // 5. 解析股票代號
-      const stockIdMatch = text.match(/\d{3,5}/);
+      // 7. 驗證股票代號
       if (!stockIdMatch) {
         await client.replyMessage(replyToken, {
           type: 'text',
@@ -683,7 +682,7 @@ exports.handler = async function(event, context) {
 
       const stockId = stockIdMatch[0];
 
-      // 5. 驗證股票代號格式
+      // 8. 驗證股票代號格式
       if (!isValidStockId(stockId)) {
         await client.replyMessage(replyToken, {
           type: 'text',
@@ -692,7 +691,7 @@ exports.handler = async function(event, context) {
         continue;
       }
 
-      // 6. 處理股票查詢
+      // 9. 處理股票查詢
       await handleStockQuery(replyToken, stockId, userId);
     }
 
