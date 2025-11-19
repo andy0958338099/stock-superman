@@ -193,12 +193,40 @@ async function clearConversationState(userId, stockId) {
   }
 }
 
+/**
+ * 取得用戶當前的討論狀態（不需要股票代號）
+ * @param {string} userId - LINE 用戶 ID
+ * @returns {Promise<object|null>} - 討論狀態或 null
+ */
+async function getUserActiveDiscussion(userId) {
+  try {
+    const { data, error } = await supabase
+      .from('user_conversation_state')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('current_stage', 'discussion_waiting')
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    if (error && error.code !== 'PGRST116') { // PGRST116 = 沒有資料
+      throw error;
+    }
+
+    return data;
+  } catch (error) {
+    console.error('❌ 取得用戶討論狀態失敗:', error);
+    return null;
+  }
+}
+
 module.exports = {
   getConversationState,
   saveConversationState,
   initConversationState,
   checkFeatureAvailability,
   markFeatureUsed,
-  clearConversationState
+  clearConversationState,
+  getUserActiveDiscussion
 };
 

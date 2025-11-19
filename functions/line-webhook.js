@@ -24,7 +24,7 @@ const { handlePoliticsAnalysis } = require('./handlers/politics-handler');
 const { handleUSMarketAnalysis } = require('./handlers/us-market-handler');
 const { handleDiscussionInit, handleDiscussionOpinion } = require('./handlers/discussion-handler');
 const { handleFinalReview, handleReviewVote } = require('./handlers/final-review-handler');
-const { getConversationState, initConversationState } = require('./conversation-state');
+const { getConversationState, initConversationState, getUserActiveDiscussion } = require('./conversation-state');
 const { buildStockAnalysisQuickReply } = require('./quick-reply-builder');
 
 // LINE Bot 設定
@@ -616,15 +616,10 @@ exports.handler = async function(event, context) {
       }
 
       // 4. 檢查是否在討論模式中（用戶輸入意見）
-      // 需要先解析股票代號以檢查討論狀態
-      let stockIdMatch = text.match(/\d{3,5}/);
-      let discussionState = null;
+      // 查詢用戶當前是否有進行中的討論
+      const discussionState = await getUserActiveDiscussion(userId);
 
-      if (stockIdMatch) {
-        discussionState = await getConversationState(userId, stockIdMatch[0]);
-      }
-
-      if (discussionState && discussionState.current_stage === 'discussion_waiting') {
+      if (discussionState) {
         console.log('💬 用戶在討論模式中，處理意見');
         const stockId = discussionState.stock_id;
 
