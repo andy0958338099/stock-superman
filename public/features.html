@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>股票超人 - 功能架構詳解</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 60px;
+        }
+
+        .header h1 {
+            font-size: 3em;
+            margin-bottom: 20px;
+            text-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+            font-size: 1.3em;
+            opacity: 0.95;
+        }
+
+        .section {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 40px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .section-title {
+            font-size: 2em;
+            color: #667eea;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .section-title::before {
+            content: '';
+            width: 6px;
+            height: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 3px;
+        }
+
+        .architecture-diagram {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 15px;
+            padding: 40px;
+            margin: 30px 0;
+        }
+
+        .flow-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .flow-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .flow-box {
+            background: white;
+            border-radius: 12px;
+            padding: 20px 30px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            font-weight: 600;
+            color: #333;
+            min-width: 150px;
+            text-align: center;
+            position: relative;
+        }
+
+        .flow-box.primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-size: 1.1em;
+        }
+
+        .flow-box.secondary {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .flow-box.tertiary {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+
+        .flow-arrow {
+            font-size: 2em;
+            color: #667eea;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        .feature-card {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 15px;
+            padding: 30px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .feature-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+
+        .feature-title {
+            font-size: 1.5em;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .feature-desc {
+            color: #666;
+            line-height: 1.8;
+            margin-bottom: 15px;
+        }
+
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .feature-list li {
+            padding: 8px 0;
+            color: #555;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .feature-list li::before {
+            content: '✓';
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .tech-stack {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .tech-badge {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #06C755 0%, #00B900 100%);
+            color: white;
+            padding: 18px 40px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-size: 1.2em;
+            font-weight: 700;
+            margin-top: 30px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 8px 24px rgba(6, 199, 85, 0.3);
+        }
+
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 32px rgba(6, 199, 85, 0.4);
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .section {
+                padding: 25px;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>📈 股票超人</h1>
+            <p>AI 驅動的智能股票分析系統 - 功能架構詳解</p>
+        </div>
+
+        <!-- 系統架構 -->
+        <div class="section">
+            <h2 class="section-title">🏗️ 系統架構</h2>
+            <div class="architecture-diagram">
+                <div class="flow-container">
+                    <div class="flow-row">
+                        <div class="flow-box primary">LINE Bot 用戶</div>
+                    </div>
+                    <div class="flow-row">
+                        <div class="flow-arrow">↓</div>
+                    </div>
+                    <div class="flow-row">
+                        <div class="flow-box secondary">LINE Messaging API</div>
+                    </div>
+                    <div class="flow-row">
+                        <div class="flow-arrow">↓</div>
+                    </div>
+                    <div class="flow-row">
+                        <div class="flow-box primary">Netlify Functions<br>(Serverless)</div>
+                    </div>
+                    <div class="flow-row">
+                        <div class="flow-arrow">↓</div>
+                    </div>
+                    <div class="flow-row">
+                        <div class="flow-box tertiary">FinMind API<br>(股價數據)</div>
+                        <div class="flow-box tertiary">Google Search API<br>(新聞搜尋)</div>
+                        <div class="flow-box tertiary">DeepSeek AI<br>(智能分析)</div>
+                    </div>
+                    <div class="flow-row">
+                        <div class="flow-arrow">↓</div>
+                    </div>
+                    <div class="flow-row">
+                        <div class="flow-box secondary">Supabase<br>(PostgreSQL 資料庫)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 六大核心功能 -->
+        <div class="section">
+            <h2 class="section-title">🚀 六大核心功能</h2>
+            <div class="features-grid">
+                <!-- 功能 1: 技術分析 -->
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <div class="feature-title">1. 技術分析</div>
+                    <div class="feature-desc">
+                        專業技術指標分析，預測未來走勢
+                    </div>
+                    <ul class="feature-list">
+                        <li>即時股價與成交量</li>
+                        <li>KD 指標（多空判斷）</li>
+                        <li>MACD 指標（趨勢強弱）</li>
+                        <li>移動平均線（MA5/MA20）</li>
+                        <li>預測未來 10 日漲跌機率</li>
+                        <li>精美視覺化圖表</li>
+                    </ul>
+                </div>
+
+                <!-- 功能 2: 新聞分析 -->
+                <div class="feature-card">
+                    <div class="feature-icon">📰</div>
+                    <div class="feature-title">2. 新聞分析</div>
+                    <div class="feature-desc">
+                        AI 解讀最新財經新聞，掌握市場脈動
+                    </div>
+                    <ul class="feature-list">
+                        <li>Google 搜尋最新財經新聞</li>
+                        <li>AI 專家深度解讀</li>
+                        <li>分析新聞對股價的影響</li>
+                        <li>提供投資建議</li>
+                        <li>每支股票限用 1 次</li>
+                    </ul>
+                </div>
+
+                <!-- 功能 3: 政治分析 -->
+                <div class="feature-card">
+                    <div class="feature-icon">🌍</div>
+                    <div class="feature-title">3. 政治情勢分析</div>
+                    <div class="feature-desc">
+                        評估國際政治對產業的影響
+                    </div>
+                    <ul class="feature-list">
+                        <li>自動識別產業類別</li>
+                        <li>搜尋相關國際新聞</li>
+                        <li>AI 評論員深度分析</li>
+                        <li>評估地緣政治風險</li>
+                        <li>產業供應鏈影響分析</li>
+                    </ul>
+                </div>
+
+                <!-- 功能 4: 美股關聯 -->
+                <div class="feature-card">
+                    <div class="feature-icon">🇺🇸</div>
+                    <div class="feature-title">4. 美股關聯分析</div>
+                    <div class="feature-desc">
+                        跨市場分析，掌握全球資金流向
+                    </div>
+                    <ul class="feature-list">
+                        <li>S&P 500、NASDAQ、SOXX 指數</li>
+                        <li>台積電 ADR 與台股大盤</li>
+                        <li>美元兌台幣匯率</li>
+                        <li>VIX 恐慌指數</li>
+                        <li>AI 跨市場關聯分析</li>
+                        <li>6 小時智慧快取</li>
+                    </ul>
+                </div>
+
+                <!-- 功能 5: 互動討論 -->
+                <div class="feature-card">
+                    <div class="feature-icon">💬</div>
+                    <div class="feature-title">5. 互動討論模式</div>
+                    <div class="feature-desc">
+                        與 AI 專家深度討論，挑戰您的投資邏輯
+                    </div>
+                    <ul class="feature-list">
+                        <li>5 輪主題式討論</li>
+                        <li>初步看法 → 風險評估</li>
+                        <li>機會分析 → 進出場策略</li>
+                        <li>最終決策</li>
+                        <li>AI 質疑與反思</li>
+                        <li>優化投資決策</li>
+                    </ul>
+                </div>
+
+                <!-- 功能 6: 綜合總評 -->
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <div class="feature-title">6. 綜合總評</div>
+                    <div class="feature-desc">
+                        整合所有分析，給出最終投資建議
+                    </div>
+                    <ul class="feature-list">
+                        <li>整合技術、新聞、政治、美股</li>
+                        <li>納入討論洞察</li>
+                        <li>AI 資深顧問總結</li>
+                        <li>明確投資建議</li>
+                        <li>信心指數評分</li>
+                        <li>維基百科式共享</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- 使用流程 -->
+        <div class="section">
+            <h2 class="section-title">📱 使用流程</h2>
+            <div class="architecture-diagram">
+                <div class="flow-container">
+                    <div class="flow-row">
+                        <div class="flow-box primary">步驟 1<br>輸入股票代號</div>
+                        <div class="flow-arrow">→</div>
+                        <div class="flow-box primary">步驟 2<br>查看技術分析</div>
+                        <div class="flow-arrow">→</div>
+                        <div class="flow-box primary">步驟 3<br>點擊 Quick Reply</div>
+                    </div>
+                    <div class="flow-row">
+                        <div class="flow-arrow">↓</div>
+                    </div>
+                    <div class="flow-row">
+                        <div class="flow-box secondary">📰 新聞</div>
+                        <div class="flow-box secondary">🌍 政治</div>
+                        <div class="flow-box secondary">🇺🇸 美股</div>
+                        <div class="flow-box secondary">💬 討論</div>
+                    </div>
+                    <div class="flow-row">
+                        <div class="flow-arrow">↓</div>
+                    </div>
+                    <div class="flow-row">
+                        <div class="flow-box tertiary">步驟 4<br>查看 📊 總評</div>
+                        <div class="flow-arrow">→</div>
+                        <div class="flow-box tertiary">步驟 5<br>做出投資決策</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI 角色設計 -->
+        <div class="section">
+            <h2 class="section-title">🎭 AI 角色設計</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">📰</div>
+                    <div class="feature-title">財經專家</div>
+                    <div class="feature-desc">
+                        <strong>個性：</strong>唯恐天下不亂但基於事實<br>
+                        <strong>溫度：</strong>0.8（較高創意）<br>
+                        <strong>特色：</strong>犀利解讀新聞，直指核心問題
+                    </div>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🌍</div>
+                    <div class="feature-title">政治評論員</div>
+                    <div class="feature-desc">
+                        <strong>個性：</strong>語不驚人死不休但基於事實<br>
+                        <strong>溫度：</strong>0.8（較高創意）<br>
+                        <strong>特色：</strong>深度分析地緣政治影響
+                    </div>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🇺🇸</div>
+                    <div class="feature-title">美股狂熱評論員</div>
+                    <div class="feature-desc">
+                        <strong>個性：</strong>熱情但基於數據<br>
+                        <strong>溫度：</strong>0.8（較高創意）<br>
+                        <strong>特色：</strong>跨市場量化分析專家
+                    </div>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">💬</div>
+                    <div class="feature-title">理性經濟分析師</div>
+                    <div class="feature-desc">
+                        <strong>個性：</strong>中性質疑、風險提醒<br>
+                        <strong>溫度：</strong>0.7（平衡理性）<br>
+                        <strong>特色：</strong>挑戰您的投資邏輯
+                    </div>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <div class="feature-title">資深投資顧問</div>
+                    <div class="feature-desc">
+                        <strong>個性：</strong>勇敢且有決心<br>
+                        <strong>溫度：</strong>0.7（平衡理性）<br>
+                        <strong>特色：</strong>整合所有分析，給出明確建議
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 技術特色 -->
+        <div class="section">
+            <h2 class="section-title">⚡ 技術特色</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🚀</div>
+                    <div class="feature-title">極速回應</div>
+                    <ul class="feature-list">
+                        <li>技術分析：3 秒內完成</li>
+                        <li>新聞分析：5-8 秒</li>
+                        <li>美股分析：首次 20 秒，快取後秒回</li>
+                        <li>智慧快取機制</li>
+                    </ul>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🛡️</div>
+                    <div class="feature-title">安全可靠</div>
+                    <ul class="feature-list">
+                        <li>Webhook 去重機制</li>
+                        <li>Reply Token 單次使用</li>
+                        <li>錯誤重試機制（Exponential Backoff）</li>
+                        <li>完整錯誤處理</li>
+                    </ul>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">💾</div>
+                    <div class="feature-title">智慧快取</div>
+                    <ul class="feature-list">
+                        <li>技術分析：12 小時快取</li>
+                        <li>美股數據：6 小時快取</li>
+                        <li>對話狀態：即時更新</li>
+                        <li>總評：維基百科式共享</li>
+                    </ul>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🎯</div>
+                    <div class="feature-title">狀態管理</div>
+                    <ul class="feature-list">
+                        <li>追蹤用戶對話狀態</li>
+                        <li>功能使用次數限制</li>
+                        <li>討論歷史記錄</li>
+                        <li>內容自動保存</li>
+                    </ul>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <div class="feature-title">資料整合</div>
+                    <ul class="feature-list">
+                        <li>FinMind API（台股/美股）</li>
+                        <li>Google Search API（新聞）</li>
+                        <li>DeepSeek AI（分析）</li>
+                        <li>Supabase（資料庫）</li>
+                    </ul>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🎨</div>
+                    <div class="feature-title">精美介面</div>
+                    <ul class="feature-list">
+                        <li>Flex Message 卡片式設計</li>
+                        <li>Quick Reply 快速按鈕</li>
+                        <li>視覺化圖表</li>
+                        <li>清晰的資訊層次</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- 技術堆疊 -->
+        <div class="section">
+            <h2 class="section-title">🔧 技術堆疊</h2>
+            <div class="tech-stack">
+                <div class="tech-badge">💬 LINE Messaging API</div>
+                <div class="tech-badge">☁️ Netlify Functions (Serverless)</div>
+                <div class="tech-badge">🗄️ Supabase (PostgreSQL)</div>
+                <div class="tech-badge">📊 FinMind API</div>
+                <div class="tech-badge">🔍 Google Custom Search API</div>
+                <div class="tech-badge">🤖 DeepSeek AI</div>
+                <div class="tech-badge">📈 Chart.js</div>
+                <div class="tech-badge">⚡ Node.js</div>
+                <div class="tech-badge">🎨 Canvas</div>
+            </div>
+        </div>
+
+        <!-- CTA -->
+        <div class="section" style="text-align: center;">
+            <h2 class="section-title" style="justify-content: center;">🎯 立即體驗</h2>
+            <p style="font-size: 1.2em; color: #666; margin-bottom: 20px;">
+                加入「股票超人」LINE Bot，開始您的智能投資之旅！
+            </p>
+            <a href="https://lin.ee/evT2jXv" target="_blank" class="cta-button">
+                加入好友
+            </a>
+            <p style="margin-top: 20px; color: #999;">
+                LINE ID: @754zptsk
+            </p>
+        </div>
+
+        <!-- Footer -->
+        <div style="text-align: center; color: white; margin-top: 60px; opacity: 0.8;">
+            <p>© 2024 股票超人 Stock Superman. All rights reserved.</p>
+            <p style="margin-top: 10px;">
+                <a href="index.html" style="color: white; text-decoration: none;">返回首頁</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>
+
