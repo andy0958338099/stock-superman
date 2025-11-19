@@ -132,6 +132,7 @@ async function handleCacheCommand(replyToken, text) {
       type: 'text',
       text: `🔧 快取管理\n\n${result.message}`
     });
+    await recordReplyToken(replyToken); // 成功回覆後記錄 token
     return true;
   }
 
@@ -144,6 +145,7 @@ async function handleCacheCommand(replyToken, text) {
       type: 'text',
       text: `🔧 快取管理\n\n${result.message}`
     });
+    await recordReplyToken(replyToken); // 成功回覆後記錄 token
     return true;
   }
 
@@ -359,6 +361,7 @@ async function handleStockQuery(replyToken, stockId, userId) {
           }
 
           await client.replyMessage(replyToken, replyMessages);
+          await recordReplyToken(replyToken); // 成功回覆後記錄 token
 
           console.log(`✅ 已使用快取回覆（快取時間：${new Date(cache.updated_at).toLocaleString('zh-TW')}）`);
           return;
@@ -474,6 +477,7 @@ async function handleStockQuery(replyToken, stockId, userId) {
 
     // 發送 Flex Message（使用 replyToken 一次性回覆）
     await client.replyMessage(replyToken, replyMessages);
+    await recordReplyToken(replyToken); // 成功回覆後記錄 token
 
     console.log('✅ 分析完成並已回覆');
 
@@ -486,6 +490,7 @@ async function handleStockQuery(replyToken, stockId, userId) {
         type: 'text',
         text: `❌ 查詢失敗\n\n${error.message}\n\n請確認股票代號是否正確，或稍後再試。`
       });
+      await recordReplyToken(replyToken); // 成功回覆後記錄 token
     } catch (replyError) {
       console.error('回覆錯誤訊息失敗:', replyError);
     }
@@ -564,10 +569,7 @@ exports.handler = async function(event, context) {
         continue;
       }
 
-      // 2. 記錄 reply token
-      await recordReplyToken(replyToken);
-
-      // 3. 解析互動式分析指令（格式：功能:股票代號 或 評價:股票代號:評價）
+      // 2. 解析互動式分析指令（格式：功能:股票代號 或 評價:股票代號:評價）
       const interactiveMatch = text.match(/^(新聞|政治|美股|討論|總評|評價):(\d{3,5})(?::(.+))?$/);
       if (interactiveMatch) {
         const [, action, stockId, extra] = interactiveMatch;
@@ -611,6 +613,7 @@ exports.handler = async function(event, context) {
         }
 
         await client.replyMessage(replyToken, replyMessage);
+        await recordReplyToken(replyToken); // 成功回覆後記錄 token
         console.log(`✅ ${action}分析完成`);
         continue;
       }
@@ -634,6 +637,7 @@ exports.handler = async function(event, context) {
 
         const replyMessage = await handleDiscussionOpinion(userId, stockId, stockName, text);
         await client.replyMessage(replyToken, replyMessage);
+        await recordReplyToken(replyToken); // 成功回覆後記錄 token
         console.log('✅ 討論意見處理完成');
         continue;
       }
@@ -643,6 +647,7 @@ exports.handler = async function(event, context) {
         console.log('🌎 收到美股分析請求');
         const usMarketMessage = await handleUSMarketCommand();
         await client.replyMessage(replyToken, usMarketMessage);
+        await recordReplyToken(replyToken); // 成功回覆後記錄 token
         console.log('✅ 美股分析完成');
         continue;
       }
@@ -675,6 +680,7 @@ exports.handler = async function(event, context) {
                 '• 輸入「清除快取」刪除所有快取\n' +
                 '• 輸入「刪除快取 2330」刪除特定股票快取'
         });
+        await recordReplyToken(replyToken); // 成功回覆後記錄 token
         continue;
       }
 
@@ -686,6 +692,7 @@ exports.handler = async function(event, context) {
           type: 'text',
           text: `❌ 股票代號格式錯誤：${stockId}\n\n請輸入 3-5 位數字的台股代號`
         });
+        await recordReplyToken(replyToken); // 成功回覆後記錄 token
         continue;
       }
 
