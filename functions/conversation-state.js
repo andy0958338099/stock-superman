@@ -206,14 +206,20 @@ async function getUserActiveDiscussion(userId) {
       .eq('user_id', userId)
       .eq('current_stage', 'discussion_waiting')
       .order('updated_at', { ascending: false })
-      .limit(1)
-      .single();
+      .limit(1);
 
-    if (error && error.code !== 'PGRST116') { // PGRST116 = 沒有資料
-      throw error;
+    if (error) {
+      console.error('❌ 查詢用戶討論狀態失敗:', error);
+      return null;
     }
 
-    return data;
+    // 如果沒有資料，返回 null
+    if (!data || data.length === 0) {
+      return null;
+    }
+
+    // 返回第一筆資料
+    return data[0];
   } catch (error) {
     console.error('❌ 取得用戶討論狀態失敗:', error);
     return null;
