@@ -83,11 +83,38 @@ function buildStockAnalysisQuickReply(stockId, state = null) {
 }
 
 /**
- * 建立討論提示的 Quick Reply
+ * 建立討論提示的 Quick Reply（根據輪次提供不同範例）
  * @param {string} stockId - 股票代號
+ * @param {number} round - 討論輪次（1-5）
  * @returns {object} - LINE Quick Reply 物件
  */
-function buildDiscussionPromptQuickReply(stockId) {
+function buildDiscussionPromptQuickReply(stockId, round = 1) {
+  // 根據輪次定義不同的範例
+  const examples = {
+    1: [
+      { label: '💡 範例：我認為會漲', text: '我認為這支股票會漲，因為技術面轉強' },
+      { label: '💡 範例：我認為會跌', text: '我認為這支股票會跌，因為基本面轉弱' }
+    ],
+    2: [
+      { label: '💡 範例：產業風險', text: '我最擔心的風險是產業競爭加劇' },
+      { label: '💡 範例：政策風險', text: '我認為最大的風險是政策變化' }
+    ],
+    3: [
+      { label: '💡 範例：成長機會', text: '我看到的機會是新產品即將推出' },
+      { label: '💡 範例：市場機會', text: '我認為最大的機會是市場需求增加' }
+    ],
+    4: [
+      { label: '💡 範例：買進策略', text: '我會在價格跌到 500 元時買進' },
+      { label: '💡 範例：停損策略', text: '我的停損點設在 450 元' }
+    ],
+    5: [
+      { label: '💡 範例：買進決策', text: '綜合考量後，我決定買進並持有 3 個月' },
+      { label: '💡 範例：觀望決策', text: '綜合考量後，我決定先觀望等待更好時機' }
+    ]
+  };
+
+  const roundExamples = examples[round] || examples[1];
+
   return {
     type: 'text',
     quickReply: {
@@ -96,16 +123,16 @@ function buildDiscussionPromptQuickReply(stockId) {
           type: 'action',
           action: {
             type: 'message',
-            label: '💡 範例：我認為會漲',
-            text: '我認為這支股票會漲，因為技術面轉強'
+            label: roundExamples[0].label,
+            text: roundExamples[0].text
           }
         },
         {
           type: 'action',
           action: {
             type: 'message',
-            label: '💡 範例：我認為會跌',
-            text: '我認為這支股票會跌，因為基本面轉弱'
+            label: roundExamples[1].label,
+            text: roundExamples[1].text
           }
         },
         {
@@ -161,7 +188,7 @@ function buildReviewVotingQuickReply(stockId) {
 }
 
 /**
- * 建立繼續討論的 Quick Reply
+ * 建立繼續討論的 Quick Reply（根據輪次顯示不同主題）
  * @param {string} stockId - 股票代號
  * @param {number} discussionCount - 當前討論次數
  * @returns {object} - LINE Quick Reply 物件
@@ -169,13 +196,22 @@ function buildReviewVotingQuickReply(stockId) {
 function buildContinueDiscussionQuickReply(stockId, discussionCount) {
   const items = [];
 
-  // 如果還沒達到 5 次，顯示繼續討論
+  // 定義下一輪的主題
+  const nextThemes = {
+    1: '風險評估',
+    2: '機會分析',
+    3: '進出場策略',
+    4: '最終決策'
+  };
+
+  // 如果還沒達到 5 次，顯示繼續討論（帶主題提示）
   if (discussionCount < 5) {
+    const nextTheme = nextThemes[discussionCount] || '繼續討論';
     items.push({
       type: 'action',
       action: {
         type: 'message',
-        label: `💬 繼續討論 (${discussionCount}/5)`,
+        label: `💬 ${nextTheme} (${discussionCount}/5)`,
         text: `討論:${stockId}`
       }
     });
