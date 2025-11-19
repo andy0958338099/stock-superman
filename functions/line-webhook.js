@@ -24,7 +24,7 @@ const { handlePoliticsAnalysis } = require('./handlers/politics-handler');
 const { handleUSMarketAnalysis } = require('./handlers/us-market-handler');
 const { handleDiscussionInit, handleDiscussionOpinion } = require('./handlers/discussion-handler');
 const { handleFinalReview, handleReviewVote } = require('./handlers/final-review-handler');
-const { getConversationState, initConversationState, getUserActiveDiscussion } = require('./conversation-state');
+const { getConversationState, initConversationState, getUserActiveDiscussion, saveConversationState } = require('./conversation-state');
 const { buildStockAnalysisQuickReply } = require('./quick-reply-builder');
 
 // LINE Bot 設定
@@ -689,7 +689,18 @@ exports.handler = async function(event, context) {
         continue;
       }
 
-      // 10. 處理股票查詢
+      // 10. 清除可能存在的討論等待狀態
+      // 如果用戶在討論模式中途離開（輸入股票代號），清除舊的討論狀態
+      const existingDiscussion = await getUserActiveDiscussion(userId);
+      if (existingDiscussion && existingDiscussion.current_stage === 'discussion_waiting') {
+        console.log('⚠️ 用戶離開討論模式，清除討論等待狀態');
+        await saveConversationState(userId, existingDiscussion.stock_id, {
+          current_stage: 'discussion',
+          ...existingDiscussion
+        });
+      }
+
+      // 11. 處理股票查詢
       await handleStockQuery(replyToken, stockId, userId);
     }
 
