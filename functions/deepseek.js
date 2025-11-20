@@ -238,9 +238,9 @@ VIX：${vix.close}
 【JSON 回覆】
 {
   "us_market_status": "多頭|空頭|盤整",
-  "us_market_summary": "美股總結（40字）",
+  "us_market_summary": "美股總結（80-120字，包含：S&P 500 指數、NASDAQ 指數、TSM ADR、VIX 恐慌指數的具體數值和趨勢分析）",
   "tw_market_status": "多頭|空頭|盤整",
-  "tw_market_summary": "台股總結（40字）",
+  "tw_market_summary": "台股總結（80-120字，包含：台股加權指數、USD/TWD 匯率的具體數值和趨勢分析）",
   "transmission_analysis": {
     "index_to_tw_weights": "指數→權值（40字）",
     "tech_to_semiconductor": "科技→半導體（40字）",
@@ -253,13 +253,13 @@ VIX：${vix.close}
     "potential_stocks": "潛在個股（30字）"
   },
   "correlation_score": 0-100,
-  "correlation_analysis": "連動分析（30字）",
+  "correlation_analysis": "連動分析（60-80字，詳細說明美台市場的連動性和原因）",
   "forecast": {
     "short_term_1_3days": {
       "direction": "偏多|偏空|震盪",
       "probability": 0-100,
-      "reason": "預測理由（50字）",
-      "key_observation": "關鍵觀察（30字）",
+      "reason": "預測理由（80-120字，詳細說明為什麼做出這個預測，包含技術指標分析）",
+      "key_observation": "關鍵觀察（60-80字，列出需要關注的具體指標和價位）",
       "scenario": "情境（40字）",
       "trigger_condition": "觸發條件（30字）"
     },
@@ -272,13 +272,17 @@ VIX：${vix.close}
   "strategy": "多頭|空頭|等待|區間",
   "key_levels": "關鍵價位（30字）",
   "watch_sectors": ["類股1", "類股2"],
-  "risk_factors": ["風險1", "風險2"],
+  "risk_factors": ["風險1", "風險2", "風險3", "風險4"],
   "action_plan": "操作建議（60字）",
   "opportunity_alert": "機會（30字）",
   "risk_alert": "風險（30字）"
 }
 
-要求：機率輸出、情境分析、市場動機語氣`;
+要求：
+1. us_market_summary 必須包含：S&P 500 指數 ${sp500.price}、NASDAQ 指數 ${nasdaq.price}、TSM ADR ${tsmAdr.price}、VIX 恐慌指數 ${vix.close}
+2. tw_market_summary 必須包含：台股加權指數 ${twii.price}、USD/TWD 匯率 ${usdTwd.rate}
+3. reason 和 key_observation 必須詳細且具體
+4. 機率輸出、情境分析、市場動機語氣`;
 
     // 呼叫 DeepSeek API（帶 retry）
     const result = await retryWithBackoff(async () => {
@@ -297,7 +301,7 @@ VIX：${vix.close}
             }
           ],
           temperature: 0.5,  // 🚀 優化：從 0.7 降至 0.5，減少隨機性，加快生成
-          max_tokens: 1200,  // 🚀 優化：從 1500 降至 1200，進一步加快響應
+          max_tokens: 1800,  // 🚀 增加 token 限制以支持更詳細的分析內容
           response_format: { type: 'json_object' }
         },
         {
@@ -386,6 +390,8 @@ function generateFallbackUSMarketAnalysis(marketData) {
       short_term_1_3days: {
         direction: shortDirection,
         probability: shortProbability,
+        reason: `美股${usStatus}，${sp500.kd.signal === '買進' ? 'KD 指標顯示買進訊號' : sp500.kd.signal === '賣出' ? 'KD 指標顯示賣出訊號' : 'KD 指標中性'}，台股短線${shortDirection}機率${shortProbability}%`,
+        key_observation: `關注 S&P 500 ${sp500.price}、NASDAQ ${nasdaq.price}、VIX ${vix.close}`,
         scenario: `美股${usStatus}，台股短線${shortDirection}機率${shortProbability}%`,
         trigger_condition: '關注美股盤後走勢與台指期夜盤'
       },

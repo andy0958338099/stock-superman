@@ -1018,8 +1018,7 @@ function generateMediumUSMarketFlexMessage(analysisResult) {
                 size: 'xs',
                 color: '#666666',
                 wrap: true,
-                margin: 'sm',
-                maxLines: 3
+                margin: 'sm'
               }] : [])
             ]
           },
@@ -1065,8 +1064,7 @@ function generateMediumUSMarketFlexMessage(analysisResult) {
                 size: 'xs',
                 color: '#666666',
                 wrap: true,
-                margin: 'sm',
-                maxLines: 3
+                margin: 'sm'
               }] : [])
             ]
           },
@@ -1112,8 +1110,7 @@ function generateMediumUSMarketFlexMessage(analysisResult) {
                 size: 'xs',
                 color: '#666666',
                 wrap: true,
-                margin: 'sm',
-                maxLines: 3
+                margin: 'sm'
               }] : [])
             ]
           },
@@ -1157,8 +1154,7 @@ function generateMediumUSMarketFlexMessage(analysisResult) {
                 size: 'xs',
                 color: '#666666',
                 wrap: true,
-                margin: 'sm',
-                maxLines: 3
+                margin: 'sm'
               }] : []),
               ...(analysis.forecast.short_term_1_3days.key_observation && analysis.forecast.short_term_1_3days.key_observation.trim() ? [{
                 type: 'text',
@@ -1167,8 +1163,7 @@ function generateMediumUSMarketFlexMessage(analysisResult) {
                 color: '#1DB446',
                 wrap: true,
                 margin: 'xs',
-                weight: 'bold',
-                maxLines: 2
+                weight: 'bold'
               }] : [])
             ]
           }] : []),
@@ -1192,8 +1187,7 @@ function generateMediumUSMarketFlexMessage(analysisResult) {
                 size: 'sm',
                 color: '#333333',
                 wrap: true,
-                margin: 'md',
-                maxLines: 4
+                margin: 'md'
               },
               ...(analysis.key_levels && analysis.key_levels.trim() ? [{
                 type: 'text',
@@ -1202,8 +1196,7 @@ function generateMediumUSMarketFlexMessage(analysisResult) {
                 color: '#1DB446',
                 wrap: true,
                 margin: 'sm',
-                weight: 'bold',
-                maxLines: 2
+                weight: 'bold'
               }] : [])
             ]
           },
@@ -1231,8 +1224,7 @@ function generateMediumUSMarketFlexMessage(analysisResult) {
                 size: 'xs',
                 color: '#333333',
                 wrap: true,
-                margin: 'sm',
-                maxLines: 4
+                margin: 'sm'
               }
             ]
           }] : []),
@@ -1360,8 +1352,7 @@ function generateSimplifiedUSMarketFlexMessage(analysisResult) {
                 size: 'xs',
                 color: '#666666',
                 wrap: true,
-                margin: 'sm',
-                maxLines: 2
+                margin: 'sm'
               }] : [])
             ]
           },
@@ -1482,8 +1473,7 @@ function generateSimplifiedUSMarketFlexMessage(analysisResult) {
                 size: 'xs',
                 color: '#666666',
                 wrap: true,
-                margin: 'sm',
-                maxLines: 2
+                margin: 'sm'
               }] : [])
             ]
           }] : []),
@@ -1507,8 +1497,7 @@ function generateSimplifiedUSMarketFlexMessage(analysisResult) {
                 size: 'sm',
                 color: '#333333',
                 wrap: true,
-                margin: 'md',
-                maxLines: 3
+                margin: 'md'
               }
             ]
           },
@@ -1536,8 +1525,7 @@ function generateSimplifiedUSMarketFlexMessage(analysisResult) {
                 size: 'xs',
                 color: '#333333',
                 wrap: true,
-                margin: 'sm',
-                maxLines: 3
+                margin: 'sm'
               }
             ]
           }] : []),
