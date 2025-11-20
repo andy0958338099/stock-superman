@@ -1012,15 +1012,16 @@ function generateSimplifiedUSMarketFlexMessage(analysisResult) {
                   }
                 ]
               },
-              {
+              // 只有當 summary 不為空時才顯示
+              ...(analysis.us_market_summary && analysis.us_market_summary.trim() ? [{
                 type: 'text',
-                text: analysis.us_market_summary || '美股市場分析',
+                text: analysis.us_market_summary,
                 size: 'xs',
                 color: '#666666',
                 wrap: true,
                 margin: 'sm',
                 maxLines: 2
-              }
+              }] : [])
             ]
           },
 
@@ -1133,15 +1134,16 @@ function generateSimplifiedUSMarketFlexMessage(analysisResult) {
                   }
                 ]
               },
-              {
+              // 只有當 reason 不為空時才顯示
+              ...(analysis.forecast.short_term_1_3days.reason && analysis.forecast.short_term_1_3days.reason.trim() ? [{
                 type: 'text',
-                text: analysis.forecast.short_term_1_3days.reason || '',
+                text: analysis.forecast.short_term_1_3days.reason,
                 size: 'xs',
                 color: '#666666',
                 wrap: true,
                 margin: 'sm',
                 maxLines: 2
-              }
+              }] : [])
             ]
           }] : []),
 
@@ -1160,7 +1162,7 @@ function generateSimplifiedUSMarketFlexMessage(analysisResult) {
               },
               {
                 type: 'text',
-                text: analysis.strategy || '請謹慎操作',
+                text: (analysis.strategy && analysis.strategy.trim()) ? analysis.strategy : '請謹慎操作，等待市場明確訊號',
                 size: 'sm',
                 color: '#333333',
                 wrap: true,
