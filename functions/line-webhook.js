@@ -65,8 +65,8 @@ async function handleUSMarketCommand(userId) {
       const elapsedTime = Math.floor((Date.now() - new Date(existingTask.created_at)) / 1000);
       console.log(`⏳ 用戶已有進行中的任務（已進行 ${elapsedTime} 秒）`);
 
-      // 如果任務超過 60 秒，視為超時，創建新任務
-      if (elapsedTime > 60) {
+      // 如果任務超過 90 秒，視為超時，創建新任務
+      if (elapsedTime > 90) {
         console.log(`⚠️ 任務已超時（${elapsedTime} 秒），標記為失敗並創建新任務`);
         await updateTaskStatus(existingTask.task_id, AnalysisStatus.FAILED, null, '任務超時');
         // 繼續創建新任務（不 return）
@@ -76,7 +76,7 @@ async function handleUSMarketCommand(userId) {
           type: 'text',
           text: `⏳ 美股分析進行中...\n\n` +
                 `📊 已進行 ${elapsedTime} 秒\n` +
-                `⏱️ 預計還需要 ${Math.max(0, 30 - elapsedTime)} 秒\n\n` +
+                `⏱️ 預計還需要 ${Math.max(0, 90 - elapsedTime)} 秒\n\n` +
                 `💡 請點擊下方按鈕查看分析結果`,
           quickReply: buildUSMarketPollingQuickReply(existingTask.task_id).quickReply
         };
@@ -106,8 +106,8 @@ async function handleUSMarketCommand(userId) {
             `• 台股加權指數\n` +
             `• USD/TWD 匯率\n` +
             `• VIX 恐慌指數\n\n` +
-            `⏱️ 預計需要 15-25 秒\n\n` +
-            `💡 請在 15 秒後點擊下方按鈕查看分析結果`,
+            `⏱️ 預計需要 30-60 秒\n\n` +
+            `💡 請在 30 秒後點擊下方按鈕查看分析結果`,
       quickReply: buildUSMarketPollingQuickReply(taskId).quickReply
     };
 
@@ -206,8 +206,8 @@ async function handleUSMarketPolling(userId, taskId = null) {
         const elapsedTime = Math.floor((Date.now() - new Date(task.created_at)) / 1000);
         console.log(`⏳ 分析進行中（已進行 ${elapsedTime} 秒）`);
 
-        // 如果超過 60 秒，視為超時
-        if (elapsedTime > 60) {
+        // 如果超過 90 秒，視為超時
+        if (elapsedTime > 90) {
           console.log(`⚠️ 任務已超時（${elapsedTime} 秒），標記為失敗`);
           await updateTaskStatus(task.task_id, AnalysisStatus.FAILED, null, '任務超時');
 
@@ -223,7 +223,7 @@ async function handleUSMarketPolling(userId, taskId = null) {
           type: 'text',
           text: `⏳ 美股分析進行中...\n\n` +
                 `📊 已進行 ${elapsedTime} 秒\n` +
-                `⏱️ 預計還需要 ${Math.max(0, 30 - elapsedTime)} 秒\n\n` +
+                `⏱️ 預計還需要 ${Math.max(0, 90 - elapsedTime)} 秒\n\n` +
                 `💡 請稍後再點擊下方按鈕查看結果`,
           quickReply: buildUSMarketPollingQuickReply(task.task_id).quickReply
         };
