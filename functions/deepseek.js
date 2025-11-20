@@ -369,6 +369,12 @@ function generateFallbackUSMarketAnalysis(marketData) {
     tw_market_summary: `台股 ${twii.trend}，指數 ${twii.price}`,
     correlation_score: correlationScore,
     correlation_analysis: `美台市場${usStatus === twStatus ? '同步' : '分歧'}，連動性${correlationScore > 60 ? '較高' : '中等'}`,
+    transmission_analysis: {
+      index_to_tw_weights: usStatus === '多頭' ? '美股指數走強，外資買盤增加，台股權值股受惠' : '美股指數走弱，外資賣壓增加，台股權值股承壓',
+      tech_to_semiconductor: tsmAdr.trend === '多頭' ? 'TSM ADR 走強，台積電供應鏈受惠，半導體族群偏多' : 'TSM ADR 走弱，半導體族群承壓',
+      risk_to_capital: vix.close < 20 ? 'VIX 低於 20，市場風險偏好提升，資金回流新興市場' : 'VIX 高於 20，避險情緒升溫，資金轉向防禦',
+      futures_to_gap: usStatus === '多頭' ? '美股期貨偏強，台股明日高開機率提高' : '美股期貨偏弱，台股明日低開機率提高'
+    },
     sector_impact: {
       positive: usStatus === '多頭' ? ['半導體', '電子'] : ['金融', '傳產'],
       negative: usStatus === '多頭' ? ['高殖利率股'] : ['電子', '半導體'],

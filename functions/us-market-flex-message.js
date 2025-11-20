@@ -278,7 +278,8 @@ function generateUSMarketFlexMessage(analysisResult) {
           },
 
           // 傳導分析（新增）
-          ...(analysis.transmission_analysis ? [{
+          ...(analysis.transmission_analysis &&
+              analysis.transmission_analysis.index_to_tw_weights ? [{
             type: 'box',
             layout: 'vertical',
             margin: 'xl',
@@ -291,10 +292,10 @@ function generateUSMarketFlexMessage(analysisResult) {
                 size: 'md',
                 color: '#333333'
               },
-              generateTransmissionBox('📊 指數→權值股', analysis.transmission_analysis.index_to_tw_weights),
-              generateTransmissionBox('💻 科技股→半導體', analysis.transmission_analysis.tech_to_semiconductor),
-              generateTransmissionBox('⚠️ 風險→資金偏好', analysis.transmission_analysis.risk_to_capital),
-              generateTransmissionBox('🌙 期貨→跳空機率', analysis.transmission_analysis.futures_to_gap)
+              ...(analysis.transmission_analysis.index_to_tw_weights ? [generateTransmissionBox('📊 指數→權值股', analysis.transmission_analysis.index_to_tw_weights)] : []),
+              ...(analysis.transmission_analysis.tech_to_semiconductor ? [generateTransmissionBox('💻 科技股→半導體', analysis.transmission_analysis.tech_to_semiconductor)] : []),
+              ...(analysis.transmission_analysis.risk_to_capital ? [generateTransmissionBox('⚠️ 風險→資金偏好', analysis.transmission_analysis.risk_to_capital)] : []),
+              ...(analysis.transmission_analysis.futures_to_gap ? [generateTransmissionBox('🌙 期貨→跳空機率', analysis.transmission_analysis.futures_to_gap)] : [])
             ]
           }] : []),
 
