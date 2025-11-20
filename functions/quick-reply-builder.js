@@ -246,10 +246,41 @@ function buildContinueDiscussionQuickReply(stockId, discussionCount) {
   };
 }
 
+/**
+ * 建立美股分析輪詢的 Quick Reply
+ * @param {string} taskId - 任務 ID（可選）
+ * @returns {object} - LINE Quick Reply 物件
+ */
+function buildUSMarketPollingQuickReply(taskId = null) {
+  return {
+    quickReply: {
+      items: [
+        {
+          type: 'action',
+          action: {
+            type: 'message',
+            label: '📊 查看美股分析',
+            text: taskId ? `查看美股分析:${taskId}` : '查看美股分析'
+          }
+        },
+        {
+          type: 'action',
+          action: {
+            type: 'uri',
+            label: '📤 分享給朋友們',
+            uri: `https://line.me/R/share?text=${encodeURIComponent('推薦超好用的股票大亨！https://line.me/R/ti/p/@754zptsk')}`
+          }
+        }
+      ]
+    }
+  };
+}
+
 module.exports = {
   buildStockAnalysisQuickReply,
   buildDiscussionPromptQuickReply,
   buildReviewVotingQuickReply,
-  buildContinueDiscussionQuickReply
+  buildContinueDiscussionQuickReply,
+  buildUSMarketPollingQuickReply
 };
 
