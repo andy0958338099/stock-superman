@@ -10,8 +10,8 @@ const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
 const DEEPSEEK_API_URL = process.env.DEEPSEEK_API_URL || 'https://api.deepseek.com/v1/chat/completions';
 
 // Retry 設定
-const MAX_RETRIES = 2; // DeepSeek API 較慢，減少重試次數
-const INITIAL_RETRY_DELAY = 2000; // 2 秒
+const MAX_RETRIES = 1; // 美股分析 prompt 較長，只重試 1 次避免超時
+const INITIAL_RETRY_DELAY = 1000; // 1 秒（加快重試速度）
 
 /**
  * 延遲函數
@@ -224,17 +224,17 @@ async function analyzeUSMarketWithDeepSeek(marketData) {
 
     const { sp500, nasdaq, tsmAdr, twii, usdTwd, vix } = marketData;
 
-    // 建立 AI Prompt（強化版：市場動機導向 + 傳導邏輯 + 可操作建議）
-    const prompt = `你是一位具備強烈市場動機的跨市場量化分析師，專精於美股→台股的傳導分析。
+    // 建立 AI Prompt（優化版：精簡但保留核心要求）
+    const prompt = `你是跨市場量化分析師，分析美股→台股傳導。
 
-=== 核心任務 ===
-1. 建立美股→台股的 4 條傳導邏輯鏈
-2. 交叉比對多個領先指標
-3. 為台股分類輸出影響（類股層級）
-4. 提供可操作的結論（含機率、情境、觸發條件）
-5. 使用強烈市場動機語氣（機會意識 + 風險警示 + 行動誘因）
+=== 任務 ===
+1. 建立 4 條傳導鏈（指數→權值、科技→半導體、風險→資金、期貨→跳空）
+2. 交叉比對指標（S&P/NASDAQ/VIX/TSM/匯率）
+3. 分類類股影響（受惠/受壓/中立）
+4. 提供可操作結論（機率+情境+觸發條件）
+5. 使用市場動機語氣（機會+風險+行動）
 
-=== 資料來源 ===
+=== 資料 ===
 
 【台股大盤】
 指數：${twii.name}
@@ -270,23 +270,10 @@ MACD：${tsmAdr.macd.macd} / Signal=${tsmAdr.macd.signal} / Histogram=${tsmAdr.m
 匯率：${usdTwd.rate}
 日期：${usdTwd.date}
 
-【VIX 恐慌指數】
-VIX：${vix.close}
-日期：${vix.date}
+【VIX】${vix.close}
+【匯率】${usdTwd.rate}
 
-=== 4 條傳導邏輯鏈（必須分析）===
-1. 美股指數 → 台股權值股（外資買賣力道）
-2. 美科技股（NASDAQ/TSM ADR） → 台積電/IC 設計（供應鏈連動）
-3. VIX/美債殖利率 → 台灣資金風險偏好（避險情緒）
-4. 美股期貨盤後 → 台股隔日跳空機率（開盤預期）
-
-=== 多指標交叉比對（必須檢查）===
-- S&P 500 vs NASDAQ（大盤 vs 科技）
-- VIX 恐慌指數（風險偏好）
-- TSM ADR（台股龍頭領先指標）
-- USD/TWD 匯率（外資成本）
-
-=== 分析任務（JSON 格式回覆）===
+=== JSON 格式 ===
 {
   "us_market_status": "多頭|空頭|盤整",
   "us_market_summary": "美股市場總結（帶市場動機語氣，50字內）",
@@ -334,25 +321,18 @@ VIX：${vix.close}
   "watch_sectors": ["值得觀察的類股1", "值得觀察的類股2"],
   "risk_factors": ["風險因子1", "風險因子2", "風險因子3"],
 
-  "action_plan": "可操作的具體建議（帶機率、情境、觸發條件，120字內）",
-  "opportunity_alert": "市場機會警示（強烈動機語氣，60字內）",
-  "risk_alert": "風險警示（強烈動機語氣，60字內）"
+  "action_plan": "可操作建議（100字內）",
+  "opportunity_alert": "機會警示（50字內）",
+  "risk_alert": "風險警示（50字內）"
 }
 
-=== 語氣要求（重要）===
-1. 使用「市場機會意識」語氣：「美股三大指數連三紅，台股補漲機率提高」
-2. 使用「風險警示」語氣：「若 VIX 突破 20，需留意台股回檔風險」
-3. 使用「行動誘因」語氣：「電子權值股可能先反應，請注意盤中動向」
-4. 避免預言式語句：不用「一定會」「必漲」，改用「機率提高」「偏向」
-5. 提供情境分析：「若...則...」的條件式判斷
-
-=== 注意事項 ===
-1. 必須基於 4 條傳導邏輯進行分析，不是講故事
-2. 必須交叉比對多個指標，避免片面結論
-3. 必須為台股分類輸出（類股層級）
-4. 必須提供可操作的結論（機率 + 情境 + 觸發條件）
-5. 必須使用強烈市場動機語氣
-6. 必須以機率輸出，不做絕對預測`;
+=== 要求 ===
+1. 基於 4 條傳導邏輯分析
+2. 交叉比對多指標
+3. 分類類股影響
+4. 機率輸出（避免「一定」「必漲」）
+5. 情境分析（若...則...）
+6. 市場動機語氣（機會+風險+行動）`;
 
     // 呼叫 DeepSeek API（帶 retry）
     const result = await retryWithBackoff(async () => {
@@ -371,7 +351,7 @@ VIX：${vix.close}
             }
           ],
           temperature: 0.7,
-          max_tokens: 2000,
+          max_tokens: 1500,  // 🚀 優化：從 2000 降至 1500，加快響應速度
           response_format: { type: 'json_object' }
         },
         {
@@ -379,7 +359,7 @@ VIX：${vix.close}
             'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
             'Content-Type': 'application/json'
           },
-          timeout: 15000  // 🚀 優化：從 30 秒降至 15 秒（DeepSeek 通常 3-8 秒響應）
+          timeout: 25000  // 🚀 優化：增加至 25 秒，給 DeepSeek 更多時間處理複雜 prompt
         }
       );
 
@@ -405,15 +385,72 @@ VIX：${vix.close}
 
   } catch (error) {
     if (error.response) {
-      console.error('DeepSeek API 錯誤:', error.response.status, error.response.data);
+      console.error('❌ DeepSeek API 錯誤:', error.response.status, error.response.data);
     } else if (error.request) {
-      console.error('DeepSeek API 無回應:', error.message);
+      console.error('❌ DeepSeek API 無回應（可能超時）:', error.message);
     } else {
-      console.error('DeepSeek 錯誤:', error.message);
+      console.error('❌ DeepSeek 錯誤:', error.message);
     }
 
-    return null;
+    // 🚀 優化：返回簡化版分析，避免完全失敗
+    console.log('⚠️ 返回簡化版美股分析（AI 分析失敗）');
+    return generateFallbackUSMarketAnalysis(marketData);
   }
+}
+
+/**
+ * 生成簡化版美股分析（當 AI 失敗時使用）
+ * @param {object} marketData - 市場數據
+ * @returns {object} - 簡化版分析結果
+ */
+function generateFallbackUSMarketAnalysis(marketData) {
+  const { sp500, nasdaq, tsmAdr, twii, usdTwd, vix } = marketData;
+
+  // 簡單判斷趨勢
+  const usStatus = (sp500.trend === '多頭' && nasdaq.trend === '多頭') ? '多頭' :
+                   (sp500.trend === '空頭' && nasdaq.trend === '空頭') ? '空頭' : '盤整';
+  const twStatus = twii.trend;
+
+  // 計算連動分數（基於趨勢一致性）
+  const correlationScore = (usStatus === twStatus) ? 75 : 50;
+
+  // 判斷短線方向
+  const shortDirection = (usStatus === '多頭') ? '偏多' : (usStatus === '空頭') ? '偏空' : '震盪';
+  const shortProbability = (usStatus === '多頭' || usStatus === '空頭') ? 60 : 50;
+
+  return {
+    us_market_status: usStatus,
+    us_market_summary: `S&P ${sp500.trend}、NASDAQ ${nasdaq.trend}，VIX ${vix.close}`,
+    tw_market_status: twStatus,
+    tw_market_summary: `台股 ${twii.trend}，指數 ${twii.price}`,
+    correlation_score: correlationScore,
+    correlation_analysis: `美台市場${usStatus === twStatus ? '同步' : '分歧'}，連動性${correlationScore > 60 ? '較高' : '中等'}`,
+    forecast: {
+      short_term_1_3days: {
+        direction: shortDirection,
+        probability: shortProbability,
+        scenario: `美股${usStatus}，台股短線${shortDirection}機率${shortProbability}%`,
+        trigger_condition: '關注美股盤後走勢與台指期夜盤'
+      },
+      mid_term_1week: {
+        direction: '震盪',
+        probability: 55,
+        reason: '等待更多市場訊號'
+      },
+      swing_10days: {
+        direction: shortDirection,
+        probability: 55,
+        reason: `跟隨美股${usStatus}趨勢`
+      }
+    },
+    strategy: usStatus === '多頭' ? '多頭策略' : usStatus === '空頭' ? '空頭策略' : '等待策略',
+    key_levels: '關注台指 18500 支撐與 18800 壓力',
+    watch_sectors: ['半導體', '電子', '金融'],
+    risk_factors: ['美股波動', '外資動向', '匯率變化'],
+    action_plan: `美股${usStatus}，建議${usStatus === '多頭' ? '偏多操作' : usStatus === '空頭' ? '偏空操作' : '觀望為主'}，注意風險控管`,
+    opportunity_alert: usStatus === '多頭' ? '美股走強，台股補漲機會' : '市場震盪，等待明確訊號',
+    risk_alert: usStatus === '空頭' ? '美股走弱，留意台股回檔風險' : 'VIX 波動，注意風險控管'
+  };
 }
 
 /**

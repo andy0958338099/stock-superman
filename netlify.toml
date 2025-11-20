@@ -7,9 +7,9 @@
   node_bundler = "esbuild"
   external_node_modules = ["canvas", "sharp"]
 
-# 美股分析需要較長時間，設定 26 秒超時
+# 美股分析 AI prompt 較複雜，需要更長時間處理
 [functions."line-webhook"]
-  timeout = 26
+  timeout = 40
 
 [[redirects]]
   from = "/api/*"
