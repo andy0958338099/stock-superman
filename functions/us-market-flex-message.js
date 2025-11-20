@@ -715,7 +715,7 @@ function generateUSMarketFlexMessage(analysisResult) {
                   }
                 ]
               }] : []),
-              ...(analysis.watch_sectors && analysis.watch_sectors.length > 0 ? [{
+              ...(analysis.watch_sectors && Array.isArray(analysis.watch_sectors) && analysis.watch_sectors.length > 0 ? [{
                 type: 'box',
                 layout: 'vertical',
                 margin: 'md',
@@ -792,7 +792,8 @@ function generateUSMarketFlexMessage(analysisResult) {
           }] : []),
 
           // 關鍵重點
-          {
+          // 關鍵重點（條件式渲染）
+          ...(analysis.key_points && Array.isArray(analysis.key_points) && analysis.key_points.length > 0 ? [{
             type: 'box',
             layout: 'vertical',
             margin: 'xl',
@@ -814,7 +815,7 @@ function generateUSMarketFlexMessage(analysisResult) {
                 margin: 'md'
               }
             ]
-          },
+          }] : []),
 
           // 操作建議
           {

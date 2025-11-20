@@ -398,6 +398,11 @@ function generateFallbackUSMarketAnalysis(marketData) {
     key_levels: '關注台指 18500 支撐與 18800 壓力',
     watch_sectors: ['半導體', '電子', '金融'],
     risk_factors: ['美股波動', '外資動向', '匯率變化'],
+    key_points: [
+      `美股${usStatus}，台股${twStatus}`,
+      `連動性${correlationScore > 60 ? '較高' : '中等'}（${correlationScore}%）`,
+      `短線${shortDirection}機率 ${shortProbability}%`
+    ],
     action_plan: `美股${usStatus}，建議${usStatus === '多頭' ? '偏多操作' : usStatus === '空頭' ? '偏空操作' : '觀望為主'}，注意風險控管`,
     opportunity_alert: usStatus === '多頭' ? '美股走強，台股補漲機會' : '市場震盪，等待明確訊號',
     risk_alert: usStatus === '空頭' ? '美股走弱，留意台股回檔風險' : 'VIX 波動，注意風險控管'
