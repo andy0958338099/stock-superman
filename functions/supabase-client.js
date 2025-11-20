@@ -229,7 +229,7 @@ async function getUSMarketCache() {
       .from('stock_cache')
       .select('*')
       .eq('stock_id', 'US_MARKET')
-      .order('created_at', { ascending: false })
+      .order('updated_at', { ascending: false })
       .limit(1);
 
     if (error) {
@@ -245,9 +245,9 @@ async function getUSMarketCache() {
     }
 
     const cache = data[0];
-    console.log(`📅 快取建立時間：${cache.created_at}`);
+    console.log(`📅 快取更新時間：${cache.updated_at}`);
 
-    const cacheTime = new Date(cache.created_at);
+    const cacheTime = new Date(cache.updated_at);
     const now = new Date();
     const diffHours = (now - cacheTime) / (1000 * 60 * 60);
 
@@ -258,8 +258,8 @@ async function getUSMarketCache() {
     }
 
     console.log(`✅ 快取有效！使用美股分析快取（${diffHours.toFixed(1)} 小時前，快取有效期 6 小時）`);
-    console.log(`📊 快取數據結構：`, Object.keys(cache.analysis_result || {}));
-    return cache.analysis_result;
+    console.log(`📊 快取數據結構：`, Object.keys(cache.result_json || {}));
+    return cache.result_json;
 
   } catch (error) {
     console.error('❌ 取得美股分析快取失敗:', error);
@@ -277,31 +277,20 @@ async function saveUSMarketCache(analysisResult) {
     console.log('💾 開始儲存美股分析快取到 stock_cache 表...');
     console.log('📊 分析結果結構:', Object.keys(analysisResult || {}));
 
-    // 先刪除舊的快取
-    console.log('🗑️ 刪除舊的 US_MARKET 快取...');
-    const { error: deleteError } = await supabase
-      .from('stock_cache')
-      .delete()
-      .eq('stock_id', 'US_MARKET');
-
-    if (deleteError) {
-      console.error('❌ 刪除舊快取時發生錯誤:', deleteError);
-    } else {
-      console.log('✅ 舊快取已刪除');
-    }
-
-    // 儲存新的快取
-    console.log('💾 插入新的 US_MARKET 快取...');
+    // 使用 upsert 來插入或更新快取
+    console.log('💾 Upsert US_MARKET 快取...');
     const { error } = await supabase
       .from('stock_cache')
-      .insert({
+      .upsert({
         stock_id: 'US_MARKET',
-        analysis_result: analysisResult,
-        created_at: new Date().toISOString()
+        result_json: analysisResult,
+        updated_at: new Date().toISOString()
+      }, {
+        onConflict: 'stock_id'
       });
 
     if (error) {
-      console.error('❌ 插入新快取時發生錯誤:', error);
+      console.error('❌ Upsert 快取時發生錯誤:', error);
       throw error;
     }
 
