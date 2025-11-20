@@ -132,7 +132,7 @@ async function saveStockCache(cacheData) {
 
 /**
  * 刪除指定股票的快取
- * @param {string} stockId - 股票代號（可選，若為 null 則刪除所有快取）
+ * @param {string} stockId - 股票代號（可選，若為 null 則刪除所有快取，包括美股分析快取）
  * @returns {Promise<object>} - { success: boolean, count: number, message: string }
  */
 async function deleteStockCache(stockId = null) {
@@ -156,14 +156,44 @@ async function deleteStockCache(stockId = null) {
         message: `已刪除股票 ${stockId} 的快取（${deletedCount} 筆）`
       };
     } else {
-      // 刪除所有快取：先查詢所有記錄，再刪除
+      // 刪除所有快取：包括台股快取和美股分析快取
+
+      // 1. 刪除台股快取
       const { data: allData, error: selectError } = await supabase
         .from('stock_cache')
         .select('stock_id');
 
       if (selectError) throw selectError;
 
-      if (!allData || allData.length === 0) {
+      let stockCacheCount = 0;
+      if (allData && allData.length > 0) {
+        const { data, error } = await supabase
+          .from('stock_cache')
+          .delete()
+          .neq('stock_id', '')  // 刪除所有 stock_id 不等於空字串的記錄（即所有記錄）
+          .select();
+
+        if (error) throw error;
+        stockCacheCount = data ? data.length : 0;
+        console.log(`✅ 已刪除台股快取（${stockCacheCount} 筆）`);
+      }
+
+      // 2. 刪除美股分析快取
+      const { data: usMarketData, error: usMarketError } = await supabase
+        .from('us_market_analysis_tasks')
+        .delete()
+        .neq('task_id', '')  // 刪除所有記錄
+        .select();
+
+      let usMarketCount = 0;
+      if (!usMarketError && usMarketData) {
+        usMarketCount = usMarketData.length;
+        console.log(`✅ 已刪除美股分析快取（${usMarketCount} 筆）`);
+      }
+
+      const totalCount = stockCacheCount + usMarketCount;
+
+      if (totalCount === 0) {
         console.log('⚠️ 沒有快取可以刪除');
         return {
           success: true,
@@ -172,22 +202,10 @@ async function deleteStockCache(stockId = null) {
         };
       }
 
-      // 刪除所有記錄（使用 neq 搭配一個不可能的值來刪除所有）
-      const { data, error } = await supabase
-        .from('stock_cache')
-        .delete()
-        .neq('stock_id', '')  // 刪除所有 stock_id 不等於空字串的記錄（即所有記錄）
-        .select();
-
-      if (error) throw error;
-
-      const deletedCount = data ? data.length : 0;
-      console.log(`✅ 已刪除所有快取（${deletedCount} 筆）`);
-
       return {
         success: true,
-        count: deletedCount,
-        message: `已刪除所有快取（${deletedCount} 筆）`
+        count: totalCount,
+        message: `已刪除所有快取（台股 ${stockCacheCount} 筆 + 美股 ${usMarketCount} 筆，共 ${totalCount} 筆）`
       };
     }
   } catch (error) {
