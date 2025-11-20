@@ -18,15 +18,9 @@ function generateUSMarketFlexMessage(analysisResult) {
     };
   }
 
-  // 檢查 Flex Message 大小並決定是否使用簡化版
-  const estimatedSize = JSON.stringify(analysis).length;
-  console.log(`📊 Flex Message 預估大小：${estimatedSize} bytes`);
-
-  // 如果內容太大（> 8000 bytes），使用簡化版
-  if (estimatedSize > 8000) {
-    console.log('⚠️ 內容過大，使用簡化版 Flex Message');
-    return generateSimplifiedUSMarketFlexMessage(analysisResult);
-  }
+  // 直接使用簡化版，避免 LINE API 400 錯誤
+  console.log('📊 使用簡化版 Flex Message（避免超過 LINE 10KB 限制）');
+  return generateSimplifiedUSMarketFlexMessage(analysisResult);
 
   const { sp500, nasdaq, tsmAdr, twii, usdTwd, vix } = data;
 
