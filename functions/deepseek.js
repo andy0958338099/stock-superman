@@ -258,6 +258,8 @@ VIX：${vix.close}
     "short_term_1_3days": {
       "direction": "偏多|偏空|震盪",
       "probability": 0-100,
+      "reason": "預測理由（50字）",
+      "key_observation": "關鍵觀察（30字）",
       "scenario": "情境（40字）",
       "trigger_condition": "觸發條件（30字）"
     },
