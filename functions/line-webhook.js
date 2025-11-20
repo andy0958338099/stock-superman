@@ -20,6 +20,7 @@ const { generateUSMarketFlexMessage } = require('./us-market-flex-message');
 const {
   AnalysisStatus,
   createUSMarketAnalysisTask,
+  updateTaskStatus,
   getTaskStatus,
   getUserLatestTask,
   executeUSMarketAnalysis
@@ -64,14 +65,22 @@ async function handleUSMarketCommand(userId) {
       const elapsedTime = Math.floor((Date.now() - new Date(existingTask.created_at)) / 1000);
       console.log(`⏳ 用戶已有進行中的任務（已進行 ${elapsedTime} 秒）`);
 
-      return {
-        type: 'text',
-        text: `⏳ 美股分析進行中...\n\n` +
-              `📊 已進行 ${elapsedTime} 秒\n` +
-              `⏱️ 預計還需要 ${Math.max(0, 25 - elapsedTime)} 秒\n\n` +
-              `💡 請點擊下方按鈕查看分析結果`,
-        quickReply: buildUSMarketPollingQuickReply(existingTask.task_id).quickReply
-      };
+      // 如果任務超過 60 秒，視為超時，創建新任務
+      if (elapsedTime > 60) {
+        console.log(`⚠️ 任務已超時（${elapsedTime} 秒），標記為失敗並創建新任務`);
+        await updateTaskStatus(existingTask.task_id, AnalysisStatus.FAILED, null, '任務超時');
+        // 繼續創建新任務（不 return）
+      } else {
+        // 任務仍在合理時間內，返回等待訊息
+        return {
+          type: 'text',
+          text: `⏳ 美股分析進行中...\n\n` +
+                `📊 已進行 ${elapsedTime} 秒\n` +
+                `⏱️ 預計還需要 ${Math.max(0, 30 - elapsedTime)} 秒\n\n` +
+                `💡 請點擊下方按鈕查看分析結果`,
+          quickReply: buildUSMarketPollingQuickReply(existingTask.task_id).quickReply
+        };
+      }
     }
 
     // 2. 創建新任務
@@ -193,15 +202,28 @@ async function handleUSMarketPolling(userId, taskId = null) {
         return generateUSMarketFlexMessage(task.result);
 
       case AnalysisStatus.PROCESSING:
-        // 仍在處理中，返回進度訊息
+        // 仍在處理中，檢查是否超時
         const elapsedTime = Math.floor((Date.now() - new Date(task.created_at)) / 1000);
         console.log(`⏳ 分析進行中（已進行 ${elapsedTime} 秒）`);
+
+        // 如果超過 60 秒，視為超時
+        if (elapsedTime > 60) {
+          console.log(`⚠️ 任務已超時（${elapsedTime} 秒），標記為失敗`);
+          await updateTaskStatus(task.task_id, AnalysisStatus.FAILED, null, '任務超時');
+
+          return {
+            type: 'text',
+            text: `⚠️ 美股分析超時\n\n` +
+                  `任務已進行 ${elapsedTime} 秒但未完成\n\n` +
+                  `💡 請重新輸入「美股」開始新的分析`
+          };
+        }
 
         return {
           type: 'text',
           text: `⏳ 美股分析進行中...\n\n` +
                 `📊 已進行 ${elapsedTime} 秒\n` +
-                `⏱️ 預計還需要 ${Math.max(0, 25 - elapsedTime)} 秒\n\n` +
+                `⏱️ 預計還需要 ${Math.max(0, 30 - elapsedTime)} 秒\n\n` +
                 `💡 請稍後再點擊下方按鈕查看結果`,
           quickReply: buildUSMarketPollingQuickReply(task.task_id).quickReply
         };
