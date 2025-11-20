@@ -3,6 +3,7 @@
  * 實現異步分析 + 輪詢機制，避免超時問題
  */
 
+const axios = require('axios');
 const { supabase } = require('./supabase-client');
 const { analyzeUSMarket } = require('./us-market-analysis');
 
@@ -139,25 +140,33 @@ async function getUserLatestTask(userId) {
 
 /**
  * 執行美股分析（異步）
+ * 通過調用獨立的 Worker Function 來執行分析
  * @param {string} taskId - 任務 ID
  */
 async function executeUSMarketAnalysis(taskId) {
   try {
-    console.log(`🚀 開始執行美股分析任務：${taskId}`);
+    console.log(`🚀 觸發美股分析 Worker：${taskId}`);
 
-    // 更新狀態為處理中
-    await updateTaskStatus(taskId, AnalysisStatus.PROCESSING);
+    // 獲取當前部署的 URL
+    const baseUrl = process.env.URL || 'https://stock-superman.netlify.app';
+    const workerUrl = `${baseUrl}/.netlify/functions/us-market-analysis-worker`;
 
-    // 執行分析
-    const result = await analyzeUSMarket();
+    console.log(`📡 調用 Worker URL: ${workerUrl}`);
 
-    // 更新狀態為已完成
-    await updateTaskStatus(taskId, AnalysisStatus.COMPLETED, result);
+    // 調用 Worker Function（不等待結果）
+    axios.post(workerUrl, { taskId }, {
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      timeout: 5000  // 5 秒超時（只是觸發，不等待完成）
+    }).catch(err => {
+      console.error('❌ 調用 Worker 失敗:', err.message);
+    });
 
-    console.log(`✅ 美股分析任務完成：${taskId}`);
+    console.log(`✅ Worker 已觸發：${taskId}`);
 
   } catch (error) {
-    console.error(`❌ 美股分析任務失敗：${taskId}`, error);
+    console.error(`❌ 觸發 Worker 失敗：${taskId}`, error);
     await updateTaskStatus(taskId, AnalysisStatus.FAILED, null, error.message);
   }
 }
