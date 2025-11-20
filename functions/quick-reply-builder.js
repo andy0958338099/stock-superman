@@ -59,6 +59,19 @@ function buildStockAnalysisQuickReply(stockId, state = null) {
     }
   });
 
+  // 6. 分享給朋友們按鈕（永遠顯示）
+  // 注意：Quick Reply 最多只能有 13 個按鈕，所以我們確保不超過限制
+  if (items.length < 13) {
+    items.push({
+      type: 'action',
+      action: {
+        type: 'uri',
+        label: '📤 分享給朋友們',
+        uri: 'https://line.me/R/ti/p/@754zptsk'
+      }
+    });
+  }
+
   // 如果沒有任何按鈕，返回 null
   if (items.length === 0) {
     return null;
@@ -163,6 +176,14 @@ function buildReviewVotingQuickReply(stockId) {
             label: '🔄 重新生成總評',
             text: `總評:${stockId}`
           }
+        },
+        {
+          type: 'action',
+          action: {
+            type: 'uri',
+            label: '📤 分享給朋友們',
+            uri: 'https://line.me/R/ti/p/@754zptsk'
+          }
         }
       ]
     }
@@ -206,6 +227,16 @@ function buildContinueDiscussionQuickReply(stockId, discussionCount) {
       type: 'message',
       label: '📊 查看總評',
       text: `總評:${stockId}`
+    }
+  });
+
+  // 分享給朋友們按鈕
+  items.push({
+    type: 'action',
+    action: {
+      type: 'uri',
+      label: '📤 分享給朋友們',
+      uri: 'https://line.me/R/ti/p/@754zptsk'
     }
   });
 
