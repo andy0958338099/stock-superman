@@ -224,12 +224,15 @@ async function analyzeUSMarketWithDeepSeek(marketData) {
 
     const { sp500, nasdaq, tsmAdr, twii, usdTwd, vix } = marketData;
 
-    // 建立 AI Prompt
-    const prompt = `你是一位跨市場量化分析師，請根據以下數據進行：
-1. 美股主要指數的技術面分析（S&P500、NASDAQ）
-2. 台股大盤的技術面分析
-3. 評估美股狀態對台股的短線（3天）與中期（10天）影響
-4. 給出具體投資建議（標註風險）
+    // 建立 AI Prompt（強化版：市場動機導向 + 傳導邏輯 + 可操作建議）
+    const prompt = `你是一位具備強烈市場動機的跨市場量化分析師，專精於美股→台股的傳導分析。
+
+=== 核心任務 ===
+1. 建立美股→台股的 4 條傳導邏輯鏈
+2. 交叉比對多個領先指標
+3. 為台股分類輸出影響（類股層級）
+4. 提供可操作的結論（含機率、情境、觸發條件）
+5. 使用強烈市場動機語氣（機會意識 + 風險警示 + 行動誘因）
 
 === 資料來源 ===
 
@@ -271,39 +274,85 @@ MACD：${tsmAdr.macd.macd} / Signal=${tsmAdr.macd.signal} / Histogram=${tsmAdr.m
 VIX：${vix.close}
 日期：${vix.date}
 
-=== 分析任務 ===
-請以 JSON 格式回覆，包含以下欄位：
+=== 4 條傳導邏輯鏈（必須分析）===
+1. 美股指數 → 台股權值股（外資買賣力道）
+2. 美科技股（NASDAQ/TSM ADR） → 台積電/IC 設計（供應鏈連動）
+3. VIX/美債殖利率 → 台灣資金風險偏好（避險情緒）
+4. 美股期貨盤後 → 台股隔日跳空機率（開盤預期）
+
+=== 多指標交叉比對（必須檢查）===
+- S&P 500 vs NASDAQ（大盤 vs 科技）
+- VIX 恐慌指數（風險偏好）
+- TSM ADR（台股龍頭領先指標）
+- USD/TWD 匯率（外資成本）
+
+=== 分析任務（JSON 格式回覆）===
 {
   "us_market_status": "多頭|空頭|盤整",
-  "us_market_summary": "美股市場總結（50字內）",
+  "us_market_summary": "美股市場總結（帶市場動機語氣，50字內）",
   "tw_market_status": "多頭|空頭|盤整",
-  "tw_market_summary": "台股市場總結（50字內）",
-  "correlation_score": 0-100 (美股與台股短線連動性分數),
+  "tw_market_summary": "台股市場總結（帶市場動機語氣，50字內）",
+
+  "transmission_analysis": {
+    "index_to_tw_weights": "美股指數→台股權值股傳導分析（60字內）",
+    "tech_to_semiconductor": "美科技股→台灣半導體傳導分析（60字內）",
+    "risk_to_capital": "VIX/美債→台灣資金風險偏好分析（60字內）",
+    "futures_to_gap": "美股期貨→台股跳空機率分析（60字內）"
+  },
+
+  "sector_impact": {
+    "positive": ["受惠類股1", "受惠類股2"],
+    "negative": ["受壓類股1", "受壓類股2"],
+    "neutral": ["中立類股1"],
+    "potential_stocks": "潛在受惠個股方向（50字內）"
+  },
+
+  "correlation_score": 0-100,
   "correlation_analysis": "連動性分析（50字內）",
-  "tw_3day_forecast": {
-    "direction": "上漲|下跌|盤整",
-    "probability": 0-100,
-    "reason": "理由（50字內）"
+
+  "forecast": {
+    "short_term_1_3days": {
+      "direction": "偏多|偏空|震盪",
+      "probability": 0-100,
+      "scenario": "情境分析（若...則...，60字內）",
+      "trigger_condition": "觸發條件（例：台指期夜盤 +80 點以上，40字內）"
+    },
+    "mid_term_1week": {
+      "direction": "偏多|偏空|震盪",
+      "probability": 0-100,
+      "reason": "理由（50字內）"
+    },
+    "swing_10days": {
+      "direction": "偏多|偏空|震盪",
+      "probability": 0-100,
+      "reason": "理由（50字內）"
+    }
   },
-  "tw_10day_forecast": {
-    "direction": "上漲|下跌|盤整",
-    "probability": 0-100,
-    "reason": "理由（50字內）"
-  },
-  "strategy": "多頭策略|空頭策略|等待策略",
-  "recommended_sectors": ["半導體", "金融", "AI", "原物料", "傳產"],
-  "risk_factors": ["外資動向", "匯率波動", "政策風險", "量能不足", "美股回檔"],
-  "key_points": ["重點1", "重點2", "重點3", "重點4", "重點5"],
-  "action_plan": "具體操作建議（100字內）"
+
+  "strategy": "多頭策略|空頭策略|等待策略|區間操作",
+  "key_levels": "明日關鍵價位或時間點（例：台指 18500 支撐，50字內）",
+  "watch_sectors": ["值得觀察的類股1", "值得觀察的類股2"],
+  "risk_factors": ["風險因子1", "風險因子2", "風險因子3"],
+
+  "action_plan": "可操作的具體建議（帶機率、情境、觸發條件，120字內）",
+  "opportunity_alert": "市場機會警示（強烈動機語氣，60字內）",
+  "risk_alert": "風險警示（強烈動機語氣，60字內）"
 }
 
-注意事項：
-1. 基於技術指標數據進行客觀分析
-2. 評估美股對台股的影響程度
-3. TSM ADR 與台積電本體的差異
-4. 匯率對外資買賣的影響
-5. VIX 反映的市場風險偏好
-6. 給出明確的風險提示`;
+=== 語氣要求（重要）===
+1. 使用「市場機會意識」語氣：「美股三大指數連三紅，台股補漲機率提高」
+2. 使用「風險警示」語氣：「若 VIX 突破 20，需留意台股回檔風險」
+3. 使用「行動誘因」語氣：「電子權值股可能先反應，請注意盤中動向」
+4. 避免預言式語句：不用「一定會」「必漲」，改用「機率提高」「偏向」
+5. 提供情境分析：「若...則...」的條件式判斷
+
+=== 注意事項 ===
+1. 必須基於 4 條傳導邏輯進行分析，不是講故事
+2. 必須交叉比對多個指標，避免片面結論
+3. 必須為台股分類輸出（類股層級）
+4. 必須提供可操作的結論（機率 + 情境 + 觸發條件）
+5. 必須使用強烈市場動機語氣
+6. 必須以機率輸出，不做絕對預測`;
 
     // 呼叫 DeepSeek API（帶 retry）
     const result = await retryWithBackoff(async () => {
@@ -314,7 +363,7 @@ VIX：${vix.close}
           messages: [
             {
               role: 'system',
-              content: '你是一位專業的跨市場量化分析師，擅長分析美股與台股的連動關係，並基於技術指標給出投資建議。'
+              content: '你是一位具備強烈市場動機的跨市場量化分析師，專精於美股→台股的傳導分析。你的分析必須：1) 建立明確的因果傳導鏈 2) 交叉比對多個領先指標 3) 為台股分類輸出影響 4) 提供可操作的結論（含機率、情境、觸發條件）5) 使用強烈市場動機語氣（機會意識 + 風險警示 + 行動誘因）6) 以機率輸出，避免絕對預測。'
             },
             {
               role: 'user',
