@@ -67,7 +67,7 @@ function buildStockAnalysisQuickReply(stockId, state = null) {
       action: {
         type: 'uri',
         label: '📤 分享給朋友們',
-        uri: 'line://ti/p/@754zptsk'
+        uri: 'line://ti/p/@754zptsk?oat_content=url&ts=11172135'
       }
     });
   }
@@ -182,7 +182,7 @@ function buildReviewVotingQuickReply(stockId) {
           action: {
             type: 'uri',
             label: '📤 分享給朋友們',
-            uri: 'line://ti/p/@754zptsk'
+            uri: 'line://ti/p/@754zptsk?oat_content=url&ts=11172135'
           }
         }
       ]
@@ -236,7 +236,7 @@ function buildContinueDiscussionQuickReply(stockId, discussionCount) {
     action: {
       type: 'uri',
       label: '📤 分享給朋友們',
-      uri: 'line://ti/p/@754zptsk'
+      uri: 'line://ti/p/@754zptsk?oat_content=url&ts=11172135'
     }
   });
 
