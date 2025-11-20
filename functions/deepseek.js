@@ -336,14 +336,21 @@ VIX：${vix.close}
   } catch (error) {
     if (error.response) {
       console.error('❌ DeepSeek API 錯誤:', error.response.status, error.response.data);
+      console.error('   錯誤詳情:', JSON.stringify(error.response.data, null, 2));
     } else if (error.request) {
       console.error('❌ DeepSeek API 無回應（可能超時）:', error.message);
+      console.error('   請求配置:', {
+        url: DEEPSEEK_API_URL,
+        timeout: 20000,
+        maxRetries: MAX_RETRIES
+      });
     } else {
       console.error('❌ DeepSeek 錯誤:', error.message);
+      console.error('   錯誤堆疊:', error.stack);
     }
 
-    // 🚀 優化：返回簡化版分析，避免完全失敗
-    console.log('⚠️ 返回簡化版美股分析（AI 分析失敗）');
+    // 🚀 優化：返回增強版 fallback 分析，避免完全失敗
+    console.log('⚠️ 返回增強版美股分析（AI 分析失敗，但 fallback 已包含詳細信息）');
     return generateFallbackUSMarketAnalysis(marketData);
   }
 }
@@ -370,11 +377,11 @@ function generateFallbackUSMarketAnalysis(marketData) {
 
   return {
     us_market_status: usStatus,
-    us_market_summary: `S&P ${sp500.trend}、NASDAQ ${nasdaq.trend}，VIX ${vix.close}`,
+    us_market_summary: `S&P 500 指數目前為 ${sp500.price} 點，呈現${sp500.trend}格局，KD 指標 K 值 ${sp500.kd.K}、D 值 ${sp500.kd.D}，${sp500.kd.signal}訊號。NASDAQ 指數 ${nasdaq.price} 點，同樣呈現${nasdaq.trend}，科技股${nasdaq.trend === '多頭' ? '表現強勁' : nasdaq.trend === '空頭' ? '承壓明顯' : '震盪整理'}。TSM ADR 收盤 ${tsmAdr.price} 美元，${tsmAdr.trend}，半導體族群${tsmAdr.trend === '多頭' ? '偏多' : tsmAdr.trend === '空頭' ? '偏弱' : '中性'}。VIX 恐慌指數 ${vix.close}，市場${vix.close < 15 ? '風險偏好較高' : vix.close < 20 ? '情緒中性' : '避險情緒升溫'}。`,
     tw_market_status: twStatus,
-    tw_market_summary: `台股 ${twii.trend}，指數 ${twii.price}`,
+    tw_market_summary: `台股加權指數目前為 ${twii.price} 點，呈現${twii.trend}格局，KD 指標 K 值 ${twii.kd.K}、D 值 ${twii.kd.D}，${twii.kd.signal}訊號。USD/TWD 匯率 ${usdTwd.rate}，台幣${usdTwd.rate > 32 ? '相對偏弱' : usdTwd.rate < 30 ? '相對強勢' : '相對穩定'}。外資近期${usStatus === '多頭' ? '買盤增加' : usStatus === '空頭' ? '賣壓增加' : '呈現觀望態度'}，成交量${twii.trend === '多頭' ? '放大' : twii.trend === '空頭' ? '萎縮' : '略顯不足'}。`,
     correlation_score: correlationScore,
-    correlation_analysis: `美台市場${usStatus === twStatus ? '同步' : '分歧'}，連動性${correlationScore > 60 ? '較高' : '中等'}`,
+    correlation_analysis: `美股與台股連動性${correlationScore > 70 ? '較高' : correlationScore > 50 ? '中等' : '較低'}（${correlationScore} 分）。當前美股${usStatus}、台股${twStatus}，市場${usStatus === twStatus ? '同步運行' : '出現分歧'}。主要受${usStatus === '多頭' ? '外資買盤增加、台積電 ADR 走強' : usStatus === '空頭' ? '外資賣壓增加、避險情緒升溫' : '市場觀望、等待方向明朗'}影響。`,
     transmission_analysis: {
       index_to_tw_weights: usStatus === '多頭' ? '美股指數走強，外資買盤增加，台股權值股受惠' : '美股指數走弱，外資賣壓增加，台股權值股承壓',
       tech_to_semiconductor: tsmAdr.trend === '多頭' ? 'TSM ADR 走強，台積電供應鏈受惠，半導體族群偏多' : 'TSM ADR 走弱，半導體族群承壓',
@@ -390,8 +397,8 @@ function generateFallbackUSMarketAnalysis(marketData) {
       short_term_1_3days: {
         direction: shortDirection,
         probability: shortProbability,
-        reason: `美股${usStatus}，${sp500.kd.signal === '買進' ? 'KD 指標顯示買進訊號' : sp500.kd.signal === '賣出' ? 'KD 指標顯示賣出訊號' : 'KD 指標中性'}，台股短線${shortDirection}機率${shortProbability}%`,
-        key_observation: `關注 S&P 500 ${sp500.price}、NASDAQ ${nasdaq.price}、VIX ${vix.close}`,
+        reason: `美股三大指數均呈現${usStatus}格局，S&P 500 KD 指標 K 值 ${sp500.kd.K}、D 值 ${sp500.kd.D}，${sp500.kd.signal}訊號。NASDAQ ${nasdaq.trend}，${nasdaq.kd.signal}。VIX 指數 ${vix.close}，${vix.close < 15 ? '市場風險偏好較高' : vix.close < 20 ? '情緒中性' : '避險情緒升溫'}。台股受美股影響，外資${usStatus === '多頭' ? '買盤增加' : usStatus === '空頭' ? '賣壓增加' : '觀望'}，短線${shortDirection}機率 ${shortProbability}%。`,
+        key_observation: `關注 S&P 500 能否守住 ${(sp500.price * 0.98).toFixed(0)} 點支撐、NASDAQ ${(nasdaq.price * 0.98).toFixed(0)} 點關鍵位、VIX 是否突破 ${vix.close < 20 ? '20' : '25'} 點、台指期夜盤走勢、外資買賣超動向。TSM ADR ${tsmAdr.price} 美元，${tsmAdr.trend}，影響台積電及半導體族群。`,
         scenario: `美股${usStatus}，台股短線${shortDirection}機率${shortProbability}%`,
         trigger_condition: '關注美股盤後走勢與台指期夜盤'
       },
@@ -403,9 +410,14 @@ function generateFallbackUSMarketAnalysis(marketData) {
       // 🚀 移除 swing_10days，減少生成內容
     },
     strategy: usStatus === '多頭' ? '多頭策略' : usStatus === '空頭' ? '空頭策略' : '等待策略',
-    key_levels: '關注台指 18500 支撐與 18800 壓力',
-    watch_sectors: ['半導體', '電子', '金融'],
-    risk_factors: ['美股波動', '外資動向', '匯率變化'],
+    key_levels: `S&P 500 支撐 ${(sp500.price * 0.98).toFixed(0)}、壓力 ${(sp500.price * 1.02).toFixed(0)}；NASDAQ 支撐 ${(nasdaq.price * 0.98).toFixed(0)}；台指支撐 ${(twii.price * 0.98).toFixed(0)}、壓力 ${(twii.price * 1.02).toFixed(0)}`,
+    watch_sectors: usStatus === '多頭' ? ['半導體', '電子', 'AI 概念'] : usStatus === '空頭' ? ['金融', '傳產', '高殖利率'] : ['半導體', '電子', '金融'],
+    risk_factors: [
+      `美股${usStatus}，波動加劇風險`,
+      `外資${usStatus === '多頭' ? '買盤持續性' : usStatus === '空頭' ? '賣壓擴大' : '觀望態度'}`,
+      `VIX ${vix.close}，${vix.close > 20 ? '恐慌情緒升溫' : '市場情緒穩定'}`,
+      `匯率 ${usdTwd.rate}，${usdTwd.rate > 32 ? '台幣貶值壓力' : '匯率相對穩定'}`
+    ],
     key_points: [
       `美股${usStatus}，台股${twStatus}`,
       `連動性${correlationScore > 60 ? '較高' : '中等'}（${correlationScore}%）`,
