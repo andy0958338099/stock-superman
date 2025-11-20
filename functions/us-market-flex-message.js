@@ -18,9 +18,9 @@ function generateUSMarketFlexMessage(analysisResult) {
     };
   }
 
-  // 直接使用簡化版，避免 LINE API 400 錯誤
-  console.log('📊 使用簡化版 Flex Message（避免超過 LINE 10KB 限制）');
-  return generateSimplifiedUSMarketFlexMessage(analysisResult);
+  // 使用中等版本，包含更多信息但避免超過 LINE 限制
+  console.log('📊 使用中等版 Flex Message（平衡信息量與大小限制）');
+  return generateMediumUSMarketFlexMessage(analysisResult);
 
   const { sp500, nasdaq, tsmAdr, twii, usdTwd, vix } = data;
 
@@ -917,6 +917,347 @@ function generateIndexBox(name, indexData) {
         ]
       }
     ]
+  };
+}
+
+/**
+ * 生成中等版美股市場分析 Flex Message（平衡信息量與大小）
+ * @param {object} analysisResult - 美股分析結果
+ * @returns {object} - LINE Flex Message
+ */
+function generateMediumUSMarketFlexMessage(analysisResult) {
+  const { data, analysis } = analysisResult;
+  const { sp500, nasdaq, tsmAdr, twii } = data;
+
+  // 判斷趨勢顏色
+  const getTrendColor = (status) => {
+    if (status === '多頭' || status === '偏多') return '#00C851';
+    if (status === '空頭' || status === '偏空') return '#ff4444';
+    return '#ffbb33';
+  };
+
+  // 判斷趨勢 Emoji
+  const getTrendEmoji = (status) => {
+    if (status === '多頭' || status === '偏多') return '📈';
+    if (status === '空頭' || status === '偏空') return '📉';
+    return '➡️';
+  };
+
+  // 格式化時間
+  const now = new Date();
+  const formattedTime = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+  return {
+    type: 'flex',
+    altText: '🌎 美股市場分析報告',
+    contents: {
+      type: 'bubble',
+      size: 'mega',
+      body: {
+        type: 'box',
+        layout: 'vertical',
+        contents: [
+          // 標題
+          {
+            type: 'text',
+            text: '🌎 美股市場分析',
+            weight: 'bold',
+            size: 'xl',
+            color: '#1DB446'
+          },
+          {
+            type: 'text',
+            text: `更新：${formattedTime}`,
+            size: 'xs',
+            color: '#aaaaaa',
+            margin: 'md'
+          },
+          {
+            type: 'separator',
+            margin: 'xl'
+          },
+
+          // 美股狀態
+          {
+            type: 'box',
+            layout: 'vertical',
+            margin: 'xl',
+            spacing: 'sm',
+            contents: [
+              {
+                type: 'text',
+                text: '📊 美股市場',
+                weight: 'bold',
+                size: 'md'
+              },
+              {
+                type: 'box',
+                layout: 'horizontal',
+                margin: 'md',
+                contents: [
+                  {
+                    type: 'text',
+                    text: '整體趨勢',
+                    size: 'sm',
+                    color: '#555555',
+                    flex: 0
+                  },
+                  {
+                    type: 'text',
+                    text: `${getTrendEmoji(analysis.us_market_status)} ${analysis.us_market_status}`,
+                    size: 'sm',
+                    color: getTrendColor(analysis.us_market_status),
+                    align: 'end',
+                    weight: 'bold'
+                  }
+                ]
+              },
+              ...(analysis.us_market_summary && analysis.us_market_summary.trim() ? [{
+                type: 'text',
+                text: analysis.us_market_summary,
+                size: 'xs',
+                color: '#666666',
+                wrap: true,
+                margin: 'sm',
+                maxLines: 3
+              }] : [])
+            ]
+          },
+
+          // 台股狀態
+          {
+            type: 'box',
+            layout: 'vertical',
+            margin: 'xl',
+            spacing: 'sm',
+            contents: [
+              {
+                type: 'text',
+                text: '🇹🇼 台股市場',
+                weight: 'bold',
+                size: 'md'
+              },
+              {
+                type: 'box',
+                layout: 'horizontal',
+                margin: 'md',
+                contents: [
+                  {
+                    type: 'text',
+                    text: '整體趨勢',
+                    size: 'sm',
+                    color: '#555555',
+                    flex: 0
+                  },
+                  {
+                    type: 'text',
+                    text: `${getTrendEmoji(analysis.tw_market_status)} ${analysis.tw_market_status}`,
+                    size: 'sm',
+                    color: getTrendColor(analysis.tw_market_status),
+                    align: 'end',
+                    weight: 'bold'
+                  }
+                ]
+              },
+              ...(analysis.tw_market_summary && analysis.tw_market_summary.trim() ? [{
+                type: 'text',
+                text: analysis.tw_market_summary,
+                size: 'xs',
+                color: '#666666',
+                wrap: true,
+                margin: 'sm',
+                maxLines: 3
+              }] : [])
+            ]
+          },
+
+          // 連動性
+          {
+            type: 'box',
+            layout: 'vertical',
+            margin: 'xl',
+            spacing: 'sm',
+            contents: [
+              {
+                type: 'text',
+                text: '🔗 美台連動',
+                weight: 'bold',
+                size: 'md'
+              },
+              {
+                type: 'box',
+                layout: 'horizontal',
+                margin: 'md',
+                contents: [
+                  {
+                    type: 'text',
+                    text: '連動分數',
+                    size: 'sm',
+                    color: '#555555',
+                    flex: 0
+                  },
+                  {
+                    type: 'text',
+                    text: `${analysis.correlation_score} 分`,
+                    size: 'sm',
+                    color: '#1DB446',
+                    align: 'end',
+                    weight: 'bold'
+                  }
+                ]
+              },
+              ...(analysis.correlation_analysis && analysis.correlation_analysis.trim() ? [{
+                type: 'text',
+                text: analysis.correlation_analysis,
+                size: 'xs',
+                color: '#666666',
+                wrap: true,
+                margin: 'sm',
+                maxLines: 3
+              }] : [])
+            ]
+          },
+
+          // 短線預測
+          ...(analysis.forecast && analysis.forecast.short_term_1_3days ? [{
+            type: 'box',
+            layout: 'vertical',
+            margin: 'xl',
+            spacing: 'sm',
+            contents: [
+              {
+                type: 'text',
+                text: '🔮 短線預測（1-3天）',
+                weight: 'bold',
+                size: 'md'
+              },
+              {
+                type: 'box',
+                layout: 'horizontal',
+                margin: 'md',
+                contents: [
+                  {
+                    type: 'text',
+                    text: `${getTrendEmoji(analysis.forecast.short_term_1_3days.direction)} ${analysis.forecast.short_term_1_3days.direction}`,
+                    size: 'sm',
+                    weight: 'bold'
+                  },
+                  {
+                    type: 'text',
+                    text: `機率 ${analysis.forecast.short_term_1_3days.probability}%`,
+                    size: 'sm',
+                    color: '#666666',
+                    align: 'end'
+                  }
+                ]
+              },
+              ...(analysis.forecast.short_term_1_3days.reason && analysis.forecast.short_term_1_3days.reason.trim() ? [{
+                type: 'text',
+                text: `📌 ${analysis.forecast.short_term_1_3days.reason}`,
+                size: 'xs',
+                color: '#666666',
+                wrap: true,
+                margin: 'sm',
+                maxLines: 3
+              }] : []),
+              ...(analysis.forecast.short_term_1_3days.key_observation && analysis.forecast.short_term_1_3days.key_observation.trim() ? [{
+                type: 'text',
+                text: `🎯 ${analysis.forecast.short_term_1_3days.key_observation}`,
+                size: 'xs',
+                color: '#1DB446',
+                wrap: true,
+                margin: 'xs',
+                weight: 'bold',
+                maxLines: 2
+              }] : [])
+            ]
+          }] : []),
+
+          // 投資策略
+          {
+            type: 'box',
+            layout: 'vertical',
+            margin: 'xl',
+            spacing: 'sm',
+            contents: [
+              {
+                type: 'text',
+                text: '💡 投資策略',
+                weight: 'bold',
+                size: 'md'
+              },
+              {
+                type: 'text',
+                text: (analysis.strategy && analysis.strategy.trim()) ? analysis.strategy : '請謹慎操作，等待市場明確訊號',
+                size: 'sm',
+                color: '#333333',
+                wrap: true,
+                margin: 'md',
+                maxLines: 4
+              },
+              ...(analysis.key_levels && analysis.key_levels.trim() ? [{
+                type: 'text',
+                text: `🎯 ${analysis.key_levels}`,
+                size: 'xs',
+                color: '#1DB446',
+                wrap: true,
+                margin: 'sm',
+                weight: 'bold',
+                maxLines: 2
+              }] : [])
+            ]
+          },
+
+          // 風險提示
+          ...(analysis.risk_factors && Array.isArray(analysis.risk_factors) && analysis.risk_factors.length > 0 ? [{
+            type: 'box',
+            layout: 'vertical',
+            margin: 'xl',
+            spacing: 'sm',
+            paddingAll: '12px',
+            backgroundColor: '#fff3e0',
+            cornerRadius: '8px',
+            contents: [
+              {
+                type: 'text',
+                text: '⚠️ 風險提示',
+                weight: 'bold',
+                size: 'sm',
+                color: '#e65100'
+              },
+              {
+                type: 'text',
+                text: analysis.risk_factors.slice(0, 4).map(r => `• ${r}`).join('\n'),
+                size: 'xs',
+                color: '#333333',
+                wrap: true,
+                margin: 'sm',
+                maxLines: 4
+              }
+            ]
+          }] : []),
+
+          // 免責聲明
+          {
+            type: 'box',
+            layout: 'vertical',
+            margin: 'xl',
+            paddingAll: '10px',
+            backgroundColor: '#f5f5f5',
+            cornerRadius: '6px',
+            contents: [
+              {
+                type: 'text',
+                text: '⚠️ 本分析僅供參考，不構成投資建議',
+                size: 'xxs',
+                color: '#999999',
+                align: 'center'
+              }
+            ]
+          }
+        ]
+      }
+    }
   };
 }
 
