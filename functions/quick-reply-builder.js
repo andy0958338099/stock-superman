@@ -78,8 +78,6 @@ function buildStockAnalysisQuickReply(stockId, state = null) {
   }
 
   return {
-    type: 'text',
-    text: '請選擇功能：',
     quickReply: {
       items: items
     }
@@ -120,8 +118,6 @@ function buildDiscussionPromptQuickReply(stockId, round = 1) {
   const roundExamples = examples[round] || examples[1];
 
   return {
-    type: 'text',
-    text: '請分享您的看法：',
     quickReply: {
       items: [
         {
@@ -152,8 +148,6 @@ function buildDiscussionPromptQuickReply(stockId, round = 1) {
  */
 function buildReviewVotingQuickReply(stockId) {
   return {
-    type: 'text',
-    text: '您覺得這份總評如何？',
     quickReply: {
       items: [
         {
@@ -244,8 +238,6 @@ function buildContinueDiscussionQuickReply(stockId, discussionCount) {
   });
 
   return {
-    type: 'text',
-    text: '繼續討論或查看總評：',
     quickReply: {
       items: items
     }
