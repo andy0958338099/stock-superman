@@ -222,11 +222,11 @@ async function analyzeUSMarketWithDeepSeek(marketData) {
 
     console.log('🤖 開始 DeepSeek 美股跨市場分析...');
 
-    const { sp500, nasdaq, soxx, tsmAdr, twii, usdTwd, vix } = marketData;
+    const { sp500, nasdaq, tsmAdr, twii, usdTwd, vix } = marketData;
 
     // 建立 AI Prompt
     const prompt = `你是一位跨市場量化分析師，請根據以下數據進行：
-1. 美股主要指數的技術面分析（S&P500、NASDAQ、SOXX）
+1. 美股主要指數的技術面分析（S&P500、NASDAQ）
 2. 台股大盤的技術面分析
 3. 評估美股狀態對台股的短線（3天）與中期（10天）影響
 4. 給出具體投資建議（標註風險）
@@ -255,13 +255,6 @@ MACD：${sp500.macd.macd} / Signal=${sp500.macd.signal} / Histogram=${sp500.macd
 KD：K=${nasdaq.kd.K}, D=${nasdaq.kd.D} (${nasdaq.kd.status})
 MACD：${nasdaq.macd.macd} / Signal=${nasdaq.macd.signal} / Histogram=${nasdaq.macd.histogram} (${nasdaq.macd.status})
 趨勢：${nasdaq.trend}
-
-【美股 SOXX 半導體】
-收盤：${soxx.price}
-日期：${soxx.date}
-KD：K=${soxx.kd.K}, D=${soxx.kd.D} (${soxx.kd.status})
-MACD：${soxx.macd.macd} / Signal=${soxx.macd.signal} / Histogram=${soxx.macd.histogram} (${soxx.macd.status})
-趨勢：${soxx.trend}
 
 【TSM ADR】
 收盤：$${tsmAdr.price}

@@ -18,7 +18,7 @@ function generateUSMarketFlexMessage(analysisResult) {
     };
   }
 
-  const { sp500, nasdaq, soxx, tsmAdr, twii, usdTwd, vix } = data;
+  const { sp500, nasdaq, tsmAdr, twii, usdTwd, vix } = data;
 
   // 判斷趨勢顏色
   const getTrendColor = (status) => {
@@ -127,7 +127,6 @@ function generateUSMarketFlexMessage(analysisResult) {
               },
               generateIndexBox('S&P 500', sp500),
               generateIndexBox('NASDAQ', nasdaq),
-              generateIndexBox('SOXX', soxx),
               generateIndexBox('TSM ADR', tsmAdr)
             ]
           },

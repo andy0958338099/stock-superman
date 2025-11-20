@@ -51,10 +51,6 @@ async function analyzeUSMarket() {
     const nasdaqData = await fetchUSStockPrice('^IXIC', startDate, endDate);
     await delay(500);
 
-    console.log('📊 抓取 SOXX...');
-    const soxxData = await fetchUSStockPrice('^SOX', startDate, endDate);
-    await delay(500);
-
     console.log('📊 抓取 TSM ADR...');
     const tsmAdrData = await fetchUSStockPrice('TSM', startDate, endDate);
     await delay(500);
@@ -76,7 +72,6 @@ async function analyzeUSMarket() {
     console.log(`📊 資料筆數檢查：`);
     console.log(`  - S&P 500: ${sp500Data.length} 筆`);
     console.log(`  - NASDAQ: ${nasdaqData.length} 筆`);
-    console.log(`  - SOXX: ${soxxData.length} 筆`);
     console.log(`  - TSM ADR: ${tsmAdrData.length} 筆`);
     console.log(`  - 台股加權: ${twiiData.length} 筆`);
     console.log(`  - USD/TWD: ${usdTwdData.length} 筆`);
@@ -87,8 +82,6 @@ async function analyzeUSMarket() {
     const sp500Analysis = calculateIndicators(sp500Data, 'S&P 500');
     console.log('📊 計算 NASDAQ 指標...');
     const nasdaqAnalysis = calculateIndicators(nasdaqData, 'NASDAQ');
-    console.log('📊 計算 SOXX 指標...');
-    const soxxAnalysis = calculateIndicators(soxxData, 'SOXX');
     console.log('📊 計算 TSM ADR 指標...');
     const tsmAdrAnalysis = calculateIndicators(tsmAdrData, 'TSM ADR');
     console.log('📊 計算台股加權指標...');
@@ -104,7 +97,6 @@ async function analyzeUSMarket() {
     const analysisData = {
       sp500: sp500Analysis,
       nasdaq: nasdaqAnalysis,
-      soxx: soxxAnalysis,
       tsmAdr: tsmAdrAnalysis,
       twii: twiiAnalysis,
       usdTwd: latestUsdTwd,

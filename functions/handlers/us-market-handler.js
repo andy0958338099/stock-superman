@@ -53,7 +53,7 @@ async function handleUSMarketAnalysis(userId, stockId, stockName) {
         text: `🇺🇸 美股市場概況\n\n` +
               `S&P 500: ${marketSummary.sp500?.price || 'N/A'}\n` +
               `NASDAQ: ${marketSummary.nasdaq?.price || 'N/A'}\n` +
-              `SOXX: ${marketSummary.soxx?.price || 'N/A'}\n\n` +
+              `TSM ADR: ${marketSummary.tsmAdr?.price || 'N/A'}\n\n` +
               `⚠️ AI 關聯分析暫時無法使用\n\n` +
               `💡 您可以繼續探索其他分析`,
         quickReply: quickReply?.quickReply
