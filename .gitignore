@@ -40,3 +40,6 @@ temp/
 dist/
 build/
 
+# Cleanup and planning files
+CLEANUP_PLAN.md
+
