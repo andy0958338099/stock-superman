@@ -224,115 +224,59 @@ async function analyzeUSMarketWithDeepSeek(marketData) {
 
     const { sp500, nasdaq, tsmAdr, twii, usdTwd, vix } = marketData;
 
-    // 建立 AI Prompt（優化版：精簡但保留核心要求）
-    const prompt = `你是跨市場量化分析師，分析美股→台股傳導。
+    // 建立 AI Prompt（極簡版：只保留核心數據，大幅減少 token）
+    const prompt = `跨市場分析師，分析美股→台股。
 
-=== 任務 ===
-1. 建立 4 條傳導鏈（指數→權值、科技→半導體、風險→資金、期貨→跳空）
-2. 交叉比對指標（S&P/NASDAQ/VIX/TSM/匯率）
-3. 分類類股影響（受惠/受壓/中立）
-4. 提供可操作結論（機率+情境+觸發條件）
-5. 使用市場動機語氣（機會+風險+行動）
-
-=== 資料 ===
-
-【台股大盤】
-指數：${twii.name}
-收盤：${twii.price}
-日期：${twii.date}
-KD：K=${twii.kd.K}, D=${twii.kd.D} (${twii.kd.status})
-MACD：${twii.macd.macd} / Signal=${twii.macd.signal} / Histogram=${twii.macd.histogram} (${twii.macd.status})
-均線：MA5=${twii.ma.ma5}, MA10=${twii.ma.ma10}, MA20=${twii.ma.ma20}
-趨勢：${twii.trend}
-
-【美股 S&P 500】
-收盤：${sp500.price}
-日期：${sp500.date}
-KD：K=${sp500.kd.K}, D=${sp500.kd.D} (${sp500.kd.status})
-MACD：${sp500.macd.macd} / Signal=${sp500.macd.signal} / Histogram=${sp500.macd.histogram} (${sp500.macd.status})
-趨勢：${sp500.trend}
-
-【美股 NASDAQ】
-收盤：${nasdaq.price}
-日期：${nasdaq.date}
-KD：K=${nasdaq.kd.K}, D=${nasdaq.kd.D} (${nasdaq.kd.status})
-MACD：${nasdaq.macd.macd} / Signal=${nasdaq.macd.signal} / Histogram=${nasdaq.macd.histogram} (${nasdaq.macd.status})
-趨勢：${nasdaq.trend}
-
-【TSM ADR】
-收盤：$${tsmAdr.price}
-日期：${tsmAdr.date}
-KD：K=${tsmAdr.kd.K}, D=${tsmAdr.kd.D} (${tsmAdr.kd.status})
-MACD：${tsmAdr.macd.macd} / Signal=${tsmAdr.macd.signal} / Histogram=${tsmAdr.macd.histogram} (${tsmAdr.macd.status})
-趨勢：${tsmAdr.trend}
-
-【匯率 USD/TWD】
+【數據】
+台股：${twii.price} (${twii.trend}, KD=${twii.kd.K}/${twii.kd.D})
+S&P：${sp500.price} (${sp500.trend}, KD=${sp500.kd.K}/${sp500.kd.D})
+NASDAQ：${nasdaq.price} (${nasdaq.trend}, KD=${nasdaq.kd.K}/${nasdaq.kd.D})
+TSM ADR：${tsmAdr.price} (${tsmAdr.trend}, KD=${tsmAdr.kd.K}/${tsmAdr.kd.D})
+VIX：${vix.close}
 匯率：${usdTwd.rate}
-日期：${usdTwd.date}
 
-【VIX】${vix.close}
-【匯率】${usdTwd.rate}
-
-=== JSON 格式 ===
+【JSON 回覆】
 {
   "us_market_status": "多頭|空頭|盤整",
-  "us_market_summary": "美股市場總結（帶市場動機語氣，50字內）",
+  "us_market_summary": "美股總結（40字）",
   "tw_market_status": "多頭|空頭|盤整",
-  "tw_market_summary": "台股市場總結（帶市場動機語氣，50字內）",
-
+  "tw_market_summary": "台股總結（40字）",
   "transmission_analysis": {
-    "index_to_tw_weights": "美股指數→台股權值股傳導分析（60字內）",
-    "tech_to_semiconductor": "美科技股→台灣半導體傳導分析（60字內）",
-    "risk_to_capital": "VIX/美債→台灣資金風險偏好分析（60字內）",
-    "futures_to_gap": "美股期貨→台股跳空機率分析（60字內）"
+    "index_to_tw_weights": "指數→權值（40字）",
+    "tech_to_semiconductor": "科技→半導體（40字）",
+    "risk_to_capital": "風險→資金（40字）",
+    "futures_to_gap": "期貨→跳空（40字）"
   },
-
   "sector_impact": {
-    "positive": ["受惠類股1", "受惠類股2"],
-    "negative": ["受壓類股1", "受壓類股2"],
-    "neutral": ["中立類股1"],
-    "potential_stocks": "潛在受惠個股方向（50字內）"
+    "positive": ["類股1", "類股2"],
+    "negative": ["類股1"],
+    "potential_stocks": "潛在個股（30字）"
   },
-
   "correlation_score": 0-100,
-  "correlation_analysis": "連動性分析（50字內）",
-
+  "correlation_analysis": "連動分析（30字）",
   "forecast": {
     "short_term_1_3days": {
       "direction": "偏多|偏空|震盪",
       "probability": 0-100,
-      "scenario": "情境分析（若...則...，60字內）",
-      "trigger_condition": "觸發條件（例：台指期夜盤 +80 點以上，40字內）"
+      "scenario": "情境（40字）",
+      "trigger_condition": "觸發條件（30字）"
     },
     "mid_term_1week": {
       "direction": "偏多|偏空|震盪",
       "probability": 0-100,
-      "reason": "理由（50字內）"
-    },
-    "swing_10days": {
-      "direction": "偏多|偏空|震盪",
-      "probability": 0-100,
-      "reason": "理由（50字內）"
+      "reason": "理由（30字）"
     }
   },
-
-  "strategy": "多頭策略|空頭策略|等待策略|區間操作",
-  "key_levels": "明日關鍵價位或時間點（例：台指 18500 支撐，50字內）",
-  "watch_sectors": ["值得觀察的類股1", "值得觀察的類股2"],
-  "risk_factors": ["風險因子1", "風險因子2", "風險因子3"],
-
-  "action_plan": "可操作建議（100字內）",
-  "opportunity_alert": "機會警示（50字內）",
-  "risk_alert": "風險警示（50字內）"
+  "strategy": "多頭|空頭|等待|區間",
+  "key_levels": "關鍵價位（30字）",
+  "watch_sectors": ["類股1", "類股2"],
+  "risk_factors": ["風險1", "風險2"],
+  "action_plan": "操作建議（60字）",
+  "opportunity_alert": "機會（30字）",
+  "risk_alert": "風險（30字）"
 }
 
-=== 要求 ===
-1. 基於 4 條傳導邏輯分析
-2. 交叉比對多指標
-3. 分類類股影響
-4. 機率輸出（避免「一定」「必漲」）
-5. 情境分析（若...則...）
-6. 市場動機語氣（機會+風險+行動）`;
+要求：機率輸出、情境分析、市場動機語氣`;
 
     // 呼叫 DeepSeek API（帶 retry）
     const result = await retryWithBackoff(async () => {
@@ -343,15 +287,15 @@ MACD：${tsmAdr.macd.macd} / Signal=${tsmAdr.macd.signal} / Histogram=${tsmAdr.m
           messages: [
             {
               role: 'system',
-              content: '你是一位具備強烈市場動機的跨市場量化分析師，專精於美股→台股的傳導分析。你的分析必須：1) 建立明確的因果傳導鏈 2) 交叉比對多個領先指標 3) 為台股分類輸出影響 4) 提供可操作的結論（含機率、情境、觸發條件）5) 使用強烈市場動機語氣（機會意識 + 風險警示 + 行動誘因）6) 以機率輸出，避免絕對預測。'
+              content: '跨市場量化分析師，分析美股→台股傳導。要求：1)傳導鏈分析 2)類股影響 3)機率輸出 4)市場動機語氣'
             },
             {
               role: 'user',
               content: prompt
             }
           ],
-          temperature: 0.7,
-          max_tokens: 1500,  // 🚀 優化：從 2000 降至 1500，加快響應速度
+          temperature: 0.5,  // 🚀 優化：從 0.7 降至 0.5，減少隨機性，加快生成
+          max_tokens: 1200,  // 🚀 優化：從 1500 降至 1200，進一步加快響應
           response_format: { type: 'json_object' }
         },
         {
@@ -359,7 +303,7 @@ MACD：${tsmAdr.macd.macd} / Signal=${tsmAdr.macd.signal} / Histogram=${tsmAdr.m
             'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
             'Content-Type': 'application/json'
           },
-          timeout: 25000  // 🚀 優化：增加至 25 秒，給 DeepSeek 更多時間處理複雜 prompt
+          timeout: 20000  // 🚀 優化：從 25 秒降至 20 秒，更快失敗觸發 fallback
         }
       );
 
@@ -436,12 +380,8 @@ function generateFallbackUSMarketAnalysis(marketData) {
         direction: '震盪',
         probability: 55,
         reason: '等待更多市場訊號'
-      },
-      swing_10days: {
-        direction: shortDirection,
-        probability: 55,
-        reason: `跟隨美股${usStatus}趨勢`
       }
+      // 🚀 移除 swing_10days，減少生成內容
     },
     strategy: usStatus === '多頭' ? '多頭策略' : usStatus === '空頭' ? '空頭策略' : '等待策略',
     key_levels: '關注台指 18500 支撐與 18800 壓力',

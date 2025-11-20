@@ -582,54 +582,7 @@ function generateUSMarketFlexMessage(analysisResult) {
                   }
                 ]
               }] : []),
-              // 波段 10 天預測（新格式）
-              ...(analysis.forecast && analysis.forecast.swing_10days ? [{
-                type: 'box',
-                layout: 'vertical',
-                margin: 'md',
-                spacing: 'xs',
-                paddingAll: '12px',
-                backgroundColor: '#fff3e0',
-                cornerRadius: '8px',
-                contents: [
-                  {
-                    type: 'text',
-                    text: '📅 波段（10 天）',
-                    size: 'sm',
-                    weight: 'bold',
-                    color: '#e65100'
-                  },
-                  {
-                    type: 'box',
-                    layout: 'horizontal',
-                    margin: 'sm',
-                    contents: [
-                      {
-                        type: 'text',
-                        text: `${getTrendEmoji(analysis.forecast.swing_10days.direction)} ${analysis.forecast.swing_10days.direction}`,
-                        size: 'sm',
-                        color: '#333333',
-                        weight: 'bold'
-                      },
-                      {
-                        type: 'text',
-                        text: `機率 ${analysis.forecast.swing_10days.probability}%`,
-                        size: 'sm',
-                        color: '#666666',
-                        align: 'end'
-                      }
-                    ]
-                  },
-                  {
-                    type: 'text',
-                    text: analysis.forecast.swing_10days.reason,
-                    size: 'xs',
-                    color: '#666666',
-                    wrap: true,
-                    margin: 'sm'
-                  }
-                ]
-              }] : [])
+              // 🚀 移除波段 10 天預測，減少 AI 生成時間
             ]
           },
 
