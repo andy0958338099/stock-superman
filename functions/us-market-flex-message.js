@@ -299,7 +299,7 @@ function generateUSMarketFlexMessage(analysisResult) {
           }] : []),
 
           // 類股影響（新增）
-          ...(analysis.sector_impact ? [{
+          ...(analysis.sector_impact && analysis.sector_impact.positive && Array.isArray(analysis.sector_impact.positive) && analysis.sector_impact.positive.length > 0 ? [{
             type: 'box',
             layout: 'vertical',
             margin: 'xl',
@@ -334,7 +334,7 @@ function generateUSMarketFlexMessage(analysisResult) {
                   }
                 ]
               },
-              ...(analysis.sector_impact.negative && analysis.sector_impact.negative.length > 0 ? [{
+              ...(analysis.sector_impact.negative && Array.isArray(analysis.sector_impact.negative) && analysis.sector_impact.negative.length > 0 ? [{
                 type: 'box',
                 layout: 'vertical',
                 margin: 'sm',
@@ -737,7 +737,7 @@ function generateUSMarketFlexMessage(analysisResult) {
                 ]
               }] :
               // 舊格式推薦族群（向後兼容）
-              analysis.recommended_sectors ? [{
+              (analysis.recommended_sectors && Array.isArray(analysis.recommended_sectors) && analysis.recommended_sectors.length > 0) ? [{
                 type: 'box',
                 layout: 'vertical',
                 margin: 'md',
@@ -763,7 +763,7 @@ function generateUSMarketFlexMessage(analysisResult) {
           },
 
           // 風險提示
-          {
+          ...(analysis.risk_factors && Array.isArray(analysis.risk_factors) && analysis.risk_factors.length > 0 ? [{
             type: 'box',
             layout: 'vertical',
             margin: 'xl',
@@ -788,7 +788,7 @@ function generateUSMarketFlexMessage(analysisResult) {
                 margin: 'sm'
               }
             ]
-          },
+          }] : []),
 
           // 關鍵重點
           {

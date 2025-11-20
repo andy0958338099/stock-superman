@@ -369,6 +369,11 @@ function generateFallbackUSMarketAnalysis(marketData) {
     tw_market_summary: `台股 ${twii.trend}，指數 ${twii.price}`,
     correlation_score: correlationScore,
     correlation_analysis: `美台市場${usStatus === twStatus ? '同步' : '分歧'}，連動性${correlationScore > 60 ? '較高' : '中等'}`,
+    sector_impact: {
+      positive: usStatus === '多頭' ? ['半導體', '電子'] : ['金融', '傳產'],
+      negative: usStatus === '多頭' ? ['高殖利率股'] : ['電子', '半導體'],
+      potential_stocks: usStatus === '多頭' ? '台積電、聯發科等科技龍頭' : '金融股、傳產股'
+    },
     forecast: {
       short_term_1_3days: {
         direction: shortDirection,
