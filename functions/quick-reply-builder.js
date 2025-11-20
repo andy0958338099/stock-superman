@@ -62,7 +62,7 @@ function buildStockAnalysisQuickReply(stockId, state = null) {
   // 6. 分享給朋友們按鈕（永遠顯示）
   // 注意：Quick Reply 最多只能有 13 個按鈕，所以我們確保不超過限制
   if (items.length < 13) {
-    const shareText = encodeURIComponent('推薦超好用的股票分析 BOT！https://line.me/R/ti/p/@754zptsk');
+    const shareText = encodeURIComponent('推薦超好用的股票大亨！https://line.me/R/ti/p/@754zptsk');
     items.push({
       type: 'action',
       action: {
@@ -180,7 +180,7 @@ function buildReviewVotingQuickReply(stockId) {
           action: {
             type: 'uri',
             label: '📤 分享給朋友們',
-            uri: `https://line.me/R/share?text=${encodeURIComponent('推薦超好用的股票分析 BOT！https://line.me/R/ti/p/@754zptsk')}`
+            uri: `https://line.me/R/share?text=${encodeURIComponent('推薦超好用的股票大亨！https://line.me/R/ti/p/@754zptsk')}`
           }
         }
       ]
@@ -229,7 +229,7 @@ function buildContinueDiscussionQuickReply(stockId, discussionCount) {
   });
 
   // 分享給朋友們按鈕
-  const shareText = encodeURIComponent('推薦超好用的股票分析 BOT！https://line.me/R/ti/p/@754zptsk');
+  const shareText = encodeURIComponent('推薦超好用的股票大亨！https://line.me/R/ti/p/@754zptsk');
   items.push({
     type: 'action',
     action: {
