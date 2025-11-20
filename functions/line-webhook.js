@@ -59,18 +59,20 @@ async function handleUSMarketCommand(userId) {
     console.log(`🌎 開始處理美股分析請求... (用戶: ${userId})`);
 
     // 1. 先檢查快取（6 小時有效）
+    console.log('🔍 檢查美股分析快取...');
     const { getUSMarketCache } = require('./supabase-client');
     const cachedResult = await getUSMarketCache();
 
     if (cachedResult) {
       const cacheTime = (Date.now() - startTime) / 1000;
-      console.log(`✅ 使用快取的美股分析結果（耗時 ${cacheTime.toFixed(2)} 秒）`);
+      console.log(`✅ 快取命中！使用快取的美股分析結果（耗時 ${cacheTime.toFixed(2)} 秒）`);
+      console.log('📊 快取數據:', JSON.stringify(cachedResult).substring(0, 200) + '...');
 
       // 直接返回完整的 Flex Message
       return generateUSMarketFlexMessage(cachedResult);
     }
 
-    console.log('📊 快取未命中，開始異步分析...');
+    console.log('⚠️ 快取未命中，開始異步分析...');
 
     // 2. 檢查是否有進行中的任務
     const existingTask = await getUserLatestTask(userId);
