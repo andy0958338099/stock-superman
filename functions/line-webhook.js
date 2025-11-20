@@ -17,6 +17,13 @@ const { analyzeWithDeepSeek } = require('./deepseek');
 const { analyzeKD, analyzeMACDSignal, calculateKD, calculateMACD } = require('./indicators');
 const { analyzeUSMarket } = require('./us-market-analysis');
 const { generateUSMarketFlexMessage } = require('./us-market-flex-message');
+const {
+  AnalysisStatus,
+  createUSMarketAnalysisTask,
+  getTaskStatus,
+  getUserLatestTask,
+  executeUSMarketAnalysis
+} = require('./us-market-async');
 
 // 互動式分析功能處理器
 const { handleNewsAnalysis } = require('./handlers/news-handler');
@@ -25,7 +32,7 @@ const { handleUSMarketAnalysis } = require('./handlers/us-market-handler');
 const { handleDiscussionInit, handleDiscussionOpinion } = require('./handlers/discussion-handler');
 const { handleFinalReview, handleReviewVote } = require('./handlers/final-review-handler');
 const { getConversationState, initConversationState, getUserActiveDiscussion, saveConversationState } = require('./conversation-state');
-const { buildStockAnalysisQuickReply } = require('./quick-reply-builder');
+const { buildStockAnalysisQuickReply, buildUSMarketPollingQuickReply } = require('./quick-reply-builder');
 
 // LINE Bot 設定
 const config = {
@@ -40,29 +47,64 @@ if (!config.channelAccessToken || !config.channelSecret) {
 const client = new line.Client(config);
 
 /**
- * 處理美股分析指令
+ * 處理美股分析指令（異步版本）
+ * @param {string} userId - LINE 用戶 ID
  * @returns {Promise<object>} - LINE 訊息物件
  */
-async function handleUSMarketCommand() {
+async function handleUSMarketCommand(userId) {
   const startTime = Date.now();
 
   try {
-    console.log('🌎 開始處理美股分析請求...');
+    console.log(`🌎 開始處理美股分析請求... (用戶: ${userId})`);
 
-    // 執行美股分析
-    const analysisResult = await analyzeUSMarket();
+    // 1. 檢查是否有進行中的任務
+    const existingTask = await getUserLatestTask(userId);
 
-    // 生成 Flex Message
-    const flexMessage = generateUSMarketFlexMessage(analysisResult);
+    if (existingTask && existingTask.status === AnalysisStatus.PROCESSING) {
+      const elapsedTime = Math.floor((Date.now() - new Date(existingTask.created_at)) / 1000);
+      console.log(`⏳ 用戶已有進行中的任務（已進行 ${elapsedTime} 秒）`);
+
+      return {
+        type: 'text',
+        text: `⏳ 美股分析進行中...\n\n` +
+              `📊 已進行 ${elapsedTime} 秒\n` +
+              `⏱️ 預計還需要 ${Math.max(0, 25 - elapsedTime)} 秒\n\n` +
+              `💡 請點擊下方按鈕查看分析結果`,
+        quickReply: buildUSMarketPollingQuickReply(existingTask.task_id).quickReply
+      };
+    }
+
+    // 2. 創建新任務
+    const taskId = await createUSMarketAnalysisTask(userId);
+    console.log(`✅ 創建美股分析任務：${taskId}`);
+
+    // 3. 異步執行分析（不等待）
+    executeUSMarketAnalysis(taskId).catch(err => {
+      console.error('❌ 異步分析失敗:', err);
+    });
 
     const totalTime = (Date.now() - startTime) / 1000;
-    console.log(`✅ 美股分析請求處理完成（總耗時 ${totalTime.toFixed(2)} 秒）`);
+    console.log(`✅ 美股分析任務已創建（耗時 ${totalTime.toFixed(2)} 秒）`);
 
-    return flexMessage;
+    // 4. 立即返回「分析中」訊息
+    return {
+      type: 'text',
+      text: `🚀 開始美股分析\n\n` +
+            `📊 正在抓取以下資料：\n` +
+            `• S&P 500 指數\n` +
+            `• NASDAQ 指數\n` +
+            `• TSM ADR\n` +
+            `• 台股加權指數\n` +
+            `• USD/TWD 匯率\n` +
+            `• VIX 恐慌指數\n\n` +
+            `⏱️ 預計需要 15-25 秒\n\n` +
+            `💡 請在 15 秒後點擊下方按鈕查看分析結果`,
+      quickReply: buildUSMarketPollingQuickReply(taskId).quickReply
+    };
 
   } catch (error) {
     const totalTime = (Date.now() - startTime) / 1000;
-    console.error(`❌ 美股分析失敗（耗時 ${totalTime.toFixed(2)} 秒）:`, error.message);
+    console.error(`❌ 美股分析任務創建失敗（耗時 ${totalTime.toFixed(2)} 秒）:`, error.message);
     console.error('錯誤堆疊:', error.stack);
 
     let errorMessage = '❌ 美股分析失敗\n\n';
@@ -114,6 +156,85 @@ async function handleUSMarketCommand() {
     return {
       type: 'text',
       text: errorMessage
+    };
+  }
+}
+
+/**
+ * 處理美股分析輪詢請求
+ * @param {string} userId - LINE 用戶 ID
+ * @param {string} taskId - 任務 ID（可選）
+ * @returns {Promise<object>} - LINE 訊息物件
+ */
+async function handleUSMarketPolling(userId, taskId = null) {
+  try {
+    console.log(`🔍 處理美股分析輪詢請求... (用戶: ${userId}, 任務: ${taskId || '最新'})`);
+
+    // 1. 取得任務
+    const task = taskId
+      ? await getTaskStatus(taskId)
+      : await getUserLatestTask(userId);
+
+    if (!task) {
+      console.log('⚠️ 找不到分析任務');
+      return {
+        type: 'text',
+        text: '⚠️ 找不到分析任務\n\n請重新輸入「美股」開始分析'
+      };
+    }
+
+    console.log(`📊 任務狀態：${task.status}`);
+
+    // 2. 檢查任務狀態
+    switch (task.status) {
+      case AnalysisStatus.COMPLETED:
+        // 分析完成，返回完整 Flex Message
+        console.log('✅ 分析已完成，返回完整結果');
+        return generateUSMarketFlexMessage(task.result);
+
+      case AnalysisStatus.PROCESSING:
+        // 仍在處理中，返回進度訊息
+        const elapsedTime = Math.floor((Date.now() - new Date(task.created_at)) / 1000);
+        console.log(`⏳ 分析進行中（已進行 ${elapsedTime} 秒）`);
+
+        return {
+          type: 'text',
+          text: `⏳ 美股分析進行中...\n\n` +
+                `📊 已進行 ${elapsedTime} 秒\n` +
+                `⏱️ 預計還需要 ${Math.max(0, 25 - elapsedTime)} 秒\n\n` +
+                `💡 請稍後再點擊下方按鈕查看結果`,
+          quickReply: buildUSMarketPollingQuickReply(task.task_id).quickReply
+        };
+
+      case AnalysisStatus.FAILED:
+        // 分析失敗，返回錯誤訊息
+        console.log(`❌ 分析失敗：${task.error_message}`);
+
+        return {
+          type: 'text',
+          text: `❌ 美股分析失敗\n\n` +
+                `錯誤訊息：${task.error_message || '未知錯誤'}\n\n` +
+                `💡 請稍後再試或輸入「美股」重新分析`
+        };
+
+      case AnalysisStatus.PENDING:
+      default:
+        // 等待中
+        console.log('⏳ 任務等待中');
+
+        return {
+          type: 'text',
+          text: `⏳ 美股分析等待中...\n\n` +
+                `💡 請稍後再點擊下方按鈕查看結果`,
+          quickReply: buildUSMarketPollingQuickReply(task.task_id).quickReply
+        };
+    }
+
+  } catch (error) {
+    console.error('❌ 處理輪詢請求失敗:', error);
+    return {
+      type: 'text',
+      text: '❌ 系統錯誤\n\n請稍後再試'
     };
   }
 }
@@ -631,17 +752,28 @@ exports.handler = async function(event, context) {
         continue;
       }
 
-      // 5. 檢查美股分析指令
-      if (text === '美股' || text === '美股分析' || text === 'US' || text === 'us market') {
-        console.log('🌎 收到美股分析請求');
-        const usMarketMessage = await handleUSMarketCommand();
-        await client.replyMessage(replyToken, usMarketMessage);
+      // 5. 檢查美股分析輪詢指令
+      if (text.startsWith('查看美股分析')) {
+        console.log('🔍 收到美股分析輪詢請求');
+        const taskId = text.includes(':') ? text.split(':')[1] : null;
+        const pollingMessage = await handleUSMarketPolling(userId, taskId);
+        await client.replyMessage(replyToken, pollingMessage);
         await recordReplyToken(replyToken); // 成功回覆後記錄 token
-        console.log('✅ 美股分析完成');
+        console.log('✅ 美股分析輪詢完成');
         continue;
       }
 
-      // 6. 檢查快取管理指令
+      // 6. 檢查美股分析指令
+      if (text === '美股' || text === '美股分析' || text === 'US' || text === 'us market') {
+        console.log('🌎 收到美股分析請求');
+        const usMarketMessage = await handleUSMarketCommand(userId);  // 傳入 userId
+        await client.replyMessage(replyToken, usMarketMessage);
+        await recordReplyToken(replyToken); // 成功回覆後記錄 token
+        console.log('✅ 美股分析任務已創建');
+        continue;
+      }
+
+      // 7. 檢查快取管理指令
       const isCacheCmd = await handleCacheCommand(replyToken, text);
       if (isCacheCmd) {
         console.log('✅ 快取管理指令執行完成');
