@@ -53,6 +53,3 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- 可以設置定期執行清理（需要 pg_cron 擴展）
--- SELECT cron.schedule('cleanup-us-market-tasks', '0 2 * * *', 'SELECT cleanup_old_us_market_tasks()');
-

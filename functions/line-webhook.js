@@ -58,7 +58,21 @@ async function handleUSMarketCommand(userId) {
   try {
     console.log(`🌎 開始處理美股分析請求... (用戶: ${userId})`);
 
-    // 1. 檢查是否有進行中的任務
+    // 1. 先檢查快取（6 小時有效）
+    const { getUSMarketCache } = require('./supabase-client');
+    const cachedResult = await getUSMarketCache();
+
+    if (cachedResult) {
+      const cacheTime = (Date.now() - startTime) / 1000;
+      console.log(`✅ 使用快取的美股分析結果（耗時 ${cacheTime.toFixed(2)} 秒）`);
+
+      // 直接返回完整的 Flex Message
+      return generateUSMarketFlexMessage(cachedResult);
+    }
+
+    console.log('📊 快取未命中，開始異步分析...');
+
+    // 2. 檢查是否有進行中的任務
     const existingTask = await getUserLatestTask(userId);
 
     if (existingTask && existingTask.status === AnalysisStatus.PROCESSING) {
@@ -83,11 +97,11 @@ async function handleUSMarketCommand(userId) {
       }
     }
 
-    // 2. 創建新任務
+    // 3. 創建新任務
     const taskId = await createUSMarketAnalysisTask(userId);
     console.log(`✅ 創建美股分析任務：${taskId}`);
 
-    // 3. 異步執行分析（不等待）
+    // 4. 異步執行分析（不等待）
     executeUSMarketAnalysis(taskId).catch(err => {
       console.error('❌ 異步分析失敗:', err);
     });
@@ -95,7 +109,7 @@ async function handleUSMarketCommand(userId) {
     const totalTime = (Date.now() - startTime) / 1000;
     console.log(`✅ 美股分析任務已創建（耗時 ${totalTime.toFixed(2)} 秒）`);
 
-    // 4. 立即返回「分析中」訊息
+    // 5. 立即返回「分析中」訊息
     return {
       type: 'text',
       text: `🚀 開始美股分析\n\n` +
