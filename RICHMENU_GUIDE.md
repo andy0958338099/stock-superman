@@ -89,13 +89,29 @@ npm run setup:richmenu
 npm run setup:richmenu:static
 
 # 2. 複製輸出的 Rich Menu ID
-# 例如：richmenu-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+# 當前 ID：richmenu-c76a4d97360652e2b29403b7da46aa16
 
 # 3. 在 Netlify 添加環境變數
 # Key: RICH_MENU_ID
-# Value: <複製的ID>
+# Value: richmenu-c76a4d97360652e2b29403b7da46aa16
 
 # 4. 完成！
+```
+
+### 自訂圖片（可選）
+
+如果您想使用自己的圖片：
+
+```bash
+# 1. 將三張圖片放置到以下位置：
+#    public/rich-menu-assets/taiwan-stock.jpg  （台股分析背景）
+#    public/rich-menu-assets/us-stock.jpg      （美股分析背景）
+#    public/rich-menu-assets/rating.jpg        （評分背景）
+
+# 2. 重新生成 Rich Menu
+npm run setup:richmenu:static
+
+# 3. 更新 Netlify 環境變數（新的 Rich Menu ID）
 ```
 
 ### 測試動態評分（開發環境）
