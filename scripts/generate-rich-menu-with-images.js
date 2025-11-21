@@ -92,10 +92,13 @@ async function generateRichMenuWithImages() {
           const imgX = x + (CELL_WIDTH - scaledWidth) / 2;
           const imgY = y + (CELL_HEIGHT - scaledHeight) / 2;
 
+          // 降低圖片質量以減小檔案大小
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'medium';
           ctx.drawImage(img, imgX, imgY, scaledWidth, scaledHeight);
 
-          // 添加半透明遮罩
-          ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+          // 添加半透明遮罩（增加遮罩強度以減少細節）
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
           ctx.fillRect(x, y, CELL_WIDTH, CELL_HEIGHT);
 
           imageLoaded = true;
@@ -168,14 +171,25 @@ async function generateRichMenuWithImages() {
       }
     }
 
-    // 儲存圖片
-    const outputPath = path.join(__dirname, '..', 'public', 'rich-menu.png');
-    const buffer = canvas.toBuffer('image/png');
+    // 儲存圖片（使用 JPEG 格式以減小檔案大小）
+    const outputPath = path.join(__dirname, '..', 'public', 'rich-menu.jpg');
+    const buffer = canvas.toBuffer('image/jpeg', { quality: 0.85 });
     fs.writeFileSync(outputPath, buffer);
+
+    const fileSizeKB = (buffer.length / 1024).toFixed(2);
+    const fileSizeMB = (buffer.length / 1024 / 1024).toFixed(2);
 
     console.log('\n✅ Rich Menu 圖片已生成');
     console.log(`📁 儲存位置：${outputPath}`);
-    console.log(`📊 尺寸：${WIDTH} x ${HEIGHT} px\n`);
+    console.log(`📊 尺寸：${WIDTH} x ${HEIGHT} px`);
+    console.log(`💾 檔案大小：${fileSizeKB} KB (${fileSizeMB} MB)`);
+
+    if (buffer.length > 1024 * 1024) {
+      console.log('⚠️ 警告：檔案大小超過 1MB，LINE API 可能拒絕上傳');
+    } else {
+      console.log('✅ 檔案大小符合 LINE API 限制（< 1MB）');
+    }
+    console.log('');
 
     return outputPath;
 
