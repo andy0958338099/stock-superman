@@ -10,6 +10,7 @@
     "test:finmind": "node -e \"require('./test-local.js').testFinMind()\"",
     "deploy": "netlify deploy --prod",
     "setup:richmenu": "node scripts/setup-rich-menu.js",
+    "setup:richmenu:static": "node scripts/setup-rich-menu-static.js",
     "generate:richmenu": "node scripts/generate-rich-menu-image.js",
     "update:richmenu": "node scripts/update-rich-menu-image.js",
     "update:richmenu:current": "node scripts/update-rich-menu-current-score.js"
