@@ -11,9 +11,9 @@ const path = require('path');
 
 // Rich Menu 尺寸
 const WIDTH = 2500;
-const HEIGHT = 1686;
+const HEIGHT = 843;
 const COLS = 3;
-const ROWS = 2;
+const ROWS = 1;
 const CELL_WIDTH = WIDTH / COLS;
 const CELL_HEIGHT = HEIGHT / ROWS;
 
@@ -31,10 +31,7 @@ const COLORS = {
 const MENU_ITEMS = [
   { row: 0, col: 0, icon: '📊', title: '台股分析', subtitle: '輸入股票代號', color: '#1DB446' },
   { row: 0, col: 1, icon: '🌎', title: '美股分析', subtitle: 'S&P500 / NASDAQ', color: '#2196F3' },
-  { row: 0, col: 2, icon: '⭐', title: '本週評分', subtitle: '4.2/5 (128票)', color: '#FF9800' },
-  { row: 1, col: 0, icon: '📰', title: '新聞分析', subtitle: '最新市場動態', color: '#9C27B0' },
-  { row: 1, col: 1, icon: '🏛️', title: '政治分析', subtitle: '政策影響評估', color: '#F44336' },
-  { row: 1, col: 2, icon: '🔧', title: '清除快取', subtitle: '重新分析', color: '#607D8B' }
+  { row: 0, col: 2, icon: '⭐', title: '本週評分', subtitle: '4.2/5 (128票)', color: '#FF9800' }
 ];
 
 /**
