@@ -8,7 +8,7 @@ require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
 const { createRichMenu, uploadRichMenuImage, setDefaultRichMenu, deleteRichMenu } = require('../functions/rich-menu-manager');
-const { generateRichMenuImage } = require('./generate-rich-menu-image');
+const { generateRichMenuWithImages } = require('./generate-rich-menu-with-images');
 
 async function setupStaticRichMenu() {
   try {
@@ -26,9 +26,9 @@ async function setupStaticRichMenu() {
       }
     }
 
-    // 步驟 2：生成固定圖片（不顯示評分）
+    // 步驟 2：生成固定圖片（使用真實圖片）
     console.log('📝 步驟 2：生成 Rich Menu 圖片');
-    const imagePath = generateRichMenuImage();
+    const imagePath = await generateRichMenuWithImages();
     const imageBuffer = fs.readFileSync(imagePath);
     console.log('✅ 圖片生成完成\n');
 

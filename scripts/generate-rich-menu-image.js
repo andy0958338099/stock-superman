@@ -1,11 +1,11 @@
 /**
  * Rich Menu 圖片生成器
  * 使用 Canvas 生成 Rich Menu 的佔位圖片
- * 尺寸：2500 x 1686 px
- * 布局：3x2 網格
+ * 尺寸：2500 x 843 px
+ * 布局：1x3 網格
  */
 
-const { createCanvas } = require('canvas');
+const { createCanvas, loadImage } = require('canvas');
 const fs = require('fs');
 const path = require('path');
 
@@ -27,11 +27,35 @@ const COLORS = {
   textSecondary: '#666666'
 };
 
-// 功能配置
+// 功能配置（使用圖片）
 const MENU_ITEMS = [
-  { row: 0, col: 0, icon: '📊', title: '台股分析', subtitle: '輸入股票代號', color: '#1DB446' },
-  { row: 0, col: 1, icon: '🌎', title: '美股分析', subtitle: 'S&P500 / NASDAQ', color: '#2196F3' },
-  { row: 0, col: 2, icon: '⭐', title: '本週評分', subtitle: '4.2/5 (128票)', color: '#FF9800' }
+  {
+    row: 0,
+    col: 0,
+    title: '台股分析',
+    subtitle: '輸入股票代號',
+    color: '#1DB446',
+    bgColor: '#E8F5E9',
+    imageUrl: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800&q=80' // 股市看板
+  },
+  {
+    row: 0,
+    col: 1,
+    title: '美股分析',
+    subtitle: 'S&P500 / NASDAQ',
+    color: '#2196F3',
+    bgColor: '#E3F2FD',
+    imageUrl: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800&q=80' // 美股相關
+  },
+  {
+    row: 0,
+    col: 2,
+    title: '本週評分',
+    subtitle: '點擊查看',
+    color: '#FF9800',
+    bgColor: '#FFF3E0',
+    imageUrl: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800&q=80' // 金色數字5
+  }
 ];
 
 /**
