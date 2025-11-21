@@ -68,13 +68,14 @@ async function initializeNewWeek() {
 
 /**
  * 更新 Rich Menu 圖片（顯示最新評分）
+ * 優先顯示上週評分，如果沒有則顯示當前週評分
  */
 async function updateRichMenuWithScore(richMenuId) {
   try {
     console.log('🖼️ 更新 Rich Menu 圖片...');
 
-    // 取得上週的統計
-    const { data: lastWeek, error: weekError } = await supabase
+    // 步驟 1: 嘗試取得上週的統計
+    const { data: lastWeek, error: lastWeekError } = await supabase
       .from('survey_weeks')
       .select('id')
       .eq('is_active', false)
@@ -82,36 +83,65 @@ async function updateRichMenuWithScore(richMenuId) {
       .limit(1)
       .single();
 
-    if (weekError || !lastWeek) {
-      console.log('⚠️ 沒有上週資料，使用預設評分');
-      const imageBuffer = generateDynamicRichMenuImage(0, 0);
-      await uploadRichMenuImage(richMenuId, imageBuffer);
-      return;
+    let avgScore = 0;
+    let totalVotes = 0;
+    let weekType = '預設';
+
+    if (!lastWeekError && lastWeek) {
+      // 有上週資料，嘗試取得上週統計
+      const { data: lastWeekStats, error: lastWeekStatsError } = await supabase
+        .from('survey_statistics')
+        .select('*')
+        .eq('week_id', lastWeek.id)
+        .single();
+
+      if (!lastWeekStatsError && lastWeekStats) {
+        avgScore = parseFloat(lastWeekStats.average_score) || 0;
+        totalVotes = lastWeekStats.total_votes || 0;
+        weekType = '上週';
+        console.log(`✅ 使用上週評分：${avgScore.toFixed(1)}/5 (${totalVotes}票)`);
+      }
     }
 
-    // 取得上週的統計
-    const { data: stats, error: statsError } = await supabase
-      .from('survey_statistics')
-      .select('*')
-      .eq('week_id', lastWeek.id)
-      .single();
+    // 步驟 2: 如果沒有上週資料，使用當前週資料
+    if (totalVotes === 0) {
+      console.log('⚠️ 沒有上週資料，嘗試使用當前週資料...');
 
-    if (statsError || !stats) {
-      console.log('⚠️ 沒有上週統計資料，使用預設評分');
-      const imageBuffer = generateDynamicRichMenuImage(0, 0);
-      await uploadRichMenuImage(richMenuId, imageBuffer);
-      return;
+      const { data: currentWeek, error: currentWeekError } = await supabase
+        .from('survey_weeks')
+        .select('id')
+        .eq('is_active', true)
+        .single();
+
+      if (!currentWeekError && currentWeek) {
+        const { data: currentWeekStats, error: currentWeekStatsError } = await supabase
+          .from('survey_statistics')
+          .select('*')
+          .eq('week_id', currentWeek.id)
+          .single();
+
+        if (!currentWeekStatsError && currentWeekStats) {
+          avgScore = parseFloat(currentWeekStats.average_score) || 0;
+          totalVotes = currentWeekStats.total_votes || 0;
+          weekType = '本週';
+          console.log(`✅ 使用本週評分：${avgScore.toFixed(1)}/5 (${totalVotes}票)`);
+        }
+      }
+    }
+
+    // 步驟 3: 如果還是沒有資料，使用預設值
+    if (totalVotes === 0) {
+      console.log('⚠️ 沒有任何評分資料，使用預設評分');
+      weekType = '預設';
     }
 
     // 生成新的 Rich Menu 圖片
-    const avgScore = parseFloat(stats.average_score) || 0;
-    const totalVotes = stats.total_votes || 0;
     const imageBuffer = generateDynamicRichMenuImage(avgScore, totalVotes);
 
     // 上傳圖片
     await uploadRichMenuImage(richMenuId, imageBuffer);
 
-    console.log(`✅ Rich Menu 圖片已更新（評分：${avgScore.toFixed(1)}/5，投票數：${totalVotes}）`);
+    console.log(`✅ Rich Menu 圖片已更新（${weekType}評分：${avgScore.toFixed(1)}/5，投票數：${totalVotes}）`);
 
   } catch (error) {
     console.error('❌ 更新 Rich Menu 圖片失敗:', error);

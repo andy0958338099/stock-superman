@@ -138,11 +138,32 @@ async function createRichMenu() {
  * 上傳 Rich Menu 圖片
  * @param {string} richMenuId - Rich Menu ID
  * @param {Buffer} imageBuffer - 圖片 Buffer
+ * @param {boolean} forceUpdate - 是否強制更新（刪除舊圖片後重新上傳）
  */
-async function uploadRichMenuImage(richMenuId, imageBuffer) {
+async function uploadRichMenuImage(richMenuId, imageBuffer, forceUpdate = true) {
   try {
     console.log(`🖼️ 上傳 Rich Menu 圖片：${richMenuId}`);
 
+    // 如果啟用強制更新，先嘗試刪除舊圖片
+    if (forceUpdate) {
+      try {
+        console.log('🗑️ 嘗試刪除舊圖片...');
+        await axios.delete(
+          `https://api-data.line.me/v2/bot/richmenu/${richMenuId}/content`,
+          {
+            headers: {
+              'Authorization': `Bearer ${config.channelAccessToken}`
+            }
+          }
+        );
+        console.log('✅ 舊圖片已刪除');
+      } catch (deleteError) {
+        // 如果刪除失敗（可能是沒有舊圖片），繼續上傳
+        console.log('⚠️ 刪除舊圖片失敗（可能不存在）:', deleteError.response?.data?.message || deleteError.message);
+      }
+    }
+
+    // 上傳新圖片
     await axios.post(
       `https://api-data.line.me/v2/bot/richmenu/${richMenuId}/content`,
       imageBuffer,
@@ -188,9 +209,35 @@ async function setDefaultRichMenu(richMenuId) {
   }
 }
 
+/**
+ * 刪除 Rich Menu
+ * @param {string} richMenuId - Rich Menu ID
+ */
+async function deleteRichMenu(richMenuId) {
+  try {
+    console.log(`🗑️ 刪除 Rich Menu：${richMenuId}`);
+
+    await axios.delete(
+      `https://api.line.me/v2/bot/richmenu/${richMenuId}`,
+      {
+        headers: {
+          'Authorization': `Bearer ${config.channelAccessToken}`
+        }
+      }
+    );
+
+    console.log('✅ Rich Menu 已刪除');
+
+  } catch (error) {
+    console.error('❌ 刪除 Rich Menu 失敗:', error.response?.data || error.message);
+    throw error;
+  }
+}
+
 module.exports = {
   createRichMenu,
   uploadRichMenuImage,
-  setDefaultRichMenu
+  setDefaultRichMenu,
+  deleteRichMenu
 };
 
