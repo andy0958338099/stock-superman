@@ -818,28 +818,39 @@ exports.handler = async function(event, context) {
       // 7. 檢查問卷調查指令
       if (text === '📊 查看評分' || text === '問卷' || text === '評分' || text === '調查') {
         console.log('📊 收到問卷調查請求');
+        console.log('📊 用戶 ID:', userId);
         try {
+          console.log('📊 步驟 1: 取得當前週統計');
           const weekStats = await getCurrentWeekStatistics();
-          if (!weekStats) {
+          console.log('📊 當前週統計:', JSON.stringify(weekStats, null, 2));
+
+          if (!weekStats || !weekStats.week) {
+            console.error('❌ 無法取得問卷資訊，weekStats:', weekStats);
             await client.replyMessage(replyToken, {
               type: 'text',
-              text: '❌ 無法取得問卷資訊，請稍後再試'
+              text: '❌ 問卷系統尚未初始化\n\n請聯繫管理員執行資料庫初始化：\n1. 在 Supabase SQL Editor 執行遷移腳本\n2. 執行 SELECT initialize_current_week();'
             });
             await recordReplyToken(replyToken);
             continue;
           }
 
+          console.log('📊 步驟 2: 檢查用戶是否已投票');
           const hasVoted = await hasUserVotedThisWeek(userId, weekStats.week.id);
+          console.log('📊 用戶已投票:', hasVoted);
+
+          console.log('📊 步驟 3: 生成問卷訊息');
           const surveyMessage = generateSurveyFlexMessage(weekStats.week, weekStats.statistics, hasVoted);
+          console.log('📊 問卷訊息已生成');
 
           await client.replyMessage(replyToken, surveyMessage);
           await recordReplyToken(replyToken);
           console.log('✅ 問卷調查訊息已發送');
         } catch (error) {
           console.error('❌ 處理問卷調查失敗:', error);
+          console.error('❌ 錯誤堆疊:', error.stack);
           await client.replyMessage(replyToken, {
             type: 'text',
-            text: '❌ 處理問卷調查失敗，請稍後再試'
+            text: `❌ 問卷調查功能發生錯誤\n\n錯誤訊息：${error.message}\n\n請稍後再試或聯繫管理員`
           });
           await recordReplyToken(replyToken);
         }

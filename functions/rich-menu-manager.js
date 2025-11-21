@@ -28,7 +28,7 @@ async function createRichMenu() {
       },
       selected: true,
       name: '股市大亨主選單',
-      chatBarText: '📊 功能選單',
+      chatBarText: '股市大亨',
       areas: [
         // 左：台股分析
         {
