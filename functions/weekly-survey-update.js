@@ -67,35 +67,37 @@ async function initializeNewWeek() {
 }
 
 /**
- * 更新 Rich Menu 圖片（顯示當前週評分）
+ * 更新 Rich Menu 圖片（顯示最新評分）
  */
 async function updateRichMenuWithScore(richMenuId) {
   try {
     console.log('🖼️ 更新 Rich Menu 圖片...');
 
-    // 取得當前週的統計（顯示當前週的評分）
-    const { data: currentWeek, error: weekError } = await supabase
+    // 取得上週的統計
+    const { data: lastWeek, error: weekError } = await supabase
       .from('survey_weeks')
       .select('id')
-      .eq('is_active', true)
+      .eq('is_active', false)
+      .order('start_date', { ascending: false })
+      .limit(1)
       .single();
 
-    if (weekError || !currentWeek) {
-      console.log('⚠️ 沒有當前週資料，使用預設評分');
+    if (weekError || !lastWeek) {
+      console.log('⚠️ 沒有上週資料，使用預設評分');
       const imageBuffer = generateDynamicRichMenuImage(0, 0);
       await uploadRichMenuImage(richMenuId, imageBuffer);
       return;
     }
 
-    // 取得當前週的統計
+    // 取得上週的統計
     const { data: stats, error: statsError } = await supabase
       .from('survey_statistics')
       .select('*')
-      .eq('week_id', currentWeek.id)
+      .eq('week_id', lastWeek.id)
       .single();
 
     if (statsError || !stats) {
-      console.log('⚠️ 沒有當前週統計資料，使用預設評分');
+      console.log('⚠️ 沒有上週統計資料，使用預設評分');
       const imageBuffer = generateDynamicRichMenuImage(0, 0);
       await uploadRichMenuImage(richMenuId, imageBuffer);
       return;

@@ -24,13 +24,13 @@ async function createRichMenu() {
     const richMenu = {
       size: {
         width: 2500,
-        height: 843
+        height: 1686
       },
       selected: true,
       name: '股市大亨主選單',
-      chatBarText: '股市大亨',
+      chatBarText: '📊 功能選單',
       areas: [
-        // 左：台股分析
+        // 左上：台股分析
         {
           bounds: {
             x: 0,
@@ -43,7 +43,7 @@ async function createRichMenu() {
             text: '📊 台股分析'
           }
         },
-        // 中：美股分析
+        // 中上：美股分析
         {
           bounds: {
             x: 833,
@@ -56,7 +56,7 @@ async function createRichMenu() {
             text: '美股'
           }
         },
-        // 右：問卷調查（顯示評分）
+        // 右上：問卷調查（顯示評分）
         {
           bounds: {
             x: 1667,
@@ -67,6 +67,45 @@ async function createRichMenu() {
           action: {
             type: 'message',
             text: '📊 查看評分'
+          }
+        },
+        // 左下：新聞分析
+        {
+          bounds: {
+            x: 0,
+            y: 843,
+            width: 833,
+            height: 843
+          },
+          action: {
+            type: 'message',
+            text: '📰 新聞'
+          }
+        },
+        // 中下：政治分析
+        {
+          bounds: {
+            x: 833,
+            y: 843,
+            width: 834,
+            height: 843
+          },
+          action: {
+            type: 'message',
+            text: '🏛️ 政治'
+          }
+        },
+        // 右下：清除快取
+        {
+          bounds: {
+            x: 1667,
+            y: 843,
+            width: 833,
+            height: 843
+          },
+          action: {
+            type: 'message',
+            text: '清除快取'
           }
         }
       ]
