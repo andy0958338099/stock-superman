@@ -34,6 +34,8 @@ const { handleDiscussionInit, handleDiscussionOpinion } = require('./handlers/di
 const { handleFinalReview, handleReviewVote } = require('./handlers/final-review-handler');
 const { getConversationState, initConversationState, getUserActiveDiscussion, saveConversationState } = require('./conversation-state');
 const { buildStockAnalysisQuickReply, buildUSMarketPollingQuickReply } = require('./quick-reply-builder');
+const { getCurrentWeekStatistics, hasUserVotedThisWeek, submitVote } = require('./survey-handler');
+const { generateSurveyFlexMessage } = require('./survey-flex-message');
 
 // LINE Bot 設定
 const config = {
@@ -811,17 +813,87 @@ exports.handler = async function(event, context) {
         continue;
       }
 
-      // 7. 檢查快取管理指令
+      // 7. 檢查問卷調查指令
+      if (text === '📊 查看評分' || text === '問卷' || text === '評分' || text === '調查') {
+        console.log('📊 收到問卷調查請求');
+        try {
+          const weekStats = await getCurrentWeekStatistics();
+          if (!weekStats) {
+            await client.replyMessage(replyToken, {
+              type: 'text',
+              text: '❌ 無法取得問卷資訊，請稍後再試'
+            });
+            await recordReplyToken(replyToken);
+            continue;
+          }
+
+          const hasVoted = await hasUserVotedThisWeek(userId, weekStats.week.id);
+          const surveyMessage = generateSurveyFlexMessage(weekStats.week, weekStats.statistics, hasVoted);
+
+          await client.replyMessage(replyToken, surveyMessage);
+          await recordReplyToken(replyToken);
+          console.log('✅ 問卷調查訊息已發送');
+        } catch (error) {
+          console.error('❌ 處理問卷調查失敗:', error);
+          await client.replyMessage(replyToken, {
+            type: 'text',
+            text: '❌ 處理問卷調查失敗，請稍後再試'
+          });
+          await recordReplyToken(replyToken);
+        }
+        continue;
+      }
+
+      // 8. 檢查評分提交指令
+      if (text.startsWith('評分:')) {
+        console.log('🗳️ 收到評分提交');
+        try {
+          const score = parseInt(text.split(':')[1]);
+          const result = await submitVote(userId, score);
+
+          if (result.success) {
+            // 發送成功訊息和更新後的統計
+            const weekStats = await getCurrentWeekStatistics();
+            const surveyMessage = generateSurveyFlexMessage(weekStats.week, weekStats.statistics, true);
+
+            await client.replyMessage(replyToken, [
+              {
+                type: 'text',
+                text: `${result.message}\n\n您的評分：${score} ⭐`
+              },
+              surveyMessage
+            ]);
+          } else {
+            await client.replyMessage(replyToken, {
+              type: 'text',
+              text: result.message
+            });
+          }
+
+          await recordReplyToken(replyToken);
+          console.log('✅ 評分提交處理完成');
+        } catch (error) {
+          console.error('❌ 處理評分提交失敗:', error);
+          await client.replyMessage(replyToken, {
+            type: 'text',
+            text: '❌ 評分提交失敗，請稍後再試'
+          });
+          await recordReplyToken(replyToken);
+        }
+        continue;
+      }
+
+      // 9. 檢查快取管理指令
       const isCacheCmd = await handleCacheCommand(replyToken, text);
       if (isCacheCmd) {
         console.log('✅ 快取管理指令執行完成');
         continue;
       }
 
-      // 7. 解析股票代號
+      // 10. 解析股票代號
       const stockIdMatch = text.match(/\d{3,5}/);
 
-      // 8. 驗證股票代號
+      // 11. 驗證股票代號
       if (!stockIdMatch) {
         await client.replyMessage(replyToken, {
           type: 'text',
