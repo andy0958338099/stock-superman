@@ -36,6 +36,8 @@ const { getConversationState, initConversationState, getUserActiveDiscussion, sa
 const { buildStockAnalysisQuickReply, buildUSMarketPollingQuickReply } = require('./quick-reply-builder');
 const { getCurrentWeekStatistics, hasUserVotedThisWeek, submitVote } = require('./survey-handler');
 const { generateSurveyFlexMessage } = require('./survey-flex-message');
+const { uploadRichMenuImage } = require('./rich-menu-manager');
+const { generateDynamicRichMenuImage } = require('../scripts/generate-rich-menu-image');
 
 // LINE Bot 設定
 const config = {
@@ -863,6 +865,16 @@ exports.handler = async function(event, context) {
               },
               surveyMessage
             ]);
+
+            // 異步更新 Rich Menu 圖片（不阻塞回應）
+            if (process.env.RICH_MENU_ID && weekStats.statistics) {
+              const avgScore = parseFloat(weekStats.statistics.average_score) || 0;
+              const totalVotes = weekStats.statistics.total_votes || 0;
+              generateDynamicRichMenuImage(avgScore, totalVotes)
+                .then(imageBuffer => uploadRichMenuImage(process.env.RICH_MENU_ID, imageBuffer))
+                .then(() => console.log(`✅ Rich Menu 圖片已更新（評分：${avgScore.toFixed(1)}/5，投票數：${totalVotes}）`))
+                .catch(err => console.error('⚠️ 更新 Rich Menu 圖片失敗:', err));
+            }
           } else {
             await client.replyMessage(replyToken, {
               type: 'text',

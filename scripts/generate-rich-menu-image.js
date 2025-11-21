@@ -11,9 +11,9 @@ const path = require('path');
 
 // Rich Menu 尺寸
 const WIDTH = 2500;
-const HEIGHT = 1686;
+const HEIGHT = 843;
 const COLS = 3;
-const ROWS = 2;
+const ROWS = 1;
 const CELL_WIDTH = WIDTH / COLS;
 const CELL_HEIGHT = HEIGHT / ROWS;
 
@@ -29,12 +29,9 @@ const COLORS = {
 
 // 功能配置
 const MENU_ITEMS = [
-  { row: 0, col: 0, icon: '📊', title: '台股分析', subtitle: '輸入股票代號', color: '#1DB446' },
+  { row: 0, col: 0, icon: '📈', title: '台股分析', subtitle: '輸入股票代號查詢', color: '#1DB446' },
   { row: 0, col: 1, icon: '🌎', title: '美股分析', subtitle: 'S&P500 / NASDAQ', color: '#2196F3' },
-  { row: 0, col: 2, icon: '⭐', title: '本週評分', subtitle: '4.2/5 (128票)', color: '#FF9800' },
-  { row: 1, col: 0, icon: '📰', title: '新聞分析', subtitle: '最新市場動態', color: '#9C27B0' },
-  { row: 1, col: 1, icon: '🏛️', title: '政治分析', subtitle: '政策影響評估', color: '#F44336' },
-  { row: 1, col: 2, icon: '🔧', title: '清除快取', subtitle: '重新分析', color: '#607D8B' }
+  { row: 0, col: 2, icon: '⭐', title: '本週評分', subtitle: '--/5 (0票)', color: '#FF9800', showScore: true }
 ];
 
 /**
@@ -66,21 +63,31 @@ function generateRichMenuImage() {
     ctx.strokeRect(x, y, CELL_WIDTH, CELL_HEIGHT);
 
     // 繪製圖標（使用文字模擬）
-    ctx.font = 'bold 180px Arial';
+    ctx.font = 'bold 200px Arial';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillStyle = item.color;
-    ctx.fillText(item.icon, x + CELL_WIDTH / 2, y + CELL_HEIGHT / 2 - 100);
+    ctx.fillText(item.icon, x + CELL_WIDTH / 2, y + CELL_HEIGHT / 2 - 120);
+
+    // 如果是評分格子，在圖標下方顯示評分
+    if (item.showScore) {
+      ctx.font = 'bold 70px Arial';
+      ctx.fillStyle = item.color;
+      ctx.fillText(item.subtitle, x + CELL_WIDTH / 2, y + CELL_HEIGHT / 2 + 20);
+    }
 
     // 繪製標題
-    ctx.font = 'bold 80px Arial';
+    ctx.font = 'bold 90px Arial';
     ctx.fillStyle = COLORS.text;
-    ctx.fillText(item.title, x + CELL_WIDTH / 2, y + CELL_HEIGHT / 2 + 120);
+    const titleY = item.showScore ? y + CELL_HEIGHT / 2 + 140 : y + CELL_HEIGHT / 2 + 120;
+    ctx.fillText(item.title, x + CELL_WIDTH / 2, titleY);
 
-    // 繪製副標題
-    ctx.font = '50px Arial';
-    ctx.fillStyle = COLORS.textSecondary;
-    ctx.fillText(item.subtitle, x + CELL_WIDTH / 2, y + CELL_HEIGHT / 2 + 200);
+    // 繪製副標題（非評分格子）
+    if (!item.showScore) {
+      ctx.font = '55px Arial';
+      ctx.fillStyle = COLORS.textSecondary;
+      ctx.fillText(item.subtitle, x + CELL_WIDTH / 2, y + CELL_HEIGHT / 2 + 220);
+    }
   });
 
   // 保存圖片
@@ -118,10 +125,11 @@ function generateDynamicRichMenuImage(avgScore, totalVotes) {
 
   // 更新評分格子的副標題
   const updatedMenuItems = MENU_ITEMS.map(item => {
-    if (item.row === 0 && item.col === 2) {
+    if (item.showScore) {
+      const scoreText = avgScore > 0 ? `${avgScore.toFixed(1)}/5` : '--/5';
       return {
         ...item,
-        subtitle: `${avgScore.toFixed(1)}/5 (${totalVotes}票)`
+        subtitle: `${scoreText} (${totalVotes}票)`
       };
     }
     return item;
@@ -142,21 +150,31 @@ function generateDynamicRichMenuImage(avgScore, totalVotes) {
     ctx.strokeRect(x, y, CELL_WIDTH, CELL_HEIGHT);
 
     // 繪製圖標
-    ctx.font = 'bold 180px Arial';
+    ctx.font = 'bold 200px Arial';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillStyle = item.color;
-    ctx.fillText(item.icon, x + CELL_WIDTH / 2, y + CELL_HEIGHT / 2 - 100);
+    ctx.fillText(item.icon, x + CELL_WIDTH / 2, y + CELL_HEIGHT / 2 - 120);
+
+    // 如果是評分格子，在圖標下方顯示評分
+    if (item.showScore) {
+      ctx.font = 'bold 70px Arial';
+      ctx.fillStyle = item.color;
+      ctx.fillText(item.subtitle, x + CELL_WIDTH / 2, y + CELL_HEIGHT / 2 + 20);
+    }
 
     // 繪製標題
-    ctx.font = 'bold 80px Arial';
+    ctx.font = 'bold 90px Arial';
     ctx.fillStyle = COLORS.text;
-    ctx.fillText(item.title, x + CELL_WIDTH / 2, y + CELL_HEIGHT / 2 + 120);
+    const titleY = item.showScore ? y + CELL_HEIGHT / 2 + 140 : y + CELL_HEIGHT / 2 + 120;
+    ctx.fillText(item.title, x + CELL_WIDTH / 2, titleY);
 
-    // 繪製副標題
-    ctx.font = '50px Arial';
-    ctx.fillStyle = COLORS.textSecondary;
-    ctx.fillText(item.subtitle, x + CELL_WIDTH / 2, y + CELL_HEIGHT / 2 + 200);
+    // 繪製副標題（非評分格子）
+    if (!item.showScore) {
+      ctx.font = '55px Arial';
+      ctx.fillStyle = COLORS.textSecondary;
+      ctx.fillText(item.subtitle, x + CELL_WIDTH / 2, y + CELL_HEIGHT / 2 + 220);
+    }
   });
 
   // 保存圖片

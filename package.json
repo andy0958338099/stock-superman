@@ -11,7 +11,8 @@
     "deploy": "netlify deploy --prod",
     "setup:richmenu": "node scripts/setup-rich-menu.js",
     "generate:richmenu": "node scripts/generate-rich-menu-image.js",
-    "update:richmenu": "node scripts/update-rich-menu-image.js"
+    "update:richmenu": "node scripts/update-rich-menu-image.js",
+    "update:richmenu:score": "node scripts/update-rich-menu-with-current-score.js"
   },
   "keywords": ["line-bot", "stock", "finmind", "deepseek", "taiwan-stock"],
   "author": "",
