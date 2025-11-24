@@ -97,7 +97,14 @@ exports.handler = async (event, context) => {
   if (event.httpMethod === 'POST') {
     try {
       const body = JSON.parse(event.body || '{}');
-      const { action, mode, avgScore, totalVotes, richMenuId } = body;
+      const { action, mode, avgScore, totalVotes, richMenuId, imageBase64 } = body;
+
+      // 如果有 base64 圖片，轉換為 Buffer
+      let customImageBuffer = null;
+      if (imageBase64) {
+        customImageBuffer = Buffer.from(imageBase64, 'base64');
+        console.log(`📦 收到自訂圖片，大小：${(customImageBuffer.length / 1024).toFixed(2)} KB`);
+      }
 
       // 列出所有 Rich Menu
       if (action === 'list') {
@@ -155,21 +162,34 @@ exports.handler = async (event, context) => {
           results.steps[0].status = 'success';
           results.steps[0].richMenuId = newRichMenuId;
 
-          // 步驟 2：生成圖片
+          // 步驟 2：生成或使用圖片
           results.steps.push({ step: 2, action: 'Generating Rich Menu image...', status: 'processing' });
-          let imageBuffer;
-          if (mode === 'dynamic' && avgScore !== undefined && totalVotes !== undefined) {
-            imageBuffer = await generateDynamicRichMenuImage(avgScore, totalVotes);
+          let finalImageBuffer;
+
+          if (mode === 'custom' && customImageBuffer) {
+            // 使用上傳的自訂圖片
+            finalImageBuffer = customImageBuffer;
+            results.imageSource = 'custom';
+            console.log('✅ 使用自訂圖片');
+          } else if (mode === 'dynamic' && avgScore !== undefined && totalVotes !== undefined) {
+            // 生成動態圖片（顯示評分）
+            finalImageBuffer = await generateDynamicRichMenuImage(avgScore, totalVotes);
             results.scoreInfo = { avgScore, totalVotes };
+            results.imageSource = 'dynamic';
+            console.log('✅ 生成動態圖片');
           } else {
-            imageBuffer = await generateStaticRichMenuImage();
+            // 生成靜態圖片（預設）
+            finalImageBuffer = await generateStaticRichMenuImage();
+            results.imageSource = 'static';
+            console.log('✅ 生成靜態圖片');
           }
           results.steps[1].status = 'success';
-          results.steps[1].imageSize = imageBuffer.length;
+          results.steps[1].imageSize = finalImageBuffer.length;
+          results.steps[1].imageSizeKB = (finalImageBuffer.length / 1024).toFixed(2);
 
           // 步驟 3：上傳圖片
           results.steps.push({ step: 3, action: 'Uploading Rich Menu image...', status: 'processing' });
-          await uploadRichMenuImage(newRichMenuId, imageBuffer);
+          await uploadRichMenuImage(newRichMenuId, finalImageBuffer);
           results.steps[2].status = 'success';
 
           // 步驟 4：設定為預設 Rich Menu
