@@ -927,7 +927,7 @@ function generateIndexBox(name, indexData) {
  */
 function generateMediumUSMarketFlexMessage(analysisResult) {
   const { data, analysis } = analysisResult;
-  const { sp500, nasdaq, tsmAdr, twii } = data;
+  const { sp500, nasdaq, tsmAdr, twii, usdTwd, vix } = data;
 
   // 判斷趨勢顏色
   const getTrendColor = (status) => {
@@ -1066,6 +1066,74 @@ function generateMediumUSMarketFlexMessage(analysisResult) {
                 wrap: true,
                 margin: 'sm'
               }] : [])
+            ]
+          },
+
+          // VIX 恐慌指數和匯率
+          {
+            type: 'box',
+            layout: 'vertical',
+            margin: 'xl',
+            spacing: 'sm',
+            contents: [
+              {
+                type: 'text',
+                text: '📊 市場指標',
+                weight: 'bold',
+                size: 'md'
+              },
+              {
+                type: 'box',
+                layout: 'horizontal',
+                margin: 'md',
+                contents: [
+                  {
+                    type: 'text',
+                    text: 'VIX 恐慌指數',
+                    size: 'sm',
+                    color: '#555555',
+                    flex: 1
+                  },
+                  {
+                    type: 'text',
+                    text: vix && vix.close ? vix.close.toFixed(2) : '0.00',
+                    size: 'sm',
+                    color: vix && vix.close > 20 ? '#ff4444' : (vix && vix.close > 15 ? '#ffbb33' : '#00C851'),
+                    align: 'end',
+                    weight: 'bold'
+                  }
+                ]
+              },
+              {
+                type: 'box',
+                layout: 'horizontal',
+                margin: 'sm',
+                contents: [
+                  {
+                    type: 'text',
+                    text: 'USD/TWD 匯率',
+                    size: 'sm',
+                    color: '#555555',
+                    flex: 1
+                  },
+                  {
+                    type: 'text',
+                    text: usdTwd && usdTwd.rate ? usdTwd.rate.toFixed(2) : '0.00',
+                    size: 'sm',
+                    color: '#333333',
+                    align: 'end',
+                    weight: 'bold'
+                  }
+                ]
+              },
+              {
+                type: 'text',
+                text: vix && vix.close ? (vix.close > 20 ? '⚠️ 市場恐慌情緒較高' : (vix.close > 15 ? '⚡ 市場波動適中' : '✅ 市場情緒穩定')) : '⚠️ VIX 資料未取得',
+                size: 'xs',
+                color: '#666666',
+                wrap: true,
+                margin: 'sm'
+              }
             ]
           },
 
@@ -1260,7 +1328,7 @@ function generateMediumUSMarketFlexMessage(analysisResult) {
  */
 function generateSimplifiedUSMarketFlexMessage(analysisResult) {
   const { data, analysis } = analysisResult;
-  const { sp500, nasdaq, tsmAdr, twii } = data;
+  const { sp500, nasdaq, tsmAdr, twii, usdTwd, vix } = data;
 
   // 判斷趨勢顏色
   const getTrendColor = (status) => {
@@ -1387,6 +1455,66 @@ function generateSimplifiedUSMarketFlexMessage(analysisResult) {
                     text: `${getTrendEmoji(analysis.tw_market_status)} ${analysis.tw_market_status}`,
                     size: 'sm',
                     color: getTrendColor(analysis.tw_market_status),
+                    align: 'end',
+                    weight: 'bold'
+                  }
+                ]
+              }
+            ]
+          },
+
+          // VIX 恐慌指數和匯率
+          {
+            type: 'box',
+            layout: 'vertical',
+            margin: 'xl',
+            spacing: 'sm',
+            contents: [
+              {
+                type: 'text',
+                text: '📊 市場指標',
+                weight: 'bold',
+                size: 'md'
+              },
+              {
+                type: 'box',
+                layout: 'horizontal',
+                margin: 'md',
+                contents: [
+                  {
+                    type: 'text',
+                    text: 'VIX',
+                    size: 'sm',
+                    color: '#555555',
+                    flex: 1
+                  },
+                  {
+                    type: 'text',
+                    text: vix && vix.close ? vix.close.toFixed(2) : '0.00',
+                    size: 'sm',
+                    color: vix && vix.close > 20 ? '#ff4444' : '#00C851',
+                    align: 'end',
+                    weight: 'bold'
+                  }
+                ]
+              },
+              {
+                type: 'box',
+                layout: 'horizontal',
+                margin: 'sm',
+                contents: [
+                  {
+                    type: 'text',
+                    text: 'USD/TWD',
+                    size: 'sm',
+                    color: '#555555',
+                    flex: 1
+                  },
+                  {
+                    type: 'text',
+                    text: usdTwd && usdTwd.rate ? usdTwd.rate.toFixed(2) : '0.00',
+                    size: 'sm',
+                    color: '#333333',
                     align: 'end',
                     weight: 'bold'
                   }

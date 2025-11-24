@@ -91,6 +91,10 @@ async function analyzeUSMarket() {
     const latestUsdTwd = usdTwdData[usdTwdData.length - 1];
     const latestVix = vixData[vixData.length - 1];
 
+    console.log('📊 最新市場指標：');
+    console.log(`  - USD/TWD: ${latestUsdTwd ? JSON.stringify(latestUsdTwd) : '無資料'}`);
+    console.log(`  - VIX: ${latestVix ? JSON.stringify(latestVix) : '無資料'}`);
+
     console.log('✅ 技術指標計算完成，準備 AI 分析...');
 
     // 組合資料給 DeepSeek
