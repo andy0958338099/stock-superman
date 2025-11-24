@@ -488,26 +488,31 @@
           // 繪製圖片
           ctx.drawImage(opt.canvas, imgX, imgY, scaledWidth, scaledHeight);
 
-          // 添加半透明遮罩
-          ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
-          ctx.fillRect(x, 0, cellWidth, cellHeight);
+          // 添加底部漸層遮罩（只遮住下方文字區域）
+          const gradient = ctx.createLinearGradient(x, cellHeight - 200, x, cellHeight);
+          gradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
+          gradient.addColorStop(0.5, 'rgba(0, 0, 0, 0.5)');
+          gradient.addColorStop(1, 'rgba(0, 0, 0, 0.7)');
+          ctx.fillStyle = gradient;
+          ctx.fillRect(x, cellHeight - 200, cellWidth, 200);
 
-          // 添加文字
+          // 添加文字（放在底部）
           const titles = ['台股分析', '美股分析', '本週評分'];
           const subtitles = ['輸入股票代號', 'S&P500 / NASDAQ', '點擊查看'];
 
-          // 標題
+          // 標題（距離底部 100px）
           ctx.fillStyle = '#FFFFFF';
-          ctx.font = 'bold 80px Arial, "Microsoft JhengHei", sans-serif';
+          ctx.font = 'bold 70px Arial, "Microsoft JhengHei", sans-serif';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
-          ctx.shadowBlur = 10;
-          ctx.fillText(titles[i], x + cellWidth / 2, cellHeight / 2 - 20);
+          ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+          ctx.shadowBlur = 15;
+          ctx.fillText(titles[i], x + cellWidth / 2, cellHeight - 100);
 
-          // 副標題
-          ctx.font = '40px Arial, "Microsoft JhengHei", sans-serif';
-          ctx.fillText(subtitles[i], x + cellWidth / 2, cellHeight / 2 + 60);
+          // 副標題（距離底部 40px）
+          ctx.font = '36px Arial, "Microsoft JhengHei", sans-serif';
+          ctx.shadowBlur = 10;
+          ctx.fillText(subtitles[i], x + cellWidth / 2, cellHeight - 40);
           ctx.shadowBlur = 0;
         });
 
