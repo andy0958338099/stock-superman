@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rich Menu 管理 - 股市大亨</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      margin-bottom: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 28px;
+    }
+
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 14px;
+    }
+
+    .button-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    button {
+      padding: 15px 25px;
+      font-size: 16px;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      color: white;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .btn-success {
+      background: linear-gradient(135deg, #1DB446 0%, #00C851 100%);
+    }
+
+    .btn-warning {
+      background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
+    }
+
+    .btn-danger {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+
+    .loading {
+      text-align: center;
+      padding: 20px;
+      color: #667eea;
+      font-weight: 600;
+    }
+
+    .result {
+      margin-top: 20px;
+      padding: 20px;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    .result.success {
+      background: #d4edda;
+      border: 1px solid #c3e6cb;
+      color: #155724;
+    }
+
+    .result.error {
+      background: #f8d7da;
+      border: 1px solid #f5c6cb;
+      color: #721c24;
+    }
+
+    .result h3 {
+      margin-bottom: 10px;
+      font-size: 18px;
+    }
+
+    .result pre {
+      background: rgba(0, 0, 0, 0.05);
+      padding: 15px;
+      border-radius: 6px;
+      overflow-x: auto;
+      margin-top: 10px;
+      font-size: 12px;
+    }
+
+    .steps {
+      margin-top: 15px;
+    }
+
+    .step {
+      padding: 10px;
+      margin: 5px 0;
+      border-radius: 6px;
+      background: rgba(0, 0, 0, 0.03);
+    }
+
+    .step.success {
+      background: rgba(29, 180, 70, 0.1);
+      border-left: 3px solid #1DB446;
+    }
+
+    .info-box {
+      background: #e3f2fd;
+      border-left: 4px solid #2196F3;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 4px;
+    }
+
+    .info-box h4 {
+      color: #1976D2;
+      margin-bottom: 8px;
+    }
+
+    .info-box p {
+      color: #555;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <h1>📱 Rich Menu 管理</h1>
+      <p class="subtitle">股市大亨 LINE Bot Rich Menu 設置工具</p>
+
+      <div class="info-box">
+        <h4>💡 使用說明</h4>
+        <p>
+          <strong>靜態模式（推薦）：</strong>Rich Menu 顯示「點擊查看」，不需要定期更新<br>
+          <strong>動態模式：</strong>Rich Menu 顯示即時評分，需要定期更新
+        </p>
+      </div>
+
+      <div class="button-group">
+        <button class="btn-success" onclick="setupRichMenu('static')">
+          🎨 設置靜態 Rich Menu
+        </button>
+        <button class="btn-warning" onclick="setupRichMenu('dynamic')">
+          ⭐ 設置動態 Rich Menu
+        </button>
+      </div>
+
+      <div id="loading" class="loading" style="display: none;">
+        ⏳ 處理中，請稍候...
+      </div>
+
+      <div id="result"></div>
+    </div>
+  </div>
+
+  <script>
+    const API_ENDPOINT = '/.netlify/functions/rich-menu-setup';
+
+    async function setupRichMenu(mode) {
+      const loadingEl = document.getElementById('loading');
+      const resultEl = document.getElementById('result');
+      
+      // 顯示載入中
+      loadingEl.style.display = 'block';
+      resultEl.innerHTML = '';
+
+      // 禁用所有按鈕
+      document.querySelectorAll('button').forEach(btn => btn.disabled = true);
+
+      try {
+        const body = { action: 'setup', mode };
+
+        // 如果是動態模式，可以從 Supabase 獲取評分（這裡先用假數據）
+        if (mode === 'dynamic') {
+          body.avgScore = 4.5;
+          body.totalVotes = 10;
+        }
+
+        const response = await fetch(API_ENDPOINT, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(body),
+        });
+
+        const data = await response.json();
+
+        // 隱藏載入中
+        loadingEl.style.display = 'none';
+
+        // 顯示結果
+        if (data.success) {
+          resultEl.innerHTML = `
+            <div class="result success">
+              <h3>✅ ${data.message}</h3>
+              <div class="steps">
+                ${data.steps.map(step => `
+                  <div class="step ${step.status}">
+                    <strong>步驟 ${step.step}:</strong> ${step.action} - ${step.status === 'success' ? '✅ 成功' : '⏳ 處理中'}
+                  </div>
+                `).join('')}
+              </div>
+              <pre>${JSON.stringify(data.summary, null, 2)}</pre>
+            </div>
+          `;
+        } else {
+          resultEl.innerHTML = `
+            <div class="result error">
+              <h3>❌ 設置失敗</h3>
+              <p><strong>錯誤：</strong>${data.error}</p>
+              ${data.errorDetails ? `<pre>${data.errorDetails}</pre>` : ''}
+            </div>
+          `;
+        }
+      } catch (error) {
+        loadingEl.style.display = 'none';
+        resultEl.innerHTML = `
+          <div class="result error">
+            <h3>❌ 系統錯誤</h3>
+            <p>${error.message}</p>
+          </div>
+        `;
+      } finally {
+        // 重新啟用按鈕
+        document.querySelectorAll('button').forEach(btn => btn.disabled = false);
+      }
+    }
+  </script>
+</body>
+</html>
+

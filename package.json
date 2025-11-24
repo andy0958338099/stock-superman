@@ -14,7 +14,8 @@
     "generate:richmenu": "node scripts/generate-rich-menu-image.js",
     "generate:richmenu:images": "node scripts/generate-rich-menu-with-images.js",
     "update:richmenu": "node scripts/update-rich-menu-image.js",
-    "update:richmenu:current": "node scripts/update-rich-menu-current-score.js"
+    "update:richmenu:current": "node scripts/update-rich-menu-current-score.js",
+    "richmenu:admin": "echo '🌐 Open http://localhost:8888/admin/rich-menu.html in your browser' && npm run dev"
   },
   "keywords": ["line-bot", "stock", "finmind", "deepseek", "taiwan-stock"],
   "author": "",
