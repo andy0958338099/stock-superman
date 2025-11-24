@@ -17,7 +17,13 @@
     "update:richmenu:current": "node scripts/update-rich-menu-current-score.js",
     "richmenu:admin": "echo '🌐 Open http://localhost:8888/admin/rich-menu.html in your browser' && npm run dev"
   },
-  "keywords": ["line-bot", "stock", "finmind", "deepseek", "taiwan-stock"],
+  "keywords": [
+    "line-bot",
+    "stock",
+    "finmind",
+    "deepseek",
+    "taiwan-stock"
+  ],
   "author": "",
   "license": "MIT",
   "dependencies": {
@@ -28,7 +34,8 @@
     "chart.js": "^3.9.1",
     "chartjs-node-canvas": "^4.1.6",
     "dotenv": "^16.4.5",
-    "moment": "^2.30.1"
+    "moment": "^2.30.1",
+    "sharp": "^0.34.5"
   },
   "devDependencies": {
     "netlify-cli": "^17.36.4"
@@ -37,4 +44,3 @@
     "node": ">=18.0.0"
   }
 }
-
