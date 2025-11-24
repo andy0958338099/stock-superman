@@ -912,7 +912,34 @@ exports.handler = async function(event, context) {
         continue;
       }
 
-      // 7. 檢查問卷調查指令
+      // 7. 檢查清除快取指令（格式：清除快取:2330 或 clear:2330）
+      const clearCacheMatch = text.match(/^(清除快取|清除|clear):(\d{3,5})$/i);
+      if (clearCacheMatch) {
+        const stockId = clearCacheMatch[2];
+        console.log(`🗑️  收到清除快取請求：${stockId}`);
+
+        try {
+          const result = await deleteStockCache(stockId);
+          await client.replyMessage(replyToken, {
+            type: 'text',
+            text: `✅ 已清除 ${stockId} 的快取\n\n` +
+                  `刪除了 ${result.count} 筆資料\n\n` +
+                  `現在可以重新查詢該股票，系統會抓取最新資料（包含財務資訊）`
+          });
+          await recordReplyToken(replyToken);
+          console.log(`✅ 已清除 ${stockId} 快取`);
+        } catch (error) {
+          console.error('❌ 清除快取失敗:', error);
+          await client.replyMessage(replyToken, {
+            type: 'text',
+            text: `❌ 清除快取失敗：${error.message}`
+          });
+          await recordReplyToken(replyToken);
+        }
+        continue;
+      }
+
+      // 8. 檢查問卷調查指令
       if (text === '📊 查看評分' || text === '問卷' || text === '評分' || text === '調查') {
         console.log('📊 收到問卷調查請求');
         try {
