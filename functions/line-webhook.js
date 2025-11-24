@@ -34,7 +34,7 @@ const { handleDiscussionInit, handleDiscussionOpinion } = require('./handlers/di
 const { handleFinalReview, handleReviewVote } = require('./handlers/final-review-handler');
 const { getConversationState, initConversationState, getUserActiveDiscussion, saveConversationState } = require('./conversation-state');
 const { buildStockAnalysisQuickReply, buildUSMarketPollingQuickReply } = require('./quick-reply-builder');
-const { getCurrentWeekStatistics, hasUserVotedThisWeek, submitVote } = require('./survey-handler');
+const { getCurrentWeekStatistics, hasUserVotedThisWeek, submitVote, getFullSurveyInfo } = require('./survey-handler');
 const { generateSurveyFlexMessage } = require('./survey-flex-message');
 
 // LINE Bot 設定
@@ -817,8 +817,8 @@ exports.handler = async function(event, context) {
       if (text === '📊 查看評分' || text === '問卷' || text === '評分' || text === '調查') {
         console.log('📊 收到問卷調查請求');
         try {
-          const weekStats = await getCurrentWeekStatistics();
-          if (!weekStats) {
+          const surveyInfo = await getFullSurveyInfo();
+          if (!surveyInfo || !surveyInfo.currentWeek) {
             await client.replyMessage(replyToken, {
               type: 'text',
               text: '❌ 無法取得問卷資訊，請稍後再試'
@@ -827,8 +827,14 @@ exports.handler = async function(event, context) {
             continue;
           }
 
-          const hasVoted = await hasUserVotedThisWeek(userId, weekStats.week.id);
-          const surveyMessage = generateSurveyFlexMessage(weekStats.week, weekStats.statistics, hasVoted);
+          const hasVoted = await hasUserVotedThisWeek(userId, surveyInfo.currentWeek.id);
+          const surveyMessage = generateSurveyFlexMessage(
+            surveyInfo.currentWeek,
+            surveyInfo.currentStatistics,
+            surveyInfo.lastWeek,
+            surveyInfo.lastStatistics,
+            hasVoted
+          );
 
           await client.replyMessage(replyToken, surveyMessage);
           await recordReplyToken(replyToken);
@@ -853,8 +859,14 @@ exports.handler = async function(event, context) {
 
           if (result.success) {
             // 發送成功訊息和更新後的統計
-            const weekStats = await getCurrentWeekStatistics();
-            const surveyMessage = generateSurveyFlexMessage(weekStats.week, weekStats.statistics, true);
+            const surveyInfo = await getFullSurveyInfo();
+            const surveyMessage = generateSurveyFlexMessage(
+              surveyInfo.currentWeek,
+              surveyInfo.currentStatistics,
+              surveyInfo.lastWeek,
+              surveyInfo.lastStatistics,
+              true
+            );
 
             await client.replyMessage(replyToken, [
               {

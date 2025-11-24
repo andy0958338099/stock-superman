@@ -4,6 +4,7 @@
  */
 
 const { createClient } = require('@supabase/supabase-js');
+const { autoInitializeWeekIfNeeded } = require('./auto-init-week');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -152,6 +153,45 @@ async function getWeekStatistics(weekId) {
 }
 
 /**
+ * 取得上週的統計資訊
+ * @returns {Promise<object|null>} - { week: object, statistics: object }
+ */
+async function getLastWeekStatistics() {
+  try {
+    const { data: lastWeek, error } = await supabase
+      .from('survey_weeks')
+      .select('*')
+      .eq('is_active', false)
+      .order('start_date', { ascending: false })
+      .limit(1)
+      .single();
+
+    if (error || !lastWeek) {
+      console.log('⚠️ 沒有上週資料');
+      return null;
+    }
+
+    const statistics = await getWeekStatistics(lastWeek.id);
+
+    return {
+      week: lastWeek,
+      statistics: statistics || {
+        total_votes: 0,
+        average_score: 0,
+        score_1_count: 0,
+        score_2_count: 0,
+        score_3_count: 0,
+        score_4_count: 0,
+        score_5_count: 0
+      }
+    };
+  } catch (error) {
+    console.error('❌ 取得上週統計失敗:', error);
+    return null;
+  }
+}
+
+/**
  * 取得當前週的統計資訊
  * @returns {Promise<object|null>} - { week: object, statistics: object }
  */
@@ -182,11 +222,38 @@ async function getCurrentWeekStatistics() {
   }
 }
 
+/**
+ * 取得完整的問卷資訊（包含本週和上週）
+ * 自動檢查並初始化新週
+ * @returns {Promise<object|null>} - { currentWeek, lastWeek, currentStatistics, lastStatistics }
+ */
+async function getFullSurveyInfo() {
+  try {
+    // 自動檢查並初始化新週
+    await autoInitializeWeekIfNeeded();
+
+    const currentWeekData = await getCurrentWeekStatistics();
+    const lastWeekData = await getLastWeekStatistics();
+
+    return {
+      currentWeek: currentWeekData?.week || null,
+      currentStatistics: currentWeekData?.statistics || null,
+      lastWeek: lastWeekData?.week || null,
+      lastStatistics: lastWeekData?.statistics || null
+    };
+  } catch (error) {
+    console.error('❌ 取得完整問卷資訊失敗:', error);
+    return null;
+  }
+}
+
 module.exports = {
   getCurrentWeek,
   hasUserVotedThisWeek,
   submitVote,
   getWeekStatistics,
-  getCurrentWeekStatistics
+  getCurrentWeekStatistics,
+  getLastWeekStatistics,
+  getFullSurveyInfo
 };
 

@@ -4,32 +4,46 @@
  */
 
 /**
- * 生成評分問卷 Flex Message
- * @param {object} weekInfo - 週別資訊
- * @param {object} statistics - 統計資訊
+ * 生成評分問卷 Flex Message（改進版：顯示上週結果和本週投票）
+ * @param {object} currentWeek - 本週資訊
+ * @param {object} currentStatistics - 本週統計
+ * @param {object} lastWeek - 上週資訊
+ * @param {object} lastStatistics - 上週統計
  * @param {boolean} hasVoted - 用戶是否已投票
  * @returns {object} - LINE Flex Message
  */
-function generateSurveyFlexMessage(weekInfo, statistics, hasVoted = false) {
-  const avgScore = statistics?.average_score || 0;
-  const totalVotes = statistics?.total_votes || 0;
+function generateSurveyFlexMessage(currentWeek, currentStatistics, lastWeek, lastStatistics, hasVoted = false) {
+  // 上週評分
+  const lastAvgScore = lastStatistics?.average_score || 0;
+  const lastTotalVotes = lastStatistics?.total_votes || 0;
 
-  // 計算信心指數（0-100）
-  const confidenceIndex = avgScore > 0 ? Math.round((avgScore / 5) * 100) : 0;
+  // 本週評分
+  const currentAvgScore = currentStatistics?.average_score || 0;
+  const currentTotalVotes = currentStatistics?.total_votes || 0;
 
-  // 決定顏色
-  let scoreColor = '#999999';
-  let confidenceText = '尚無評分';
-  if (avgScore >= 4) {
-    scoreColor = '#00C851';
-    confidenceText = '高度可信';
-  } else if (avgScore >= 3) {
-    scoreColor = '#ffbb33';
-    confidenceText = '中等可信';
-  } else if (avgScore > 0) {
-    scoreColor = '#ff4444';
-    confidenceText = '需要改進';
+  // 計算上週信心指數
+  const lastConfidenceIndex = lastAvgScore > 0 ? Math.round((lastAvgScore / 5) * 100) : 0;
+
+  // 決定上週評分顏色
+  let lastScoreColor = '#999999';
+  let lastConfidenceText = '尚無評分';
+  if (lastAvgScore >= 4) {
+    lastScoreColor = '#00C851';
+    lastConfidenceText = '高度可信';
+  } else if (lastAvgScore >= 3) {
+    lastScoreColor = '#ffbb33';
+    lastConfidenceText = '中等可信';
+  } else if (lastAvgScore > 0) {
+    lastScoreColor = '#ff4444';
+    lastConfidenceText = '需要改進';
   }
+
+  // 格式化日期
+  const formatDate = (dateStr) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    return `${date.getMonth() + 1}/${date.getDate()}`;
+  };
 
   return {
     type: 'flex',
@@ -51,9 +65,9 @@ function generateSurveyFlexMessage(weekInfo, statistics, hasVoted = false) {
           },
           {
             type: 'text',
-            text: '上週的分析是否準確？',
-            size: 'md',
-            color: '#666666',
+            text: currentWeek ? `本週：${formatDate(currentWeek.start_date)} ~ ${formatDate(currentWeek.end_date)}` : '本週問卷',
+            size: 'sm',
+            color: '#999999',
             margin: 'md'
           },
           {
@@ -61,19 +75,29 @@ function generateSurveyFlexMessage(weekInfo, statistics, hasVoted = false) {
             margin: 'xl'
           },
 
-          // 當前評分統計
-          {
+          // 上週結果（如果有）
+          ...(lastWeek && lastTotalVotes > 0 ? [{
             type: 'box',
             layout: 'vertical',
             margin: 'xl',
             spacing: 'sm',
+            backgroundColor: '#F5F5F5',
+            cornerRadius: '8px',
+            paddingAll: '15px',
             contents: [
               {
                 type: 'text',
-                text: '📈 本週評分統計',
+                text: '📋 上週結果公佈',
                 weight: 'bold',
                 size: 'md',
                 color: '#333333'
+              },
+              {
+                type: 'text',
+                text: `${formatDate(lastWeek.start_date)} ~ ${formatDate(lastWeek.end_date)}`,
+                size: 'xs',
+                color: '#999999',
+                margin: 'xs'
               },
               {
                 type: 'box',
@@ -87,10 +111,10 @@ function generateSurveyFlexMessage(weekInfo, statistics, hasVoted = false) {
                     contents: [
                       {
                         type: 'text',
-                        text: avgScore > 0 ? avgScore.toFixed(2) : '--',
+                        text: lastAvgScore > 0 ? lastAvgScore.toFixed(2) : '--',
                         size: 'xxl',
                         weight: 'bold',
-                        color: scoreColor,
+                        color: lastScoreColor,
                         align: 'center'
                       },
                       {
@@ -110,7 +134,7 @@ function generateSurveyFlexMessage(weekInfo, statistics, hasVoted = false) {
                     contents: [
                       {
                         type: 'text',
-                        text: totalVotes.toString(),
+                        text: lastTotalVotes.toString(),
                         size: 'xxl',
                         weight: 'bold',
                         color: '#1DB446',
@@ -132,38 +156,22 @@ function generateSurveyFlexMessage(weekInfo, statistics, hasVoted = false) {
                 type: 'box',
                 layout: 'vertical',
                 margin: 'md',
-                backgroundColor: scoreColor,
+                backgroundColor: lastScoreColor,
                 cornerRadius: '8px',
                 paddingAll: '12px',
                 contents: [
                   {
                     type: 'text',
-                    text: `${confidenceText} (${confidenceIndex}%)`,
+                    text: `${lastConfidenceText} (${lastConfidenceIndex}%)`,
                     size: 'sm',
                     color: '#ffffff',
                     weight: 'bold',
                     align: 'center'
                   }
                 ]
-              }
-            ]
-          },
-
-          // 分數分布
-          ...(totalVotes > 0 ? [{
-            type: 'box',
-            layout: 'vertical',
-            margin: 'xl',
-            spacing: 'sm',
-            contents: [
-              {
-                type: 'text',
-                text: '📊 分數分布',
-                weight: 'bold',
-                size: 'md',
-                color: '#333333'
               },
-              ...generateScoreDistribution(statistics)
+              // 上週分數分布
+              ...generateScoreDistribution(lastStatistics)
             ]
           }] : []),
 
@@ -172,7 +180,7 @@ function generateSurveyFlexMessage(weekInfo, statistics, hasVoted = false) {
             margin: 'xl'
           },
 
-          // 投票說明
+          // 本週投票狀態
           {
             type: 'box',
             layout: 'vertical',
@@ -188,8 +196,8 @@ function generateSurveyFlexMessage(weekInfo, statistics, hasVoted = false) {
               },
               {
                 type: 'text',
-                text: hasVoted 
-                  ? '感謝您的反饋！下週一可以再次投票'
+                text: hasVoted
+                  ? `感謝您的反饋！下週一可以再次投票\n本週已有 ${currentTotalVotes} 人投票`
                   : '請點擊下方按鈕進行評分（1-5 分）',
                 size: 'xs',
                 color: '#999999',
