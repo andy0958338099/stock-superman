@@ -88,12 +88,15 @@ async function analyzeUSMarket() {
     const twiiAnalysis = calculateIndicators(twiiData, '台股加權');
 
     // 取得最新匯率和 VIX
-    const latestUsdTwd = usdTwdData[usdTwdData.length - 1];
-    const latestVix = vixData[vixData.length - 1];
+    console.log(`📊 USD/TWD 資料筆數: ${usdTwdData.length}`);
+    console.log(`📊 VIX 資料筆數: ${vixData.length}`);
+
+    const latestUsdTwd = usdTwdData && usdTwdData.length > 0 ? usdTwdData[usdTwdData.length - 1] : null;
+    const latestVix = vixData && vixData.length > 0 ? vixData[vixData.length - 1] : null;
 
     console.log('📊 最新市場指標：');
-    console.log(`  - USD/TWD: ${latestUsdTwd ? JSON.stringify(latestUsdTwd) : '無資料'}`);
-    console.log(`  - VIX: ${latestVix ? JSON.stringify(latestVix) : '無資料'}`);
+    console.log(`  - USD/TWD 原始資料: ${latestUsdTwd ? JSON.stringify(latestUsdTwd) : '無資料'}`);
+    console.log(`  - VIX 原始資料: ${latestVix ? JSON.stringify(latestVix) : '無資料'}`);
 
     console.log('✅ 技術指標計算完成，準備 AI 分析...');
 
@@ -114,11 +117,15 @@ async function analyzeUSMarket() {
     const totalTime = (Date.now() - startTime) / 1000;
     console.log(`✅ 美股市場分析完成（總耗時 ${totalTime.toFixed(2)} 秒）`);
 
+    // 使用台北時間
+    const taipeiTime = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Taipei' }));
+    const timestamp = `${taipeiTime.getFullYear()}-${String(taipeiTime.getMonth() + 1).padStart(2, '0')}-${String(taipeiTime.getDate()).padStart(2, '0')} ${String(taipeiTime.getHours()).padStart(2, '0')}:${String(taipeiTime.getMinutes()).padStart(2, '0')}`;
+
     const result = {
       success: true,
       data: analysisData,
       analysis: aiAnalysis,
-      timestamp: moment().format('YYYY-MM-DD HH:mm:ss')
+      timestamp: timestamp
     };
 
     // 3. 儲存快取（6 小時有效，統一快取時間）

@@ -296,14 +296,19 @@ async function fetchExchangeRate(startDate = null, endDate = null) {
     }
 
     console.log(`📊 抓取匯率資料 USD/TWD${FINMIND_API_TOKEN ? ' [使用 API Token]' : ''}`);
+    console.log(`   參數: dataset=${params.dataset}, data_id=${params.data_id}, start_date=${params.start_date}, end_date=${params.end_date}`);
 
     const response = await axios.get(url, {
       params,
       timeout: 15000
     });
 
+    console.log(`   回應狀態: ${response.status}`);
+    console.log(`   回應資料筆數: ${response.data?.data?.length || 0}`);
+
     if (!response.data || !response.data.data || response.data.data.length === 0) {
-      throw new Error('查無匯率資料');
+      console.warn('⚠️ 查無匯率資料，返回空陣列');
+      return [];
     }
 
     const data = response.data.data.map(item => ({
@@ -313,7 +318,7 @@ async function fetchExchangeRate(startDate = null, endDate = null) {
 
     data.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-    console.log(`✅ 成功抓取匯率 ${data.length} 筆資料`);
+    console.log(`✅ 成功抓取匯率 ${data.length} 筆資料，最新: ${JSON.stringify(data[data.length - 1])}`);
     return data;
   }, MAX_RETRIES, '抓取匯率資料');
 }
@@ -347,14 +352,19 @@ async function fetchVIX(startDate = null, endDate = null) {
     }
 
     console.log(`📊 抓取 VIX 指數${FINMIND_API_TOKEN ? ' [使用 API Token]' : ''}`);
+    console.log(`   參數: dataset=${params.dataset}, data_id=${params.data_id}, start_date=${params.start_date}, end_date=${params.end_date}`);
 
     const response = await axios.get(url, {
       params,
       timeout: 15000
     });
 
+    console.log(`   回應狀態: ${response.status}`);
+    console.log(`   回應資料筆數: ${response.data?.data?.length || 0}`);
+
     if (!response.data || !response.data.data || response.data.data.length === 0) {
-      throw new Error('查無 VIX 資料');
+      console.warn('⚠️ 查無 VIX 資料，返回空陣列');
+      return [];
     }
 
     const data = response.data.data.map(item => ({
@@ -364,7 +374,7 @@ async function fetchVIX(startDate = null, endDate = null) {
 
     data.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-    console.log(`✅ 成功抓取 VIX ${data.length} 筆資料`);
+    console.log(`✅ 成功抓取 VIX ${data.length} 筆資料，最新: ${JSON.stringify(data[data.length - 1])}`);
     return data;
   }, MAX_RETRIES, '抓取 VIX 指數');
 }
