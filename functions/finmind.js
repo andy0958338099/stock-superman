@@ -379,12 +379,123 @@ async function fetchVIX(startDate = null, endDate = null) {
   }, MAX_RETRIES, '抓取 VIX 指數');
 }
 
+/**
+ * 抓取台股股利資料
+ * @param {string} stockId - 股票代號
+ * @returns {Promise<object>} - 最新年度股利資料
+ */
+async function fetchStockDividend(stockId) {
+  try {
+    return await retryWithBackoff(async () => {
+      const url = `${FINMIND_BASE_URL}/data`;
+      const params = {
+        dataset: 'TaiwanStockDividend',
+        data_id: stockId
+      };
+
+      if (FINMIND_API_TOKEN) {
+        params.token = FINMIND_API_TOKEN;
+      }
+
+      console.log(`📊 抓取股利資料：${stockId}`);
+
+      const response = await axios.get(url, {
+        params,
+        timeout: 10000
+      });
+
+      if (!response.data || !response.data.data || response.data.data.length === 0) {
+        console.warn(`⚠️ 查無股利資料：${stockId}`);
+        return null;
+      }
+
+      // 取得最新年度的股利資料（按年度排序）
+      const dividendData = response.data.data.sort((a, b) => b.year - a.year);
+      const latest = dividendData[0];
+
+      console.log(`✅ 成功抓取股利資料：${latest.year} 年`);
+
+      return {
+        year: latest.year,
+        cash_dividend: parseFloat(latest.CashEarningsDistribution || 0), // 現金股利
+        stock_dividend: parseFloat(latest.StockEarningsDistribution || 0)  // 股票股利
+      };
+    }, MAX_RETRIES, `抓取股利資料 ${stockId}`);
+  } catch (error) {
+    console.warn(`⚠️ 抓取股利資料失敗：${stockId}`, error.message);
+    return null;
+  }
+}
+
+/**
+ * 抓取台股財務報表（EPS）
+ * @param {string} stockId - 股票代號
+ * @returns {Promise<object>} - 近3季 EPS 資料
+ */
+async function fetchStockFinancials(stockId) {
+  try {
+    return await retryWithBackoff(async () => {
+      const url = `${FINMIND_BASE_URL}/data`;
+      const params = {
+        dataset: 'TaiwanStockFinancialStatements',
+        data_id: stockId
+      };
+
+      if (FINMIND_API_TOKEN) {
+        params.token = FINMIND_API_TOKEN;
+      }
+
+      console.log(`📊 抓取財務報表：${stockId}`);
+
+      const response = await axios.get(url, {
+        params,
+        timeout: 10000
+      });
+
+      if (!response.data || !response.data.data || response.data.data.length === 0) {
+        console.warn(`⚠️ 查無財務報表：${stockId}`);
+        return null;
+      }
+
+      // 取得最近3季的 EPS（按日期排序）
+      const financialData = response.data.data
+        .filter(item => item.type === 'Q') // 只取季報
+        .sort((a, b) => new Date(b.date) - new Date(a.date))
+        .slice(0, 3);
+
+      if (financialData.length === 0) {
+        return null;
+      }
+
+      const epsData = financialData.map(item => ({
+        date: item.date,
+        eps: parseFloat(item.EPS || 0)
+      }));
+
+      // 計算近3季累計 EPS
+      const totalEPS = epsData.reduce((sum, item) => sum + item.eps, 0);
+
+      console.log(`✅ 成功抓取財務報表：近3季 EPS = ${totalEPS.toFixed(2)}`);
+
+      return {
+        recent_3q_eps: epsData,
+        total_3q_eps: totalEPS
+      };
+    }, MAX_RETRIES, `抓取財務報表 ${stockId}`);
+  } catch (error) {
+    console.warn(`⚠️ 抓取財務報表失敗：${stockId}`, error.message);
+    return null;
+  }
+}
+
 module.exports = {
   fetchStockPrice,
   fetchStockInfo,
   isValidStockId,
   fetchUSStockPrice,
   fetchExchangeRate,
-  fetchVIX
+  fetchVIX,
+  fetchStockDividend,
+  fetchStockFinancials
 };
 

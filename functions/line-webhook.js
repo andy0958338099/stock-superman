@@ -11,7 +11,7 @@ const {
   saveStockCache,
   deleteStockCache
 } = require('./supabase-client');
-const { fetchStockPrice, fetchStockInfo, isValidStockId } = require('./finmind');
+const { fetchStockPrice, fetchStockInfo, isValidStockId, fetchStockDividend, fetchStockFinancials } = require('./finmind');
 const { generateIndicatorChart } = require('./generate-chart-quickchart');
 const { analyzeWithDeepSeek } = require('./deepseek');
 const { analyzeKD, analyzeMACDSignal, calculateKD, calculateMACD } = require('./indicators');
@@ -323,11 +323,21 @@ async function handleCacheCommand(replyToken, text) {
  * @param {object} kdAnalysis - KD 分析結果
  * @param {object} macdAnalysis - MACD 分析結果
  * @param {object} aiResult - AI 分析結果（可為 null）
+ * @param {object} dividendData - 股利資料（可為 null）
+ * @param {object} financialData - 財務資料（可為 null）
  * @returns {object} - Flex Message 物件
  */
-function createFlexMessage(stockId, stockName, latestData, kdImageUrl, macdImageUrl, kdAnalysis, macdAnalysis, aiResult) {
+function createFlexMessage(stockId, stockName, latestData, kdImageUrl, macdImageUrl, kdAnalysis, macdAnalysis, aiResult, dividendData, financialData) {
   const title = `${stockId} ${stockName}`;
   const priceInfo = `收盤價：${latestData.close} | ${latestData.date}`;
+
+  // 計算本益比（如果有 EPS 資料）
+  let peRatio = null;
+  if (financialData && financialData.total_3q_eps > 0) {
+    // 用近3季 EPS * 4/3 估算年度 EPS，再計算本益比
+    const estimatedAnnualEPS = financialData.total_3q_eps * (4 / 3);
+    peRatio = (latestData.close / estimatedAnnualEPS).toFixed(2);
+  }
 
   // 建立技術指標摘要
   const kdSummary = `KD：${kdAnalysis.signal} (K=${kdAnalysis.K}, D=${kdAnalysis.D})`;
@@ -367,6 +377,81 @@ function createFlexMessage(stockId, stockName, latestData, kdImageUrl, macdImage
           type: 'separator',
           margin: 'lg'
         },
+        // 財務資訊區塊（如果有資料）
+        ...((dividendData || financialData) ? [{
+          type: 'box',
+          layout: 'vertical',
+          margin: 'lg',
+          spacing: 'none',
+          contents: [
+            {
+              type: 'box',
+              layout: 'horizontal',
+              spacing: 'sm',
+              contents: [
+                ...(dividendData ? [
+                  {
+                    type: 'box',
+                    layout: 'vertical',
+                    flex: 1,
+                    contents: [
+                      {
+                        type: 'text',
+                        text: `💰 ${dividendData.year}年`,
+                        size: 'xxs',
+                        color: '#999999'
+                      },
+                      {
+                        type: 'text',
+                        text: `現金 ${dividendData.cash_dividend.toFixed(2)}`,
+                        size: 'xs',
+                        color: '#333333',
+                        weight: 'bold'
+                      },
+                      {
+                        type: 'text',
+                        text: `配股 ${dividendData.stock_dividend.toFixed(2)}`,
+                        size: 'xs',
+                        color: '#333333'
+                      }
+                    ]
+                  }
+                ] : []),
+                ...(financialData ? [
+                  {
+                    type: 'box',
+                    layout: 'vertical',
+                    flex: 1,
+                    contents: [
+                      {
+                        type: 'text',
+                        text: '📊 近3季',
+                        size: 'xxs',
+                        color: '#999999'
+                      },
+                      {
+                        type: 'text',
+                        text: `EPS ${financialData.total_3q_eps.toFixed(2)}`,
+                        size: 'xs',
+                        color: '#333333',
+                        weight: 'bold'
+                      },
+                      ...(peRatio ? [{
+                        type: 'text',
+                        text: `本益比 ${peRatio}`,
+                        size: 'xs',
+                        color: '#333333'
+                      }] : [])
+                    ]
+                  }
+                ] : [])
+              ]
+            }
+          ]
+        }, {
+          type: 'separator',
+          margin: 'lg'
+        }] : []),
         {
           type: 'box',
           layout: 'vertical',
@@ -488,7 +573,7 @@ async function handleStockQuery(replyToken, stockId, userId) {
             cachedData.stock_info && cachedData.latest_data &&
             cachedData.kd_analysis && cachedData.macd_analysis) {
 
-          // 使用與第一次查詢相同的 Flex Message 格式
+          // 使用與第一次查詢相同的 Flex Message 格式（包含財務資料）
           const flexMessage = createFlexMessage(
             stockId,
             cachedData.stock_info.stock_name,
@@ -497,7 +582,9 @@ async function handleStockQuery(replyToken, stockId, userId) {
             cachedData.macd_image_url,
             cachedData.kd_analysis,
             cachedData.macd_analysis,
-            cachedData.ai_result
+            cachedData.ai_result,
+            cachedData.dividend_data || null,
+            cachedData.financial_data || null
           );
 
           // 取得對話狀態並建立 Quick Reply 按鈕
@@ -536,10 +623,12 @@ async function handleStockQuery(replyToken, stockId, userId) {
     // ⚠️ 重要：不能先回「分析中」再回結果，因為 replyToken 只能用一次
     // 所以直接進行完整分析，然後一次回覆完整結果
 
-    // 3. 抓取股票資料
-    const [stockData, stockInfo] = await Promise.all([
+    // 3. 抓取股票資料（包含股利和財務資料）
+    const [stockData, stockInfo, dividendData, financialData] = await Promise.all([
       fetchStockPrice(stockId),
-      fetchStockInfo(stockId)
+      fetchStockInfo(stockId),
+      fetchStockDividend(stockId),
+      fetchStockFinancials(stockId)
     ]);
 
     if (!stockData || stockData.length < 30) {
@@ -547,6 +636,12 @@ async function handleStockQuery(replyToken, stockId, userId) {
     }
 
     console.log(`✅ 已抓取 ${stockData.length} 天資料`);
+    if (dividendData) {
+      console.log(`✅ 股利資料：${dividendData.year}年 現金${dividendData.cash_dividend} 配股${dividendData.stock_dividend}`);
+    }
+    if (financialData) {
+      console.log(`✅ 財務資料：近3季 EPS ${financialData.total_3q_eps.toFixed(2)}`);
+    }
 
     // 4. 生成圖表
     const chartInfo = await generateIndicatorChart(stockId, stockData, stockInfo.stock_name);
@@ -572,7 +667,7 @@ async function handleStockQuery(replyToken, stockId, userId) {
       summaryText += `AI 預測：↗️${aiResult.probability_up}% ➡️${aiResult.probability_flat}% ↘️${aiResult.probability_down}%`;
     }
 
-    // 8. 儲存快取（儲存三張圖的 URL）
+    // 8. 儲存快取（儲存三張圖的 URL 和財務資料）
     await saveStockCache({
       stock_id: stockId,
       result_json: {
@@ -581,6 +676,8 @@ async function handleStockQuery(replyToken, stockId, userId) {
         kd_analysis: kdAnalysis,
         macd_analysis: macdAnalysis,
         ai_result: aiResult,
+        dividend_data: dividendData,
+        financial_data: financialData,
         price_image_url: chartInfo.priceImageUrl,
         kd_image_url: chartInfo.kdImageUrl,
         macd_image_url: chartInfo.macdImageUrl,
@@ -593,7 +690,7 @@ async function handleStockQuery(replyToken, stockId, userId) {
 
     console.log('✅ 快取已儲存');
 
-    // 9. 建立並發送 Flex Message（使用 KD + MACD 圖）
+    // 9. 建立並發送 Flex Message（使用 KD + MACD 圖 + 財務資訊）
     const flexMessage = createFlexMessage(
       stockId,
       stockInfo.stock_name,
@@ -602,7 +699,9 @@ async function handleStockQuery(replyToken, stockId, userId) {
       chartInfo.macdImageUrl,  // MACD 圖（下方）
       kdAnalysis,
       macdAnalysis,
-      aiResult
+      aiResult,
+      dividendData,
+      financialData
     );
 
     // 10. 初始化對話狀態並建立 Quick Reply 按鈕
