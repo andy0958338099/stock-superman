@@ -15,6 +15,10 @@
 [functions."us-market-analysis-worker"]
   timeout = 60
 
+# Rich Menu 設置（需要處理大型圖片上傳）
+[functions."rich-menu-setup"]
+  timeout = 30
+
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"
