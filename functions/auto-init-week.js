@@ -11,7 +11,17 @@ const supabase = createClient(
 );
 
 /**
- * 取得週數（ISO 8601）
+ * 取得台北時間
+ */
+function getTaipeiTime() {
+  const now = new Date();
+  // 轉換為台北時間（UTC+8）
+  const taipeiTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Taipei' }));
+  return taipeiTime;
+}
+
+/**
+ * 取得週數（ISO 8601）- 使用台北時間
  */
 function getWeekNumber(date) {
   const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
@@ -22,7 +32,7 @@ function getWeekNumber(date) {
 }
 
 /**
- * 取得週一日期
+ * 取得週一日期（台北時間）
  */
 function getMonday(date) {
   const d = new Date(date);
@@ -37,10 +47,14 @@ function getMonday(date) {
  */
 async function autoInitializeWeekIfNeeded() {
   try {
-    const now = new Date();
+    // 使用台北時間
+    const now = getTaipeiTime();
     const year = now.getFullYear();
     const weekOfYear = getWeekNumber(now);
     const weekNumber = year * 100 + weekOfYear;
+
+    console.log(`🕐 當前台北時間：${now.toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' })}`);
+    console.log(`📅 週別編號：${weekNumber} (${year} 年第 ${weekOfYear} 週)`);
 
     // 檢查當前週是否已存在且為活動狀態
     const { data: currentWeek, error } = await supabase

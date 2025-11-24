@@ -45,6 +45,9 @@ function generateSurveyFlexMessage(currentWeek, currentStatistics, lastWeek, las
     return `${date.getMonth() + 1}/${date.getDate()}`;
   };
 
+  // 決定顯示順序：未投票時，上週結果放在最上面
+  const showLastWeekFirst = !hasVoted && lastWeek && lastTotalVotes > 0;
+
   return {
     type: 'flex',
     altText: '📊 每週問卷調查',
@@ -55,125 +58,249 @@ function generateSurveyFlexMessage(currentWeek, currentStatistics, lastWeek, las
         type: 'box',
         layout: 'vertical',
         contents: [
-          // 標題
-          {
-            type: 'text',
-            text: '📊 每週問卷調查',
-            weight: 'bold',
-            size: 'xl',
-            color: '#1DB446'
-          },
-          {
-            type: 'text',
-            text: currentWeek ? `本週：${formatDate(currentWeek.start_date)} ~ ${formatDate(currentWeek.end_date)}` : '本週問卷',
-            size: 'sm',
-            color: '#999999',
-            margin: 'md'
-          },
-          {
-            type: 'separator',
-            margin: 'xl'
-          },
-
-          // 上週結果（如果有）
-          ...(lastWeek && lastTotalVotes > 0 ? [{
-            type: 'box',
-            layout: 'vertical',
-            margin: 'xl',
-            spacing: 'sm',
-            backgroundColor: '#F5F5F5',
-            cornerRadius: '8px',
-            paddingAll: '15px',
-            contents: [
-              {
-                type: 'text',
-                text: '📋 上週結果公佈',
-                weight: 'bold',
-                size: 'md',
-                color: '#333333'
-              },
-              {
-                type: 'text',
-                text: `${formatDate(lastWeek.start_date)} ~ ${formatDate(lastWeek.end_date)}`,
-                size: 'xs',
-                color: '#999999',
-                margin: 'xs'
-              },
-              {
-                type: 'box',
-                layout: 'horizontal',
-                margin: 'md',
-                contents: [
-                  {
-                    type: 'box',
-                    layout: 'vertical',
-                    flex: 1,
-                    contents: [
-                      {
-                        type: 'text',
-                        text: lastAvgScore > 0 ? lastAvgScore.toFixed(2) : '--',
-                        size: 'xxl',
-                        weight: 'bold',
-                        color: lastScoreColor,
-                        align: 'center'
-                      },
-                      {
-                        type: 'text',
-                        text: '平均分數',
-                        size: 'xs',
-                        color: '#999999',
-                        align: 'center',
-                        margin: 'sm'
-                      }
-                    ]
-                  },
-                  {
-                    type: 'box',
-                    layout: 'vertical',
-                    flex: 1,
-                    contents: [
-                      {
-                        type: 'text',
-                        text: lastTotalVotes.toString(),
-                        size: 'xxl',
-                        weight: 'bold',
-                        color: '#1DB446',
-                        align: 'center'
-                      },
-                      {
-                        type: 'text',
-                        text: '投票人數',
-                        size: 'xs',
-                        color: '#999999',
-                        align: 'center',
-                        margin: 'sm'
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                type: 'box',
-                layout: 'vertical',
-                margin: 'md',
-                backgroundColor: lastScoreColor,
-                cornerRadius: '8px',
-                paddingAll: '12px',
-                contents: [
-                  {
-                    type: 'text',
-                    text: `${lastConfidenceText} (${lastConfidenceIndex}%)`,
-                    size: 'sm',
-                    color: '#ffffff',
-                    weight: 'bold',
-                    align: 'center'
-                  }
-                ]
-              },
-              // 上週分數分布
-              ...generateScoreDistribution(lastStatistics)
-            ]
-          }] : []),
+          // 如果未投票且有上週結果，先顯示上週結果
+          ...(showLastWeekFirst ? [
+            // 上週結果標題
+            {
+              type: 'text',
+              text: '📋 上週結果公佈',
+              weight: 'bold',
+              size: 'xl',
+              color: '#1DB446'
+            },
+            {
+              type: 'text',
+              text: lastWeek ? `${formatDate(lastWeek.start_date)} ~ ${formatDate(lastWeek.end_date)}` : '',
+              size: 'sm',
+              color: '#999999',
+              margin: 'md'
+            },
+            {
+              type: 'separator',
+              margin: 'xl'
+            },
+            // 上週結果內容
+            {
+              type: 'box',
+              layout: 'vertical',
+              margin: 'md',
+              spacing: 'sm',
+              contents: [
+                {
+                  type: 'box',
+                  layout: 'horizontal',
+                  margin: 'md',
+                  contents: [
+                    {
+                      type: 'box',
+                      layout: 'vertical',
+                      flex: 1,
+                      contents: [
+                        {
+                          type: 'text',
+                          text: lastAvgScore > 0 ? lastAvgScore.toFixed(2) : '--',
+                          size: 'xxl',
+                          weight: 'bold',
+                          color: lastScoreColor,
+                          align: 'center'
+                        },
+                        {
+                          type: 'text',
+                          text: '平均分數',
+                          size: 'xs',
+                          color: '#999999',
+                          align: 'center',
+                          margin: 'sm'
+                        }
+                      ]
+                    },
+                    {
+                      type: 'box',
+                      layout: 'vertical',
+                      flex: 1,
+                      contents: [
+                        {
+                          type: 'text',
+                          text: lastTotalVotes.toString(),
+                          size: 'xxl',
+                          weight: 'bold',
+                          color: '#1DB446',
+                          align: 'center'
+                        },
+                        {
+                          type: 'text',
+                          text: '投票人數',
+                          size: 'xs',
+                          color: '#999999',
+                          align: 'center',
+                          margin: 'sm'
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  type: 'box',
+                  layout: 'vertical',
+                  margin: 'md',
+                  backgroundColor: lastScoreColor,
+                  cornerRadius: '8px',
+                  paddingAll: '12px',
+                  contents: [
+                    {
+                      type: 'text',
+                      text: `${lastConfidenceText} (${lastConfidenceIndex}%)`,
+                      size: 'sm',
+                      color: '#ffffff',
+                      weight: 'bold',
+                      align: 'center'
+                    }
+                  ]
+                },
+                // 上週分數分布
+                ...generateScoreDistribution(lastStatistics)
+              ]
+            },
+            {
+              type: 'separator',
+              margin: 'xl'
+            },
+            // 本週問卷調查標題
+            {
+              type: 'text',
+              text: '📊 每週問卷調查',
+              weight: 'bold',
+              size: 'xl',
+              color: '#1DB446',
+              margin: 'xl'
+            },
+            {
+              type: 'text',
+              text: currentWeek ? `本週：${formatDate(currentWeek.start_date)} ~ ${formatDate(currentWeek.end_date)}` : '本週問卷',
+              size: 'sm',
+              color: '#999999',
+              margin: 'md'
+            }
+          ] : [
+            // 如果已投票或沒有上週結果，顯示標準標題
+            {
+              type: 'text',
+              text: '📊 每週問卷調查',
+              weight: 'bold',
+              size: 'xl',
+              color: '#1DB446'
+            },
+            {
+              type: 'text',
+              text: currentWeek ? `本週：${formatDate(currentWeek.start_date)} ~ ${formatDate(currentWeek.end_date)}` : '本週問卷',
+              size: 'sm',
+              color: '#999999',
+              margin: 'md'
+            },
+            {
+              type: 'separator',
+              margin: 'xl'
+            },
+            // 上週結果（如果有，但已投票的情況）
+            ...(lastWeek && lastTotalVotes > 0 ? [{
+              type: 'box',
+              layout: 'vertical',
+              margin: 'xl',
+              spacing: 'sm',
+              backgroundColor: '#F5F5F5',
+              cornerRadius: '8px',
+              paddingAll: '15px',
+              contents: [
+                {
+                  type: 'text',
+                  text: '📋 上週結果公佈',
+                  weight: 'bold',
+                  size: 'md',
+                  color: '#333333'
+                },
+                {
+                  type: 'text',
+                  text: `${formatDate(lastWeek.start_date)} ~ ${formatDate(lastWeek.end_date)}`,
+                  size: 'xs',
+                  color: '#999999',
+                  margin: 'xs'
+                },
+                {
+                  type: 'box',
+                  layout: 'horizontal',
+                  margin: 'md',
+                  contents: [
+                    {
+                      type: 'box',
+                      layout: 'vertical',
+                      flex: 1,
+                      contents: [
+                        {
+                          type: 'text',
+                          text: lastAvgScore > 0 ? lastAvgScore.toFixed(2) : '--',
+                          size: 'xxl',
+                          weight: 'bold',
+                          color: lastScoreColor,
+                          align: 'center'
+                        },
+                        {
+                          type: 'text',
+                          text: '平均分數',
+                          size: 'xs',
+                          color: '#999999',
+                          align: 'center',
+                          margin: 'sm'
+                        }
+                      ]
+                    },
+                    {
+                      type: 'box',
+                      layout: 'vertical',
+                      flex: 1,
+                      contents: [
+                        {
+                          type: 'text',
+                          text: lastTotalVotes.toString(),
+                          size: 'xxl',
+                          weight: 'bold',
+                          color: '#1DB446',
+                          align: 'center'
+                        },
+                        {
+                          type: 'text',
+                          text: '投票人數',
+                          size: 'xs',
+                          color: '#999999',
+                          align: 'center',
+                          margin: 'sm'
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  type: 'box',
+                  layout: 'vertical',
+                  margin: 'md',
+                  backgroundColor: lastScoreColor,
+                  cornerRadius: '8px',
+                  paddingAll: '12px',
+                  contents: [
+                    {
+                      type: 'text',
+                      text: `${lastConfidenceText} (${lastConfidenceIndex}%)`,
+                      size: 'sm',
+                      color: '#ffffff',
+                      weight: 'bold',
+                      align: 'center'
+                    }
+                  ]
+                },
+                // 上週分數分布
+                ...generateScoreDistribution(lastStatistics)
+              ]
+            }] : [])
+          ]),
 
           {
             type: 'separator',

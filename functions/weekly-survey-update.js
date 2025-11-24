@@ -14,16 +14,30 @@ const supabase = createClient(
 );
 
 /**
+ * 取得台北時間
+ */
+function getTaipeiTime() {
+  const now = new Date();
+  // 轉換為台北時間（UTC+8）
+  const taipeiTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Taipei' }));
+  return taipeiTime;
+}
+
+/**
  * 初始化新的一週
  */
 async function initializeNewWeek() {
   try {
     console.log('📅 初始化新的一週...');
 
-    const now = new Date();
+    // 使用台北時間
+    const now = getTaipeiTime();
     const year = now.getFullYear();
     const weekOfYear = getWeekNumber(now);
     const weekNumber = year * 100 + weekOfYear;
+
+    console.log(`🕐 當前台北時間：${now.toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' })}`);
+    console.log(`📅 週別編號：${weekNumber} (${year} 年第 ${weekOfYear} 週)`);
 
     // 計算週開始和結束日期（週一到週日）
     const startDate = getMonday(now);
