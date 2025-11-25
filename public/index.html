@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="股票超人 LINE Bot - AI 智能股票分析系統，提供技術分析、新聞解讀、政治情勢、互動討論、綜合總評五大功能！">
-    <meta name="keywords" content="股票超人,LINE Bot,台股,AI分析,技術分析,新聞分析,政治分析,投資">
-    <meta property="og:title" content="股票超人 LINE Bot - AI 智能股票分析系統">
-    <meta property="og:description" content="五大功能全方位分析，讓您的投資決策更精準！">
+    <meta name="description" content="股票超人 LINE Bot - DeepSeek AI 驅動的智能股票分析系統！提供技術分析（KD/MACD/MA）、新聞解讀、政治情勢、互動討論、綜合總評五大功能。支援台股、美股，3秒極速回應，24/7全天候服務，完全免費！">
+    <meta name="keywords" content="股票超人,LINE Bot,台股,美股,AI分析,DeepSeek,技術分析,KD指標,MACD,新聞分析,政治分析,投資,FinMind,股利,EPS,本益比">
+    <meta property="og:title" content="股票超人 LINE Bot - DeepSeek AI 智能股票分析系統">
+    <meta property="og:description" content="五大功能全方位分析！技術指標、AI新聞解讀、政治情勢、互動討論、綜合總評。3秒極速回應，完全免費！">
     <meta property="og:type" content="website">
-    <title>股票超人 LINE Bot - AI 智能股票分析系統</title>
+    <meta property="og:image" content="https://stock-superman.netlify.app/demo-screenshot.png">
+    <title>股票超人 LINE Bot - DeepSeek AI 智能股票分析系統</title>
     <style>
         * {
             margin: 0;
@@ -611,11 +612,13 @@
                 </div>
                 <ul class="feature-list">
                     <li>即時股價與成交量</li>
-                    <li>KD 指標（多空判斷）</li>
-                    <li>MACD 指標（趨勢強弱）</li>
-                    <li>移動平均線（MA5/MA20）</li>
+                    <li>股利資料（現金股利、股票股利）</li>
+                    <li>EPS 與本益比分析</li>
+                    <li>KD 指標（多空判斷、金叉死叉）</li>
+                    <li>MACD 指標（趨勢強弱、柱狀圖）</li>
+                    <li>移動平均線（MA5/MA20/MA60）</li>
                     <li>預測未來 10 日漲跌機率</li>
-                    <li>精美視覺化圖表</li>
+                    <li>精美視覺化圖表（QuickChart）</li>
                 </ul>
             </div>
 
@@ -627,10 +630,12 @@
                     AI 解讀最新財經新聞，掌握市場脈動
                 </div>
                 <ul class="feature-list">
-                    <li>搜尋最新財經新聞</li>
-                    <li>專家深度解讀</li>
-                    <li>分析新聞對股價的影響</li>
-                    <li>提供投資建議</li>
+                    <li>Google 搜尋最新財經新聞（6 則）</li>
+                    <li>DeepSeek AI 專家深度解讀</li>
+                    <li>分析新聞對股價的正面/負面影響</li>
+                    <li>指出關鍵風險和機會</li>
+                    <li>提供明確投資建議</li>
+                    <li>專業且有態度的分析風格</li>
                 </ul>
             </div>
 
@@ -642,11 +647,13 @@
                     評估國際政治對產業的影響
                 </div>
                 <ul class="feature-list">
-                    <li>自動識別產業類別</li>
-                    <li>搜尋相關國際新聞</li>
-                    <li>專家深度分析</li>
-                    <li>評估地緣政治風險</li>
+                    <li>自動識別產業類別（半導體、航運等）</li>
+                    <li>搜尋相關國際政治新聞（6 則）</li>
+                    <li>DeepSeek AI 專家深度分析</li>
+                    <li>評估地緣政治風險（美中關係、台海局勢）</li>
                     <li>產業供應鏈影響分析</li>
+                    <li>政策變化對股價的潛在影響</li>
+                    <li>洞察深刻且基於事實</li>
                 </ul>
             </div>
 
@@ -655,30 +662,181 @@
                 <div class="feature-card-icon">💬</div>
                 <div class="feature-card-title">4. 互動討論模式</div>
                 <div class="feature-card-desc">
-                    與專家深度討論，挑戰您的投資邏輯
+                    與 AI 專家深度討論，挑戰您的投資邏輯
                 </div>
                 <ul class="feature-list">
-                    <li>5 輪主題式討論</li>
-                    <li>初步看法 → 風險評估</li>
-                    <li>機會分析 → 進出場策略</li>
-                    <li>最終決策與建議</li>
-                    <li>優化投資決策</li>
+                    <li>5 輪主題式深度討論</li>
+                    <li>第 1 輪：初步看法與投資理由</li>
+                    <li>第 2 輪：風險評估與挑戰</li>
+                    <li>第 3 輪：機會分析與反思</li>
+                    <li>第 4 輪：進出場策略與時機</li>
+                    <li>第 5 輪：最終決策與建議</li>
+                    <li>優化投資決策，避免盲點</li>
                 </ul>
             </div>
 
             <!-- 功能 5: 綜合總評 -->
             <div class="feature-card">
-                <div class="feature-card-icon">📊</div>
+                <div class="feature-card-icon">🎯</div>
                 <div class="feature-card-title">5. 綜合總評</div>
                 <div class="feature-card-desc">
                     整合所有分析，給出最終投資建議
                 </div>
                 <ul class="feature-list">
-                    <li>整合技術、新聞、政治分析</li>
-                    <li>納入討論洞察</li>
-                    <li>資深顧問總結</li>
-                    <li>明確投資建議</li>
-                    <li>信心指數評分</li>
+                    <li>整合技術、新聞、政治三大分析</li>
+                    <li>納入互動討論的洞察</li>
+                    <li>資深投資顧問總結</li>
+                    <li>明確的買入/持有/賣出建議</li>
+                    <li>信心指數評分（1-10 分）</li>
+                    <li>風險提示與注意事項</li>
+                    <li>最終投資決策參考</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 美股分析功能 -->
+        <h2 class="section-title">🇺🇸 美股市場分析</h2>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-card-icon">📈</div>
+                <div class="feature-card-title">美股即時分析</div>
+                <div class="feature-card-desc">
+                    輸入「美股」立即獲得完整市場分析
+                </div>
+                <ul class="feature-list">
+                    <li>VIX 恐慌指數（市場情緒）</li>
+                    <li>USD/TWD 匯率（新台幣走勢）</li>
+                    <li>三大指數（道瓊、S&P 500、那斯達克）</li>
+                    <li>AI 專家市場解讀</li>
+                    <li>投資建議與風險提示</li>
+                    <li>異步處理，3 秒快速回應</li>
+                </ul>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-card-icon">🔄</div>
+                <div class="feature-card-title">智能快取系統</div>
+                <div class="feature-card-desc">
+                    極速回應，節省您的時間
+                </div>
+                <ul class="feature-list">
+                    <li>台股快取 12 小時</li>
+                    <li>美股快取 6 小時</li>
+                    <li>自動更新最新資料</li>
+                    <li>支援手動清除快取</li>
+                    <li>Supabase 資料庫儲存</li>
+                    <li>3 秒內極速回應</li>
+                </ul>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-card-icon">🎨</div>
+                <div class="feature-card-title">Rich Menu 互動介面</div>
+                <div class="feature-card-desc">
+                    直覺操作，一鍵查詢
+                </div>
+                <ul class="feature-list">
+                    <li>美股市場分析（一鍵查詢）</li>
+                    <li>清除快取（重新抓取資料）</li>
+                    <li>問卷調查（提供意見回饋）</li>
+                    <li>精美視覺設計</li>
+                    <li>動態更新評分</li>
+                    <li>LINE 原生體驗</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 技術架構與特色 -->
+        <h2 class="section-title">⚡ 技術架構與特色</h2>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-card-icon">🤖</div>
+                <div class="feature-card-title">DeepSeek AI 驅動</div>
+                <div class="feature-card-desc">
+                    最先進的 AI 模型提供專業分析
+                </div>
+                <ul class="feature-list">
+                    <li>DeepSeek Chat API 整合</li>
+                    <li>專業財經分析師角色設定</li>
+                    <li>自然語言生成（NLG）</li>
+                    <li>上下文理解與推理</li>
+                    <li>即時新聞解讀能力</li>
+                </ul>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-card-icon">📡</div>
+                <div class="feature-card-title">FinMind API 資料源</div>
+                <div class="feature-card-desc">
+                    台灣最完整的金融資料 API
+                </div>
+                <ul class="feature-list">
+                    <li>台股即時股價（TaiwanStockPrice）</li>
+                    <li>股利資料（TaiwanStockDividend）</li>
+                    <li>財務報表（TaiwanStockFinancialStatements）</li>
+                    <li>美股資料（USStockPrice）</li>
+                    <li>匯率資料（TaiwanExchangeRate）</li>
+                    <li>VIX 恐慌指數（^VIX）</li>
+                </ul>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-card-icon">☁️</div>
+                <div class="feature-card-title">Serverless 架構</div>
+                <div class="feature-card-desc">
+                    Netlify Functions 無伺服器部署
+                </div>
+                <ul class="feature-list">
+                    <li>自動擴展，無需維護</li>
+                    <li>全球 CDN 加速</li>
+                    <li>99.9% 可用性保證</li>
+                    <li>即時部署與更新</li>
+                    <li>環境變數安全管理</li>
+                </ul>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-card-icon">🗄️</div>
+                <div class="feature-card-title">Supabase 資料庫</div>
+                <div class="feature-card-desc">
+                    PostgreSQL 雲端資料庫
+                </div>
+                <ul class="feature-list">
+                    <li>快取系統（台股 12h、美股 6h）</li>
+                    <li>Reply Token 去重機制</li>
+                    <li>問卷調查資料儲存</li>
+                    <li>即時資料同步</li>
+                    <li>自動備份與恢復</li>
+                </ul>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-card-icon">🔍</div>
+                <div class="feature-card-title">Google Search API</div>
+                <div class="feature-card-desc">
+                    即時新聞搜尋與分析
+                </div>
+                <ul class="feature-list">
+                    <li>財經新聞搜尋（6 則）</li>
+                    <li>政治新聞搜尋（6 則）</li>
+                    <li>自訂搜尋引擎（CSE）</li>
+                    <li>即時更新最新資訊</li>
+                    <li>智能關鍵字組合</li>
+                </ul>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-card-icon">📊</div>
+                <div class="feature-card-title">QuickChart 圖表</div>
+                <div class="feature-card-desc">
+                    精美的技術指標視覺化
+                </div>
+                <ul class="feature-list">
+                    <li>KD 線圖（K 線、D 線）</li>
+                    <li>MACD 柱狀圖（紅綠柱）</li>
+                    <li>移動平均線（MA5/MA20/MA60）</li>
+                    <li>自動配色與標註</li>
+                    <li>高解析度 PNG 輸出</li>
                 </ul>
             </div>
         </div>
@@ -695,6 +853,8 @@
                     <h3>🎯 完整技術分析一次到位</h3>
                     <ul class="showcase-features">
                         <li>✅ <strong>即時股價</strong> - 最新收盤價與日期</li>
+                        <li>✅ <strong>股利資料</strong> - 現金股利、股票股利</li>
+                        <li>✅ <strong>EPS 與本益比</strong> - 近 4 季 EPS、本益比</li>
                         <li>✅ <strong>KD 指標</strong> - 多頭/空頭判斷，K/D 線數值</li>
                         <li>✅ <strong>MACD 指標</strong> - 趨勢強弱分析</li>
                         <li>✅ <strong>預期走勢</strong> - 未來 10 日漲跌機率預測</li>
@@ -743,17 +903,58 @@
             </div>
         </div>
 
+        <!-- 技術堆疊 -->
+        <h2 class="section-title">🛠️ 技術堆疊</h2>
+        <div class="tech-stack">
+            <div class="tech-badge">LINE Messaging API</div>
+            <div class="tech-badge">DeepSeek AI</div>
+            <div class="tech-badge">FinMind API</div>
+            <div class="tech-badge">Google Search API</div>
+            <div class="tech-badge">Netlify Functions</div>
+            <div class="tech-badge">Supabase PostgreSQL</div>
+            <div class="tech-badge">QuickChart</div>
+            <div class="tech-badge">Node.js</div>
+            <div class="tech-badge">Axios</div>
+            <div class="tech-badge">Moment.js</div>
+            <div class="tech-badge">Jest Testing</div>
+            <div class="tech-badge">Sentry Monitoring</div>
+        </div>
+
         <!-- 底部資訊 -->
         <div class="info">
             <p><strong>🎯 適合對象：</strong></p>
             <p style="margin-top: 8px;">
                 ✓ 想快速了解股票技術面的投資人<br>
-                ✓ 需要技術指標輔助判斷的交易者<br>
+                ✓ 需要 AI 輔助分析的交易者<br>
                 ✓ 希望隨時隨地查詢股票的上班族<br>
-                ✓ 想學習技術分析的新手投資人
+                ✓ 想學習技術分析的新手投資人<br>
+                ✓ 關注國際政治對股市影響的投資者<br>
+                ✓ 需要多維度分析的專業投資人
             </p>
+
+            <p style="margin-top: 20px;"><strong>✨ 為什麼選擇股票超人？</strong></p>
+            <p style="margin-top: 8px;">
+                ✓ <strong>五大功能整合</strong> - 技術、新聞、政治、討論、總評一次到位<br>
+                ✓ <strong>AI 專家分析</strong> - DeepSeek AI 提供專業洞察<br>
+                ✓ <strong>極速回應</strong> - 3 秒內完整分析送達<br>
+                ✓ <strong>完全免費</strong> - 無需付費，無廣告干擾<br>
+                ✓ <strong>24/7 服務</strong> - 隨時隨地，想查就查<br>
+                ✓ <strong>持續更新</strong> - 定期新增功能與優化
+            </p>
+
+            <p style="margin-top: 20px;"><strong>🔒 隱私與安全：</strong></p>
+            <p style="margin-top: 8px;">
+                ✓ 不儲存個人投資決策<br>
+                ✓ 快取資料定期自動清除<br>
+                ✓ Webhook 簽名驗證<br>
+                ✓ Reply Token 去重機制<br>
+                ✓ Sentry 錯誤監控保障服務穩定
+            </p>
+
             <p style="margin-top: 20px; font-size: 0.85em; color: #999;">
-                ⚠️ 本服務僅供參考，不構成投資建議。投資有風險，請謹慎評估。
+                ⚠️ 本服務僅供參考，不構成投資建議。投資有風險，請謹慎評估。<br>
+                📧 問題回報或建議：透過 LINE Bot 問卷調查功能提供意見<br>
+                🔄 最後更新：2025-11-25 | 版本：v2.0
             </p>
         </div>
     </div>
