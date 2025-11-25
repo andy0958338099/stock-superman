@@ -414,11 +414,11 @@ async function fetchStockDividend(stockId) {
         return null;
       }
 
-      // 取得最新年度的股利資料（按年度排序）
-      const dividendData = response.data.data.sort((a, b) => b.year - a.year);
+      // 取得最新的股利資料（按日期排序）
+      const dividendData = response.data.data.sort((a, b) => new Date(b.date) - new Date(a.date));
       const latest = dividendData[0];
 
-      console.log(`✅ 成功抓取股利資料：${latest.year} 年`);
+      console.log(`✅ 成功抓取股利資料：${latest.year} (${latest.date})`);
 
       return {
         year: latest.year,
