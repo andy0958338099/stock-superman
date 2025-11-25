@@ -395,22 +395,17 @@ async function fetchStockDividend(stockId) {
         data_id: stockId
       };
 
-      // 設定請求選項
-      const requestOptions = {
-        params,
-        timeout: 10000
-      };
-
-      // 如果有 API Token，使用 Bearer Token 方式
+      // 如果有 API Token，加入 params
       if (FINMIND_API_TOKEN) {
-        requestOptions.headers = {
-          'Authorization': `Bearer ${FINMIND_API_TOKEN}`
-        };
+        params.token = FINMIND_API_TOKEN;
       }
 
-      console.log(`📊 抓取股利資料：${stockId}${FINMIND_API_TOKEN ? ' [使用 API Token]' : ''}`);
+      console.log(`📊 抓取股利資料：${stockId}${FINMIND_API_TOKEN ? ' [使用 API Token]' : ' [無 Token]'}`);
 
-      const response = await axios.get(url, requestOptions);
+      const response = await axios.get(url, {
+        params,
+        timeout: 10000
+      });
 
       if (!response.data || !response.data.data || response.data.data.length === 0) {
         console.warn(`⚠️ 查無股利資料：${stockId}`);
@@ -449,22 +444,17 @@ async function fetchStockFinancials(stockId) {
         data_id: stockId
       };
 
-      // 設定請求選項
-      const requestOptions = {
-        params,
-        timeout: 10000
-      };
-
-      // 如果有 API Token，使用 Bearer Token 方式
+      // 如果有 API Token，加入 params
       if (FINMIND_API_TOKEN) {
-        requestOptions.headers = {
-          'Authorization': `Bearer ${FINMIND_API_TOKEN}`
-        };
+        params.token = FINMIND_API_TOKEN;
       }
 
-      console.log(`📊 抓取財務報表：${stockId}${FINMIND_API_TOKEN ? ' [使用 API Token]' : ''}`);
+      console.log(`📊 抓取財務報表：${stockId}${FINMIND_API_TOKEN ? ' [使用 API Token]' : ' [無 Token]'}`);
 
-      const response = await axios.get(url, requestOptions);
+      const response = await axios.get(url, {
+        params,
+        timeout: 10000
+      });
 
       if (!response.data || !response.data.data || response.data.data.length === 0) {
         console.warn(`⚠️ 查無財務報表：${stockId}`);
