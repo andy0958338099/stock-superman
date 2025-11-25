@@ -1,17 +1,77 @@
 # 🚀 股市大亨 LINE Bot
 
-一個整合 **FinMind API**、**DeepSeek AI** 和 **LINE Messaging API** 的台股技術分析機器人。
+一個整合 **FinMind API**、**DeepSeek AI**、**Google Search API** 和 **LINE Messaging API** 的全方位股票分析機器人。
 
-## ✨ 功能特色
+## 🌟 網站展示
 
-- 📊 **即時股價資料**：透過 FinMind API 抓取台股日線資料
-- 📈 **技術指標分析**：自動計算 KD、MACD、MA5/20/60 等指標
-- 🤖 **AI 走勢預測**：使用 DeepSeek AI 深度分析未來 10 天走勢
-- 🎨 **視覺化圖表**：生成專業的技術分析圖表（價格、KD、MACD 三合一）
-- ⚡ **智慧快取**：12 小時內重複查詢直接使用快取，節省資源
-- 🔒 **安全機制**：Webhook 去重、Reply Token 驗證，防止重複觸發
-- 🔄 **智能重試**：API 請求失敗自動重試（Exponential Backoff）
-- 💬 **美觀介面**：使用 LINE Flex Message 呈現分析結果
+**官方網站**：https://stock-superman.netlify.app
+
+完整展示所有功能特點、技術架構、使用流程，讓使用者更了解系統的強大功能！
+
+## ✨ 五大核心功能
+
+### 1. 📊 技術分析
+- 即時股價與成交量
+- 股利資料（現金股利、股票股利）
+- EPS 與本益比分析
+- KD 指標（多空判斷、金叉死叉）
+- MACD 指標（趨勢強弱、柱狀圖）
+- 移動平均線（MA5/MA20/MA60）
+- 預測未來 10 日漲跌機率
+- 精美視覺化圖表（QuickChart）
+
+### 2. 📰 新聞分析
+- Google 搜尋最新財經新聞（6 則）
+- DeepSeek AI 專家深度解讀
+- 分析新聞對股價的正面/負面影響
+- 指出關鍵風險和機會
+- 提供明確投資建議
+
+### 3. 🌍 政治情勢分析
+- 自動識別產業類別
+- 搜尋相關國際政治新聞（6 則）
+- 評估地緣政治風險
+- 產業供應鏈影響分析
+- 政策變化對股價的潛在影響
+
+### 4. 💬 互動討論模式
+- 5 輪主題式深度討論
+- 第 1 輪：初步看法與投資理由
+- 第 2 輪：風險評估與挑戰
+- 第 3 輪：機會分析與反思
+- 第 4 輪：進出場策略與時機
+- 第 5 輪：最終決策與建議
+
+### 5. 🎯 綜合總評
+- 整合技術、新聞、政治三大分析
+- 納入互動討論的洞察
+- 資深投資顧問總結
+- 明確的買入/持有/賣出建議
+- 信心指數評分（1-10 分）
+
+## 🇺🇸 美股分析功能
+
+- VIX 恐慌指數（市場情緒）
+- USD/TWD 匯率（新台幣走勢）
+- 三大指數（道瓊、S&P 500、那斯達克）
+- AI 專家市場解讀
+- 異步處理，3 秒快速回應
+
+## 🔄 智能快取系統
+
+- 台股快取 12 小時
+- 美股快取 6 小時
+- Supabase 資料庫儲存
+- 支援手動清除快取
+- 3 秒內極速回應
+
+## 🎨 Rich Menu 互動介面
+
+- 美股市場分析（一鍵查詢）
+- 清除快取（重新抓取資料）
+- 問卷調查（提供意見回饋）
+- 精美視覺設計
+- 動態更新評分
 
 ## 🏗️ 技術架構
 
@@ -31,10 +91,13 @@ Netlify Function (line-webhook.js)
 
 - **部署平台**：Netlify Serverless Functions
 - **資料庫**：Supabase (PostgreSQL + Storage)
-- **股價資料**：FinMind API (官方 HTTP 版，無需 token)
-- **AI 分析**：DeepSeek API
-- **圖表生成**：Chart.js + chartjs-node-canvas
-- **訊息平台**：LINE Messaging API (僅使用 replyMessage)
+- **股價資料**：FinMind API (台股、美股、匯率、VIX)
+- **AI 分析**：DeepSeek Chat API
+- **新聞搜尋**：Google Custom Search API
+- **圖表生成**：QuickChart API
+- **訊息平台**：LINE Messaging API
+- **錯誤監控**：Sentry
+- **測試框架**：Jest
 
 ## 🚀 快速開始
 
