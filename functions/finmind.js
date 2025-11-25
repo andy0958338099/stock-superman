@@ -311,9 +311,10 @@ async function fetchExchangeRate(startDate = null, endDate = null) {
       return [];
     }
 
+    // USD/TWD 匯率欄位：spot_sell (即期賣出匯率)
     const data = response.data.data.map(item => ({
       date: item.date,
-      rate: parseFloat(item.close) || 0
+      rate: parseFloat(item.spot_sell || item.spot_buy || item.cash_sell || 0)
     }));
 
     data.sort((a, b) => new Date(a.date) - new Date(b.date));
@@ -367,9 +368,10 @@ async function fetchVIX(startDate = null, endDate = null) {
       return [];
     }
 
+    // VIX 欄位：Close (大寫 C)
     const data = response.data.data.map(item => ({
       date: item.date,
-      close: parseFloat(item.close) || 0
+      close: parseFloat(item.Close || item.close || item.Adj_Close || 0)
     }));
 
     data.sort((a, b) => new Date(a.date) - new Date(b.date));
@@ -393,16 +395,22 @@ async function fetchStockDividend(stockId) {
         data_id: stockId
       };
 
-      if (FINMIND_API_TOKEN) {
-        params.token = FINMIND_API_TOKEN;
-      }
-
-      console.log(`📊 抓取股利資料：${stockId}`);
-
-      const response = await axios.get(url, {
+      // 設定請求選項
+      const requestOptions = {
         params,
         timeout: 10000
-      });
+      };
+
+      // 如果有 API Token，使用 Bearer Token 方式
+      if (FINMIND_API_TOKEN) {
+        requestOptions.headers = {
+          'Authorization': `Bearer ${FINMIND_API_TOKEN}`
+        };
+      }
+
+      console.log(`📊 抓取股利資料：${stockId}${FINMIND_API_TOKEN ? ' [使用 API Token]' : ''}`);
+
+      const response = await axios.get(url, requestOptions);
 
       if (!response.data || !response.data.data || response.data.data.length === 0) {
         console.warn(`⚠️ 查無股利資料：${stockId}`);
@@ -441,45 +449,53 @@ async function fetchStockFinancials(stockId) {
         data_id: stockId
       };
 
-      if (FINMIND_API_TOKEN) {
-        params.token = FINMIND_API_TOKEN;
-      }
-
-      console.log(`📊 抓取財務報表：${stockId}`);
-
-      const response = await axios.get(url, {
+      // 設定請求選項
+      const requestOptions = {
         params,
         timeout: 10000
-      });
+      };
+
+      // 如果有 API Token，使用 Bearer Token 方式
+      if (FINMIND_API_TOKEN) {
+        requestOptions.headers = {
+          'Authorization': `Bearer ${FINMIND_API_TOKEN}`
+        };
+      }
+
+      console.log(`📊 抓取財務報表：${stockId}${FINMIND_API_TOKEN ? ' [使用 API Token]' : ''}`);
+
+      const response = await axios.get(url, requestOptions);
 
       if (!response.data || !response.data.data || response.data.data.length === 0) {
         console.warn(`⚠️ 查無財務報表：${stockId}`);
         return null;
       }
 
-      // 取得最近3季的 EPS（按日期排序）
-      const financialData = response.data.data
-        .filter(item => item.type === 'Q') // 只取季報
+      // FinMind 財務報表格式：{ date, stock_id, type, value, origin_name }
+      // 只取 type === 'EPS' 的資料
+      const epsRecords = response.data.data
+        .filter(item => item.type === 'EPS')
         .sort((a, b) => new Date(b.date) - new Date(a.date))
-        .slice(0, 3);
+        .slice(0, 4); // 取最近4季
 
-      if (financialData.length === 0) {
+      if (epsRecords.length === 0) {
+        console.warn(`⚠️ 查無 EPS 資料：${stockId}`);
         return null;
       }
 
-      const epsData = financialData.map(item => ({
+      const epsData = epsRecords.map(item => ({
         date: item.date,
-        eps: parseFloat(item.EPS || 0)
+        eps: parseFloat(item.value || 0)
       }));
 
-      // 計算近3季累計 EPS
+      // 計算近4季累計 EPS（年度 EPS）
       const totalEPS = epsData.reduce((sum, item) => sum + item.eps, 0);
 
-      console.log(`✅ 成功抓取財務報表：近3季 EPS = ${totalEPS.toFixed(2)}`);
+      console.log(`✅ 成功抓取財務報表：近4季 EPS = ${totalEPS.toFixed(2)}`);
 
       return {
-        recent_3q_eps: epsData,
-        total_3q_eps: totalEPS
+        recent_eps: epsData,
+        total_eps: totalEPS
       };
     }, MAX_RETRIES, `抓取財務報表 ${stockId}`);
   } catch (error) {

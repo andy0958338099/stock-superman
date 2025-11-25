@@ -333,10 +333,9 @@ function createFlexMessage(stockId, stockName, latestData, kdImageUrl, macdImage
 
   // 計算本益比（如果有 EPS 資料）
   let peRatio = null;
-  if (financialData && financialData.total_3q_eps > 0) {
-    // 用近3季 EPS * 4/3 估算年度 EPS，再計算本益比
-    const estimatedAnnualEPS = financialData.total_3q_eps * (4 / 3);
-    peRatio = (latestData.close / estimatedAnnualEPS).toFixed(2);
+  if (financialData && financialData.total_eps > 0) {
+    // 用近4季 EPS（年度 EPS）計算本益比
+    peRatio = (latestData.close / financialData.total_eps).toFixed(2);
   }
 
   // 建立技術指標摘要
@@ -425,13 +424,13 @@ function createFlexMessage(stockId, stockName, latestData, kdImageUrl, macdImage
                     contents: [
                       {
                         type: 'text',
-                        text: '📊 近3季',
+                        text: '📊 近4季',
                         size: 'xxs',
                         color: '#999999'
                       },
                       {
                         type: 'text',
-                        text: `EPS ${financialData.total_3q_eps.toFixed(2)}`,
+                        text: `EPS ${financialData.total_eps.toFixed(2)}`,
                         size: 'xs',
                         color: '#333333',
                         weight: 'bold'
@@ -640,7 +639,7 @@ async function handleStockQuery(replyToken, stockId, userId) {
       console.log(`✅ 股利資料：${dividendData.year}年 現金${dividendData.cash_dividend} 配股${dividendData.stock_dividend}`);
     }
     if (financialData) {
-      console.log(`✅ 財務資料：近3季 EPS ${financialData.total_3q_eps.toFixed(2)}`);
+      console.log(`✅ 財務資料：近4季 EPS ${financialData.total_eps.toFixed(2)}`);
     }
 
     // 4. 生成圖表
