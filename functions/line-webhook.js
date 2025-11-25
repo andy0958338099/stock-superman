@@ -4,6 +4,7 @@
  */
 
 const line = require('@line/bot-sdk');
+const { captureError, captureMessage } = require('./sentry');
 const {
   isReplyTokenUsed,
   recordReplyToken,
@@ -133,6 +134,13 @@ async function handleUSMarketCommand(userId) {
     const totalTime = (Date.now() - startTime) / 1000;
     console.error(`❌ 美股分析任務創建失敗（耗時 ${totalTime.toFixed(2)} 秒）:`, error.message);
     console.error('錯誤堆疊:', error.stack);
+
+    // 發送錯誤到 Sentry
+    captureError(error, {
+      user: userId,
+      action: 'us_market_analysis',
+      extra: { totalTime }
+    });
 
     let errorMessage = '❌ 美股分析失敗\n\n';
 
@@ -735,6 +743,13 @@ async function handleStockQuery(replyToken, stockId, userId) {
   } catch (error) {
     console.error('❌ 處理股票查詢失敗:', error);
 
+    // 發送錯誤到 Sentry
+    captureError(error, {
+      user: userId,
+      stockId,
+      action: 'stock_query'
+    });
+
     // 回覆錯誤訊息
     try {
       await client.replyMessage(replyToken, {
@@ -744,6 +759,11 @@ async function handleStockQuery(replyToken, stockId, userId) {
       await recordReplyToken(replyToken); // 成功回覆後記錄 token
     } catch (replyError) {
       console.error('回覆錯誤訊息失敗:', replyError);
+      captureError(replyError, {
+        user: userId,
+        stockId,
+        action: 'reply_error_message'
+      });
     }
   }
 }
@@ -1086,6 +1106,16 @@ exports.handler = async function(event, context) {
 
   } catch (error) {
     console.error('❌ Webhook 處理失敗:', error);
+
+    // 發送錯誤到 Sentry
+    captureError(error, {
+      action: 'webhook_handler',
+      extra: {
+        method: event.httpMethod,
+        path: event.path
+      }
+    });
+
     return {
       statusCode: 500,
       body: JSON.stringify({ error: error.message })
