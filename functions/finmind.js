@@ -390,17 +390,19 @@ async function fetchStockDividend(stockId) {
   try {
     return await retryWithBackoff(async () => {
       const url = `${FINMIND_BASE_URL}/data`;
+
+      // TaiwanStockDividend 需要 start_date 和 end_date 參數
+      const endDate = moment().format('YYYY-MM-DD');
+      const startDate = moment().subtract(5, 'years').format('YYYY-MM-DD');
+
       const params = {
         dataset: 'TaiwanStockDividend',
-        data_id: stockId
+        data_id: stockId,
+        start_date: startDate,
+        end_date: endDate
       };
 
-      // 如果有 API Token，加入 params
-      if (FINMIND_API_TOKEN) {
-        params.token = FINMIND_API_TOKEN;
-      }
-
-      console.log(`📊 抓取股利資料：${stockId}${FINMIND_API_TOKEN ? ' [使用 API Token]' : ' [無 Token]'}`);
+      console.log(`📊 抓取股利資料：${stockId} (${startDate} ~ ${endDate})`);
 
       const response = await axios.get(url, {
         params,
@@ -439,9 +441,16 @@ async function fetchStockFinancials(stockId) {
   try {
     return await retryWithBackoff(async () => {
       const url = `${FINMIND_BASE_URL}/data`;
+
+      // TaiwanStockFinancialStatements 需要 start_date 和 end_date 參數
+      const endDate = moment().format('YYYY-MM-DD');
+      const startDate = moment().subtract(2, 'years').format('YYYY-MM-DD');
+
       const params = {
         dataset: 'TaiwanStockFinancialStatements',
-        data_id: stockId
+        data_id: stockId,
+        start_date: startDate,
+        end_date: endDate
       };
 
       // 如果有 API Token，加入 params
@@ -449,7 +458,7 @@ async function fetchStockFinancials(stockId) {
         params.token = FINMIND_API_TOKEN;
       }
 
-      console.log(`📊 抓取財務報表：${stockId}${FINMIND_API_TOKEN ? ' [使用 API Token]' : ' [無 Token]'}`);
+      console.log(`📊 抓取財務報表：${stockId} (${startDate} ~ ${endDate})${FINMIND_API_TOKEN ? ' [使用 API Token]' : ''}`);
 
       const response = await axios.get(url, {
         params,
