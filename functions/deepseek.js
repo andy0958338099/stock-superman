@@ -444,18 +444,19 @@ async function analyzeFinancialNews(stockId, stockName, newsContent) {
 
     console.log(`🤖 DeepSeek 財經新聞分析：${stockId}`);
 
-    const prompt = `你是一位資深財經專家，以下是關於 ${stockName}(${stockId}) 的 6 則最新新聞：
+    const prompt = `你是一位資深財經分析師，以下是關於 ${stockName}(${stockId}) 的 6 則最新新聞：
 
 ${newsContent}
 
-請以財經專家的角度分析這些新聞，給予唯恐天下不亂但不違背事實的結論。
+請以專業角度分析這些新聞，提供投資建議。
 
 要求：
 1. 分析新聞對股價的潛在影響（正面/負面/中性）
 2. 指出關鍵風險和機會
-3. 語氣要有衝擊力但基於事實
-4. 結論要明確且有態度
+3. 語氣要有態度但基於事實
+4. 結論要明確
 5. 字數控制在 300 字內
+6. **不要在分析中提及字數統計、語氣說明等後設資訊**
 
 請直接輸出分析內容，不要使用 JSON 格式。`;
 
@@ -467,7 +468,7 @@ ${newsContent}
           messages: [
             {
               role: 'system',
-              content: '你是一位資深財經專家，擅長從新聞中洞察股市機會與風險，語氣犀利但基於事實。'
+              content: '你是一位資深財經分析師，擅長從新聞中洞察股市機會與風險，分析專業且有態度。'
             },
             {
               role: 'user',
@@ -518,18 +519,19 @@ async function analyzePoliticalNews(stockId, stockName, industry, politicalNews)
 
     console.log(`🤖 DeepSeek 政治新聞分析：${stockId}`);
 
-    const prompt = `你是一位犀利的政治評論員，以下是關於 ${industry} 產業的 6 則國際情勢新聞：
+    const prompt = `你是一位資深政治分析師，以下是關於 ${industry} 產業的 6 則國際情勢新聞：
 
 ${politicalNews}
 
-請以政治評論員的角度分析這些新聞對 ${stockName}(${stockId}) 的影響，給予語不驚人死不休但不違背事實的結論。
+請分析這些新聞對 ${stockName}(${stockId}) 的影響。
 
 要求：
 1. 分析國際政治對產業的影響
 2. 指出地緣政治風險
-3. 語氣要犀利但基於事實
-4. 結論要有洞察力
+3. 語氣要有洞察力但基於事實
+4. 結論要明確
 5. 字數控制在 300 字內
+6. **不要在分析中提及字數統計、語氣說明等後設資訊**
 
 請直接輸出分析內容，不要使用 JSON 格式。`;
 
@@ -541,7 +543,7 @@ ${politicalNews}
           messages: [
             {
               role: 'system',
-              content: '你是一位犀利的政治評論員，擅長分析國際情勢對產業的影響，語不驚人死不休但不違背事實。'
+              content: '你是一位資深政治分析師，擅長分析國際情勢對產業的影響，洞察深刻且基於事實。'
             },
             {
               role: 'user',
