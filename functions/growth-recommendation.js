@@ -12,41 +12,23 @@ const { searchNews } = require('./deepseek');
 const DEEPSEEK_API_URL = 'https://api.deepseek.com/chat/completions';
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
 
-// 電子股候選池（半導體、電腦、手機、AI相關）
+// 電子股候選池（精選 12 檔，減少 API 請求）
 const ELECTRONICS_STOCKS = [
-  // 半導體
+  // 半導體（最重要）
   { id: '2330', name: '台積電', sector: '半導體' },
   { id: '2303', name: '聯電', sector: '半導體' },
   { id: '2454', name: '聯發科', sector: 'IC設計' },
   { id: '3711', name: '日月光投控', sector: '封測' },
-  { id: '2379', name: '瑞昱', sector: 'IC設計' },
-  { id: '3034', name: '聯詠', sector: 'IC設計' },
-  { id: '6415', name: '矽力-KY', sector: 'IC設計' },
-  { id: '3661', name: '世芯-KY', sector: 'IC設計' },
-  { id: '6547', name: '高端疫苗', sector: '生技' },
-  // AI/伺服器相關
+  // AI/伺服器（熱門題材）
   { id: '2317', name: '鴻海', sector: '組裝' },
   { id: '2382', name: '廣達', sector: 'AI伺服器' },
-  { id: '2356', name: '英業達', sector: '伺服器' },
   { id: '3231', name: '緯創', sector: 'AI伺服器' },
-  { id: '4938', name: '和碩', sector: '組裝' },
-  { id: '2324', name: '仁寶', sector: '筆電' },
-  { id: '2353', name: '宏碁', sector: 'PC' },
+  { id: '2356', name: '英業達', sector: '伺服器' },
+  // PC/零組件
   { id: '2357', name: '華碩', sector: 'PC' },
-  // 零組件
   { id: '2308', name: '台達電', sector: '電源' },
   { id: '3037', name: '欣興', sector: 'PCB' },
-  { id: '4904', name: '遠傳', sector: '電信' },
-  { id: '2345', name: '智邦', sector: '網通' },
   { id: '2395', name: '研華', sector: '工業電腦' },
-  { id: '3008', name: '大立光', sector: '光學' },
-  { id: '2474', name: '可成', sector: '機殼' },
-  { id: '3533', name: '嘉澤', sector: '連接器' },
-  // 記憶體/被動元件
-  { id: '2344', name: '華邦電', sector: '記憶體' },
-  { id: '2408', name: '南亞科', sector: '記憶體' },
-  { id: '8046', name: '南電', sector: 'PCB' },
-  { id: '2327', name: '國巨', sector: '被動元件' },
 ];
 
 /**
@@ -236,15 +218,17 @@ async function screenGrowthStocks() {
   console.log('🚀 開始篩選高成長電子股...');
 
   const results = [];
-  const batchSize = 5;
+  // 一次只處理 2 檔，避免 API 超限
+  const batchSize = 2;
 
   for (let i = 0; i < ELECTRONICS_STOCKS.length; i += batchSize) {
     const batch = ELECTRONICS_STOCKS.slice(i, i + batchSize);
     const batchResults = await Promise.all(batch.map(stock => analyzeElectronicsStock(stock)));
     results.push(...batchResults.filter(r => r !== null));
 
+    // 每批次之間等待 1.5 秒，避免 API 超限
     if (i + batchSize < ELECTRONICS_STOCKS.length) {
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, 1500));
     }
   }
 
