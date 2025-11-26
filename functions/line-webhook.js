@@ -10,7 +10,9 @@ const {
   recordReplyToken,
   getStockCache,
   saveStockCache,
-  deleteStockCache
+  deleteStockCache,
+  recordStockSearch,
+  getHotStocks
 } = require('./supabase-client');
 const { fetchStockPrice, fetchStockInfo, isValidStockId, fetchStockDividend, fetchStockFinancials } = require('./finmind');
 const { generateIndicatorChart } = require('./generate-chart-quickchart');
@@ -38,6 +40,9 @@ const { generateGrowthRecommendationFlexMessage } = require('./growth-flex-messa
 // 瘋狂推薦功能
 const { getCrazyRecommendation } = require('./crazy-recommendation');
 const { generateCrazyRecommendationFlexMessage } = require('./crazy-flex-message');
+
+// 熱門股票功能
+const { generateHotStocksFlexMessage } = require('./hot-stocks-flex-message');
 
 // 互動式分析功能處理器
 const { handleNewsAnalysis } = require('./handlers/news-handler');
@@ -626,6 +631,9 @@ async function handleStockQuery(replyToken, stockId, userId) {
           await client.replyMessage(replyToken, replyMessages);
           await recordReplyToken(replyToken); // 成功回覆後記錄 token
 
+          // 記錄搜尋（用於熱門股票統計）
+          await recordStockSearch(stockId, cachedData.stock_info.stock_name, userId);
+
           console.log(`✅ 已使用快取回覆（快取時間：${new Date(cache.updated_at).toLocaleString('zh-TW')}）`);
           return;
         } else {
@@ -749,6 +757,9 @@ async function handleStockQuery(replyToken, stockId, userId) {
     // 發送 Flex Message（使用 replyToken 一次性回覆）
     await client.replyMessage(replyToken, replyMessages);
     await recordReplyToken(replyToken); // 成功回覆後記錄 token
+
+    // 記錄搜尋（用於熱門股票統計）
+    await recordStockSearch(stockId, stockInfo.stock_name, userId);
 
     console.log('✅ 分析完成並已回覆');
 
@@ -1142,6 +1153,30 @@ exports.handler = async function(event, context) {
         continue;
       }
 
+      // 9.8. 處理「熱門」指令
+      if (text === '熱門' || text === '熱門股票' || text === '熱搜') {
+        console.log('🔥 收到熱門股票請求');
+        try {
+          const hotStocks = await getHotStocks();
+          const flexMessage = generateHotStocksFlexMessage(hotStocks);
+
+          await client.replyMessage(replyToken, flexMessage);
+          await recordReplyToken(replyToken);
+          console.log('✅ 熱門股票發送完成');
+        } catch (error) {
+          console.error('❌ 熱門股票查詢失敗:', error);
+          captureError(error, { action: 'hot_stocks', userId });
+
+          await client.replyMessage(replyToken, {
+            type: 'text',
+            text: '❌ 熱門股票暫時無法查詢\n\n' +
+                  '請稍後再試！'
+          });
+          await recordReplyToken(replyToken);
+        }
+        continue;
+      }
+
       // 10. 解析股票代號
       const stockIdMatch = text.match(/\d{3,5}/);
 
@@ -1162,6 +1197,9 @@ exports.handler = async function(event, context) {
                 '🔥【瘋狂】積極型\n' +
                 '→ 高波動、強動能飆股\n' +
                 '→ 適合：短線交易者\n\n' +
+                '📊【熱門】大家都在看\n' +
+                '→ 24小時內最多人查詢\n' +
+                '→ 掌握市場關注焦點\n\n' +
                 '━━━━━━━━━━━━━━━\n' +
                 '📊 個股分析：輸入代號\n' +
                 '例如：2330、0050\n\n' +
@@ -1179,6 +1217,10 @@ exports.handler = async function(event, context) {
               {
                 type: 'action',
                 action: { type: 'message', label: '🔥 瘋狂', text: '瘋狂' }
+              },
+              {
+                type: 'action',
+                action: { type: 'message', label: '📊 熱門', text: '熱門' }
               },
               {
                 type: 'action',

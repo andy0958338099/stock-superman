@@ -304,6 +304,93 @@ async function saveUSMarketCache(analysisResult) {
   }
 }
 
+/**
+ * 記錄股票搜尋（用於熱門股票統計）
+ * @param {string} stockId - 股票代號
+ * @param {string} stockName - 股票名稱
+ * @param {string} userId - 用戶 ID
+ * @returns {Promise<boolean>} - 成功回傳 true
+ */
+async function recordStockSearch(stockId, stockName, userId) {
+  try {
+    const { error } = await supabase
+      .from('stock_search_logs')
+      .insert([{
+        stock_id: stockId,
+        stock_name: stockName || stockId,
+        user_id: userId,
+        searched_at: new Date().toISOString()
+      }]);
+
+    if (error) throw error;
+    console.log(`📊 已記錄搜尋：${stockId} (${stockName})`);
+    return true;
+  } catch (error) {
+    console.error('記錄搜尋失敗:', error);
+    return false;
+  }
+}
+
+/**
+ * 取得熱門股票（過去24小時內搜尋次數最多的前10名）
+ * @returns {Promise<Array>} - 熱門股票陣列
+ */
+async function getHotStocks() {
+  try {
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+
+    // 查詢過去24小時的搜尋記錄，按股票分組統計
+    const { data, error } = await supabase
+      .from('stock_search_logs')
+      .select('stock_id, stock_name, searched_at')
+      .gte('searched_at', twentyFourHoursAgo);
+
+    if (error) throw error;
+
+    if (!data || data.length === 0) {
+      console.log('⚠️ 過去24小時沒有搜尋記錄');
+      return [];
+    }
+
+    // 統計每個股票的搜尋次數和最新名稱
+    const stockStats = {};
+    const uniqueUsers = {}; // 統計不重複用戶數
+
+    data.forEach(record => {
+      const id = record.stock_id;
+      if (!stockStats[id]) {
+        stockStats[id] = {
+          stock_id: id,
+          stock_name: record.stock_name,
+          search_count: 0,
+          users: new Set()
+        };
+      }
+      stockStats[id].search_count++;
+      // 更新為最新的名稱
+      if (record.stock_name) {
+        stockStats[id].stock_name = record.stock_name;
+      }
+    });
+
+    // 轉換成陣列並排序
+    const hotStocks = Object.values(stockStats)
+      .map(stock => ({
+        stock_id: stock.stock_id,
+        stock_name: stock.stock_name,
+        search_count: stock.search_count
+      }))
+      .sort((a, b) => b.search_count - a.search_count)
+      .slice(0, 10);
+
+    console.log(`🔥 熱門股票統計完成，共 ${hotStocks.length} 檔`);
+    return hotStocks;
+  } catch (error) {
+    console.error('取得熱門股票失敗:', error);
+    return [];
+  }
+}
+
 module.exports = {
   supabase,
   isReplyTokenUsed,
@@ -312,6 +399,8 @@ module.exports = {
   saveStockCache,
   deleteStockCache,
   getUSMarketCache,
-  saveUSMarketCache
+  saveUSMarketCache,
+  recordStockSearch,
+  getHotStocks
 };
 

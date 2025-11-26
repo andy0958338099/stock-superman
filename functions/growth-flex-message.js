@@ -262,6 +262,10 @@ function generateGrowthRecommendationFlexMessage(result) {
         },
         {
           type: 'action',
+          action: { type: 'message', label: '📊 熱門', text: '熱門' }
+        },
+        {
+          type: 'action',
           action: {
             type: 'uri',
             label: '📤 分享給朋友',
