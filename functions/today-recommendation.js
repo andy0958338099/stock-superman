@@ -86,60 +86,98 @@ async function analyzeStockTechnicals(stockId, stockData) {
   const ma20 = calculateMA(closes, 20);
   const ma60 = calculateMA(closes, 60);
 
-  // 技術面評分（滿分 100）
-  let technicalScore = 50; // 基礎分
+  // ============================================
+  // 技術面評分（重新設計，更嚴格）
+  // 基礎分 40，滿分需要多項條件同時滿足
+  // ============================================
+  let technicalScore = 40;
 
-  // KD 評分（0-25分）- 傳入陣列給 analyzeKD
+  // 1. KD 指標評分（-15 ~ +20）
   const kdAnalysis = analyzeKD(kdResult.K, kdResult.D);
-  if (kdAnalysis.signal === '多頭' || kdAnalysis.signal === '黃金交叉') {
-    technicalScore += 20;
+  if (kdAnalysis.signal === '黃金交叉') {
+    technicalScore += 20; // 最佳買點
+  } else if (kdAnalysis.signal === '多頭') {
+    technicalScore += 12;
   } else if (kdAnalysis.signal === '準備上攻') {
-    technicalScore += 15;
+    technicalScore += 8;
   } else if (kdAnalysis.signal === '整理') {
-    technicalScore += 5;
-  } else if (kdAnalysis.signal === '空頭' || kdAnalysis.signal === '死亡交叉') {
+    technicalScore += 0; // 不加分
+  } else if (kdAnalysis.signal === '死亡交叉') {
     technicalScore -= 15;
+  } else if (kdAnalysis.signal === '空頭') {
+    technicalScore -= 10;
   }
 
-  // 避免超買超賣（使用最新 K 值）
-  if (latestK > 80) technicalScore -= 10; // 超買區
-  if (latestK < 20) technicalScore += 10; // 超賣區（可能反彈）
+  // 2. KD 位置風險調整（-15 ~ +8）
+  if (latestK > 85) {
+    technicalScore -= 15; // 嚴重超買，風險高
+  } else if (latestK > 75) {
+    technicalScore -= 8; // 超買區
+  } else if (latestK < 20) {
+    technicalScore += 8; // 超賣區，潛在反彈
+  } else if (latestK < 30) {
+    technicalScore += 5;
+  }
 
-  // MACD 評分（0-25分）- 傳入陣列給 analyzeMACDSignal
+  // 3. MACD 指標評分（-15 ~ +15）
   const macdAnalysis = analyzeMACDSignal(macdResult.MACD, macdResult.Signal, macdResult.Histogram);
-  if (macdAnalysis.signal === '多頭' || macdAnalysis.signal === '強勢多頭') {
-    technicalScore += 20;
-  } else if (macdAnalysis.signal === '轉強') {
+  if (macdAnalysis.signal === '強勢多頭') {
     technicalScore += 15;
+  } else if (macdAnalysis.signal === '多頭') {
+    technicalScore += 10;
+  } else if (macdAnalysis.signal === '轉強') {
+    technicalScore += 8;
   } else if (macdAnalysis.signal === '整理') {
-    technicalScore += 5;
-  } else if (macdAnalysis.signal === '空頭' || macdAnalysis.signal === '強勢空頭') {
+    technicalScore += 0;
+  } else if (macdAnalysis.signal === '轉弱') {
+    technicalScore -= 5;
+  } else if (macdAnalysis.signal === '空頭') {
+    technicalScore -= 10;
+  } else if (macdAnalysis.signal === '強勢空頭') {
     technicalScore -= 15;
   }
 
-  // 均線評分（0-25分）
+  // 4. 均線評分（-15 ~ +15）
   if (ma5 && ma20 && ma60) {
-    // 多頭排列：股價 > MA5 > MA20 > MA60
     if (latestPrice > ma5 && ma5 > ma20 && ma20 > ma60) {
-      technicalScore += 25;
+      technicalScore += 15; // 完美多頭排列
     } else if (latestPrice > ma5 && ma5 > ma20) {
-      technicalScore += 15;
-    } else if (latestPrice > ma20) {
       technicalScore += 10;
+    } else if (latestPrice > ma20) {
+      technicalScore += 5;
+    } else if (latestPrice < ma5 && latestPrice > ma20) {
+      technicalScore -= 3; // 跌破短均
+    } else if (latestPrice < ma20 && latestPrice > ma60) {
+      technicalScore -= 8; // 跌破中均
     } else if (latestPrice < ma5 && ma5 < ma20 && ma20 < ma60) {
-      technicalScore -= 20; // 空頭排列
+      technicalScore -= 15; // 空頭排列
     }
   }
 
-  // 成交量評分（0-15分）
+  // 5. 成交量評分（-5 ~ +10）
   const recentVolumes = stockData.slice(-5).map(d => d.Trading_Volume);
   const avgVolume20 = stockData.slice(-20).map(d => d.Trading_Volume).reduce((a, b) => a + b, 0) / 20;
   const avgVolume5 = recentVolumes.reduce((a, b) => a + b, 0) / 5;
 
-  if (avgVolume5 > avgVolume20 * 1.5) {
-    technicalScore += 15; // 量增
-  } else if (avgVolume5 > avgVolume20) {
-    technicalScore += 10;
+  if (avgVolume5 > avgVolume20 * 2) {
+    technicalScore += 10; // 爆量，關注
+  } else if (avgVolume5 > avgVolume20 * 1.3) {
+    technicalScore += 6;
+  } else if (avgVolume5 < avgVolume20 * 0.5) {
+    technicalScore -= 5; // 量縮，觀望
+  }
+
+  // 6. 近期漲跌幅風險調整（防止追高）
+  const price5DaysAgo = closes[closes.length - 6] || closes[0];
+  const recentGain = ((latestPrice - price5DaysAgo) / price5DaysAgo) * 100;
+  if (recentGain > 15) {
+    technicalScore -= 12; // 短期漲幅過大，追高風險
+  } else if (recentGain > 10) {
+    technicalScore -= 8;
+  } else if (recentGain > 5) {
+    technicalScore -= 3;
+  } else if (recentGain < -10) {
+    technicalScore += 5; // 超跌，可能反彈
   }
 
   return {
@@ -157,41 +195,81 @@ async function analyzeStockTechnicals(stockId, stockData) {
 }
 
 /**
- * 分析單一股票的基本面
+ * 分析單一股票的基本面（重新設計，更嚴格）
  */
 async function analyzeStockFundamentals(stockId, financialData, dividendData, latestPrice) {
-  let fundamentalScore = 50; // 基礎分
+  // ============================================
+  // 基本面評分（重新設計）
+  // 基礎分 35，需多項條件才能高分
+  // ============================================
+  let fundamentalScore = 35;
+  let hasFinancialData = false;
 
-  // EPS 評分（0-30分）
+  // 1. 本益比評分（-10 ~ +20）
   if (financialData && financialData.total_eps > 0) {
+    hasFinancialData = true;
     const eps = financialData.total_eps;
     const peRatio = latestPrice / eps;
 
-    // 本益比評分
-    if (peRatio > 0 && peRatio < 12) {
-      fundamentalScore += 30; // 低本益比，便宜
-    } else if (peRatio >= 12 && peRatio < 18) {
-      fundamentalScore += 20; // 合理本益比
-    } else if (peRatio >= 18 && peRatio < 25) {
-      fundamentalScore += 10; // 稍高但可接受
-    } else if (peRatio >= 25) {
+    if (peRatio > 0 && peRatio < 8) {
+      fundamentalScore += 20; // 極低本益比（可能有風險或被低估）
+    } else if (peRatio >= 8 && peRatio < 12) {
+      fundamentalScore += 15; // 便宜
+    } else if (peRatio >= 12 && peRatio < 16) {
+      fundamentalScore += 10; // 合理
+    } else if (peRatio >= 16 && peRatio < 20) {
+      fundamentalScore += 5; // 稍高
+    } else if (peRatio >= 20 && peRatio < 30) {
+      fundamentalScore += 0; // 偏高
+    } else if (peRatio >= 30) {
       fundamentalScore -= 10; // 過高
     }
 
-    // EPS 正成長加分
-    if (eps > 3) fundamentalScore += 10;
+    // 2. EPS 絕對值評分（0 ~ +15）
+    if (eps > 5) {
+      fundamentalScore += 15;
+    } else if (eps > 3) {
+      fundamentalScore += 10;
+    } else if (eps > 1.5) {
+      fundamentalScore += 5;
+    } else if (eps > 0) {
+      fundamentalScore += 2;
+    }
+  } else {
+    // 無財報資料（ETF 等）扣分
+    fundamentalScore -= 5;
   }
 
-  // 股利評分（0-20分）
+  // 3. 殖利率評分（0 ~ +15）
   if (dividendData && dividendData.cash_dividend > 0) {
     const yieldRate = (dividendData.cash_dividend / latestPrice) * 100;
-    if (yieldRate > 5) {
-      fundamentalScore += 20; // 高殖利率
-    } else if (yieldRate > 3) {
-      fundamentalScore += 15;
-    } else if (yieldRate > 2) {
+    if (yieldRate > 7) {
+      fundamentalScore += 15; // 超高殖利率
+    } else if (yieldRate > 5) {
+      fundamentalScore += 12;
+    } else if (yieldRate > 4) {
       fundamentalScore += 10;
+    } else if (yieldRate > 3) {
+      fundamentalScore += 7;
+    } else if (yieldRate > 2) {
+      fundamentalScore += 4;
     }
+  } else {
+    // 無股利資料扣分
+    fundamentalScore -= 3;
+  }
+
+  // 4. 產業風險調整（金融股/傳產/電子不同風險）
+  // 這裡可以根據股票代號做產業分類調整
+  // 暫時不做，保持中性
+
+  // 5. 流動性風險（高價股風險）
+  if (latestPrice > 400) {
+    fundamentalScore -= 5; // 高價股，5萬元能買的張數少
+  } else if (latestPrice > 300) {
+    fundamentalScore -= 3;
+  } else if (latestPrice < 30) {
+    fundamentalScore -= 8; // 雞蛋水餃股風險
   }
 
   return {
@@ -199,7 +277,8 @@ async function analyzeStockFundamentals(stockId, financialData, dividendData, la
     eps: financialData?.total_eps || 0,
     peRatio: financialData?.total_eps > 0 ? (latestPrice / financialData.total_eps).toFixed(2) : null,
     cashDividend: dividendData?.cash_dividend || 0,
-    yieldRate: dividendData?.cash_dividend > 0 ? ((dividendData.cash_dividend / latestPrice) * 100).toFixed(2) : null
+    yieldRate: dividendData?.cash_dividend > 0 ? ((dividendData.cash_dividend / latestPrice) * 100).toFixed(2) : null,
+    hasFinancialData
   };
 }
 
@@ -308,18 +387,32 @@ async function generateAIRecommendation(topStocks) {
   }).join('\n');
 
   const prompt = `
-你是一位資深投資顧問，專門為小資族（本金 5 萬元）提供投資建議。
+你是一位謹慎保守的投資顧問，專門為股市新手（本金 5 萬元）提供務實建議。
+
+重要原則：
+- 股市有風險，沒有「必賺」的投資
+- 15天是短期，波動風險大
+- 信心指數要誠實，不要過度樂觀
+- 技術面評分 70 以下表示趨勢不明確
+- 基本面評分 60 以下表示價值一般
 
 以下是今日篩選出的 TOP 3 候選股票：
 ${stockSummaries}
 
+請根據以下標準給出信心指數：
+- 9-10分：技術面+基本面都 > 80，極度看好（非常罕見）
+- 7-8分：綜合評分 > 70，趨勢明確
+- 5-6分：綜合評分 50-70，中性觀望
+- 3-4分：綜合評分 < 50，建議觀望
+- 1-2分：不建議買入
+
 請為每檔股票提供：
-1. 推薦理由（30字內，技術面+基本面綜合）
-2. 15日目標價（根據技術面計算合理目標）
-3. 建議買入價位（回檔到哪個價位可以買）
+1. 推薦理由（30字內，技術面+基本面綜合，要誠實說明優缺點）
+2. 15日目標價（保守估計，漲幅不超過 5-8%）
+3. 建議買入價位（回檔 2-3% 再買）
 4. 風險提示（30字內，主要風險）
-5. 信心指數（1-10分）
-6. 適合投資金額（以5萬元為基準，建議分配）
+5. 信心指數（1-10分，要合理！）
+6. 適合投資金額（以5萬元為基準，分散風險）
 
 請以 JSON 格式回覆：
 {
@@ -337,8 +430,8 @@ ${stockSummaries}
       "expectedReturn": "預期報酬率"
     }
   ],
-  "marketOutlook": "整體市場觀點（50字內）",
-  "investmentStrategy": "投資策略建議（50字內）"
+  "marketOutlook": "整體市場觀點（50字內，要誠實）",
+  "investmentStrategy": "投資策略建議（50字內，強調風險控制）"
 }
 `;
 
@@ -350,7 +443,7 @@ ${stockSummaries}
         messages: [
           {
             role: 'system',
-            content: '你是專業的投資顧問，為小資族提供務實、保守但有成長潛力的投資建議。分析要專業但易懂，避免過度樂觀。'
+            content: '你是謹慎保守的投資顧問。信心指數要誠實合理（一般股票 5-7 分，很少超過 8 分）。不要過度樂觀，要強調風險。目標價漲幅通常 3-6%，最高不超過 8%。'
           },
           {
             role: 'user',
