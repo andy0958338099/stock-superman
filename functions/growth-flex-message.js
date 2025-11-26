@@ -167,11 +167,16 @@ function generateGrowthStockCard(recommendation, stockData) {
  * 生成完整 Flex Message
  */
 function generateGrowthRecommendationFlexMessage(result) {
-  const { date, updateTime, top3Stocks, aiRecommendation } = result;
+  const { date, updateTime, top3Stocks, aiRecommendation, fromCache, cacheRemaining } = result;
 
   const stockCards = aiRecommendation.recommendations.map((rec, index) =>
     generateGrowthStockCard(rec, top3Stocks[index])
   );
+
+  // 快取狀態文字
+  const cacheStatus = fromCache
+    ? `📦 快取資料（剩餘 ${cacheRemaining || 0} 分鐘更新）`
+    : `⚡ 即時分析`;
 
   const summaryCard = {
     type: 'bubble',
@@ -181,7 +186,8 @@ function generateGrowthRecommendationFlexMessage(result) {
       layout: 'vertical',
       contents: [
         { type: 'text', text: '🚀 高成長電子股', weight: 'bold', size: 'lg', color: '#00bfff' },
-        { type: 'text', text: `${date} ${updateTime} 更新`, size: 'xs', color: '#aaaaaa' }
+        { type: 'text', text: `${date} ${updateTime} 更新`, size: 'xs', color: '#aaaaaa' },
+        { type: 'text', text: cacheStatus, size: 'xxs', color: fromCache ? '#888888' : '#00ff88' }
       ],
       backgroundColor: '#1a1a2e'
     },

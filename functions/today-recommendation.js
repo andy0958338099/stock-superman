@@ -1,6 +1,7 @@
 /**
- * 今日推薦模組 - 為小資族（5萬元）篩選 TOP 3 高勝率股票
+ * 今日推薦模組 - 篩選 TOP 3 高勝率股票
  * 策略：技術面 + 基本面 + 新聞面 + AI 綜合評分
+ * 快取：4 小時有效，避免浪費 API Token
  */
 
 const axios = require('axios');
@@ -8,6 +9,7 @@ const moment = require('moment');
 const { fetchStockPrice, fetchStockInfo, fetchStockDividend, fetchStockFinancials } = require('./finmind');
 const { calculateKD, calculateMACD, analyzeKD, analyzeMACDSignal } = require('./indicators');
 const { searchNews } = require('./deepseek');
+const { CACHE_KEYS, getRecommendationCache, saveRecommendationCache } = require('./recommendation-cache');
 
 const DEEPSEEK_API_URL = 'https://api.deepseek.com/chat/completions';
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
@@ -475,37 +477,51 @@ ${stockSummaries}
 }
 
 /**
- * 主函數：取得今日推薦
+ * 主函數：取得今日推薦（帶快取）
  */
 async function getTodayRecommendation() {
-  console.log('🚀 開始生成今日推薦...');
+  console.log('🚀 開始取得今日推薦...');
+
+  // 1. 先檢查快取
+  const cached = await getRecommendationCache(CACHE_KEYS.TODAY_RECOMMENDATION);
+  if (cached) {
+    console.log(`✅ 使用快取結果（已存在 ${cached.cacheAge} 分鐘，剩餘 ${cached.cacheRemaining} 分鐘）`);
+    return cached;
+  }
+
+  console.log('⚡ 快取不存在或已過期，重新分析...');
   const startTime = Date.now();
 
   try {
-    // 1. 篩選股票
+    // 2. 篩選股票
     const screenedStocks = await screenStocks();
 
     if (screenedStocks.length === 0) {
       throw new Error('無符合條件的股票');
     }
 
-    // 2. 取得 TOP 3
+    // 3. 取得 TOP 3
     const top3 = screenedStocks.slice(0, 3);
     console.log('📊 TOP 3 股票:', top3.map(s => `${s.stockName}(${s.stockId}): ${s.totalScore.toFixed(1)}分`).join(', '));
 
-    // 3. AI 生成最終推薦
+    // 4. AI 生成最終推薦
     const aiRecommendation = await generateAIRecommendation(top3);
 
-    // 4. 整合結果
+    // 5. 整合結果
     const result = {
       date: moment().format('YYYY-MM-DD'),
       updateTime: moment().format('HH:mm'),
       top3Stocks: top3,
       aiRecommendation,
-      processingTime: Date.now() - startTime
+      processingTime: Date.now() - startTime,
+      fromCache: false
     };
 
     console.log(`✅ 今日推薦生成完成，耗時 ${result.processingTime}ms`);
+
+    // 6. 儲存快取
+    await saveRecommendationCache(CACHE_KEYS.TODAY_RECOMMENDATION, result);
+
     return result;
   } catch (error) {
     console.error('❌ 今日推薦生成失敗:', error.message);

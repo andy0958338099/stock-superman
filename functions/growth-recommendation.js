@@ -1,6 +1,7 @@
 /**
  * 高成長推薦模組 - 找出被低估的電子股
  * 策略：低本益比 + 正向新聞 + 數據良好 + 尚未啟動
+ * 快取：4 小時有效，避免浪費 API Token
  */
 
 const axios = require('axios');
@@ -8,6 +9,7 @@ const moment = require('moment');
 const { fetchStockPrice, fetchStockInfo, fetchStockDividend, fetchStockFinancials } = require('./finmind');
 const { calculateKD, calculateMACD, analyzeKD, analyzeMACDSignal } = require('./indicators');
 const { searchNews } = require('./deepseek');
+const { CACHE_KEYS, getRecommendationCache, saveRecommendationCache } = require('./recommendation-cache');
 
 const DEEPSEEK_API_URL = 'https://api.deepseek.com/chat/completions';
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
@@ -359,35 +361,53 @@ ${stockSummaries}
 }
 
 /**
- * 主函數：取得高成長推薦
+ * 主函數：取得高成長推薦（帶快取）
  */
 async function getGrowthRecommendation() {
-  console.log('🚀 開始生成高成長推薦...');
+  console.log('🚀 開始取得高成長推薦...');
+
+  // 1. 先檢查快取
+  const cached = await getRecommendationCache(CACHE_KEYS.GROWTH_RECOMMENDATION);
+  if (cached) {
+    console.log(`✅ 使用快取結果（已存在 ${cached.cacheAge} 分鐘，剩餘 ${cached.cacheRemaining} 分鐘）`);
+    return cached;
+  }
+
+  console.log('⚡ 快取不存在或已過期，重新分析...');
   const startTime = Date.now();
 
   try {
-    // 1. 篩選股票
+    // 2. 篩選股票
     const screenedStocks = await screenGrowthStocks();
     if (screenedStocks.length === 0) throw new Error('無符合條件的股票');
 
-    // 2. 取 TOP 5 加入新聞分析
+    // 3. 取 TOP 5 加入新聞分析
     let top5 = screenedStocks.slice(0, 5);
     top5 = await addNewsAnalysis(top5);
 
-    // 3. 取最終 TOP 3
+    // 4. 取最終 TOP 3
     const top3 = top5.slice(0, 3);
     console.log('📊 TOP 3:', top3.map(s => `${s.stockName}: ${s.totalScore.toFixed(1)}分`).join(', '));
 
-    // 4. AI 推薦
+    // 5. AI 推薦
     const aiRecommendation = await generateGrowthAIRecommendation(top3);
 
-    return {
+    // 6. 整合結果
+    const result = {
       date: moment().format('YYYY-MM-DD'),
       updateTime: moment().format('HH:mm'),
       top3Stocks: top3,
       aiRecommendation,
-      processingTime: Date.now() - startTime
+      processingTime: Date.now() - startTime,
+      fromCache: false
     };
+
+    console.log(`✅ 高成長推薦生成完成，耗時 ${result.processingTime}ms`);
+
+    // 7. 儲存快取
+    await saveRecommendationCache(CACHE_KEYS.GROWTH_RECOMMENDATION, result);
+
+    return result;
   } catch (error) {
     console.error('❌ 高成長推薦失敗:', error.message);
     throw error;

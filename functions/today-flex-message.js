@@ -199,12 +199,17 @@ function generateStockCard(recommendation, stockData) {
  * 生成今日推薦的完整 Flex Message（Carousel）
  */
 function generateTodayRecommendationFlexMessage(result) {
-  const { date, updateTime, top3Stocks, aiRecommendation } = result;
+  const { date, updateTime, top3Stocks, aiRecommendation, fromCache, cacheRemaining } = result;
 
   // 生成 3 張股票卡片
   const stockCards = aiRecommendation.recommendations.map((rec, index) => {
     return generateStockCard(rec, top3Stocks[index]);
   });
+
+  // 快取狀態文字
+  const cacheStatus = fromCache
+    ? `📦 快取資料（剩餘 ${cacheRemaining || 0} 分鐘更新）`
+    : `⚡ 即時分析`;
 
   // 加入總結卡片
   const summaryCard = {
@@ -226,6 +231,12 @@ function generateTodayRecommendationFlexMessage(result) {
           text: `${date} ${updateTime} 更新`,
           size: 'xs',
           color: '#aaaaaa'
+        },
+        {
+          type: 'text',
+          text: cacheStatus,
+          size: 'xxs',
+          color: fromCache ? '#888888' : '#00ff88'
         }
       ],
       backgroundColor: '#1a1a2e'
