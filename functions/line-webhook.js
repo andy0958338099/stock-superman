@@ -31,6 +31,10 @@ const {
 const { getTodayRecommendation } = require('./today-recommendation');
 const { generateTodayRecommendationFlexMessage } = require('./today-flex-message');
 
+// 高成長推薦功能
+const { getGrowthRecommendation } = require('./growth-recommendation');
+const { generateGrowthRecommendationFlexMessage } = require('./growth-flex-message');
+
 // 互動式分析功能處理器
 const { handleNewsAnalysis } = require('./handlers/news-handler');
 const { handlePoliticsAnalysis } = require('./handlers/politics-handler');
@@ -1080,6 +1084,33 @@ exports.handler = async function(event, context) {
         continue;
       }
 
+      // 9.6. 處理「高成長」推薦指令
+      if (text === '高成長' || text === '成長股' || text === '電子股') {
+        console.log('🚀 收到高成長推薦請求');
+        try {
+          const result = await getGrowthRecommendation();
+          const flexMessage = generateGrowthRecommendationFlexMessage(result);
+
+          await client.replyMessage(replyToken, flexMessage);
+          await recordReplyToken(replyToken);
+          console.log('✅ 高成長推薦發送完成');
+        } catch (error) {
+          console.error('❌ 高成長推薦失敗:', error);
+          captureError(error, { action: 'growth_recommendation', userId });
+
+          await client.replyMessage(replyToken, {
+            type: 'text',
+            text: '❌ 高成長推薦暫時無法使用\n\n' +
+                  '可能原因：\n' +
+                  '• API 請求過於頻繁\n' +
+                  '• 市場資料更新中\n\n' +
+                  '請稍後再試！'
+          });
+          await recordReplyToken(replyToken);
+        }
+        continue;
+      }
+
       // 10. 解析股票代號
       const stockIdMatch = text.match(/\d{3,5}/);
 
@@ -1089,18 +1120,14 @@ exports.handler = async function(event, context) {
           type: 'text',
           text: '👋 歡迎使用股票超人！\n\n' +
                 '🎯 今日推薦：輸入「今天」\n' +
-                '為您篩選 TOP 3 高勝率股票\n\n' +
+                '篩選 TOP 3 高勝率股票\n\n' +
+                '🚀 高成長：輸入「高成長」\n' +
+                '找出被低估的電子股\n\n' +
                 '📊 台股分析：輸入股票代號\n' +
-                '例如：2330、0050、3003\n\n' +
-                '🌎 美股分析：輸入「美股」\n' +
-                '查看 VIX、匯率、三大指數\n\n' +
-                '✨ 功能特色：\n' +
-                '• KD、MACD、MA 技術指標\n' +
-                '• 股利、EPS、本益比分析\n' +
-                '• AI 預測未來走勢\n' +
-                '• 新聞與政治情勢分析'
+                '例如：2330、0050\n\n' +
+                '🌎 美股分析：輸入「美股」'
         });
-        await recordReplyToken(replyToken); // 成功回覆後記錄 token
+        await recordReplyToken(replyToken);
         continue;
       }
 
