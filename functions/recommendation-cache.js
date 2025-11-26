@@ -1,6 +1,6 @@
 /**
  * 推薦功能快取模組
- * 使用 Supabase stock_cache 表儲存「今天」和「高成長」推薦結果
+ * 使用 Supabase stock_cache 表儲存「今天」「高成長」「瘋狂」推薦結果
  * 快取有效期：4 小時（避免浪費 API Token）
  */
 
@@ -9,7 +9,8 @@ const { supabase } = require('./supabase-client');
 // 快取 Key 定義
 const CACHE_KEYS = {
   TODAY_RECOMMENDATION: 'TODAY_RECOMMENDATION',
-  GROWTH_RECOMMENDATION: 'GROWTH_RECOMMENDATION'
+  GROWTH_RECOMMENDATION: 'GROWTH_RECOMMENDATION',
+  CRAZY_RECOMMENDATION: 'CRAZY_RECOMMENDATION'
 };
 
 // 快取有效期（毫秒）

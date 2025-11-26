@@ -35,6 +35,10 @@ const { generateTodayRecommendationFlexMessage } = require('./today-flex-message
 const { getGrowthRecommendation } = require('./growth-recommendation');
 const { generateGrowthRecommendationFlexMessage } = require('./growth-flex-message');
 
+// 瘋狂推薦功能
+const { getCrazyRecommendation } = require('./crazy-recommendation');
+const { generateCrazyRecommendationFlexMessage } = require('./crazy-flex-message');
+
 // 互動式分析功能處理器
 const { handleNewsAnalysis } = require('./handlers/news-handler');
 const { handlePoliticsAnalysis } = require('./handlers/politics-handler');
@@ -1085,7 +1089,7 @@ exports.handler = async function(event, context) {
       }
 
       // 9.6. 處理「高成長」推薦指令
-      if (text === '高成長' || text === '成長股' || text === '電子股') {
+      if (text === '高成長' || text === '成長股') {
         console.log('🚀 收到高成長推薦請求');
         try {
           const result = await getGrowthRecommendation();
@@ -1111,6 +1115,33 @@ exports.handler = async function(event, context) {
         continue;
       }
 
+      // 9.7. 處理「瘋狂」推薦指令
+      if (text === '瘋狂' || text === '瘋狂股' || text === '飆股') {
+        console.log('🔥 收到瘋狂推薦請求');
+        try {
+          const result = await getCrazyRecommendation();
+          const flexMessage = generateCrazyRecommendationFlexMessage(result);
+
+          await client.replyMessage(replyToken, flexMessage);
+          await recordReplyToken(replyToken);
+          console.log('✅ 瘋狂推薦發送完成');
+        } catch (error) {
+          console.error('❌ 瘋狂推薦失敗:', error);
+          captureError(error, { action: 'crazy_recommendation', userId });
+
+          await client.replyMessage(replyToken, {
+            type: 'text',
+            text: '❌ 瘋狂推薦暫時無法使用\n\n' +
+                  '可能原因：\n' +
+                  '• API 請求過於頻繁\n' +
+                  '• 市場資料更新中\n\n' +
+                  '請稍後再試！'
+          });
+          await recordReplyToken(replyToken);
+        }
+        continue;
+      }
+
       // 10. 解析股票代號
       const stockIdMatch = text.match(/\d{3,5}/);
 
@@ -1123,6 +1154,8 @@ exports.handler = async function(event, context) {
                 '篩選 TOP 3 高勝率股票\n\n' +
                 '🚀 高成長：輸入「高成長」\n' +
                 '找出被低估的電子股\n\n' +
+                '🔥 瘋狂：輸入「瘋狂」\n' +
+                '找出最瘋狂的飆股\n\n' +
                 '📊 台股分析：輸入股票代號\n' +
                 '例如：2330、0050\n\n' +
                 '🌎 美股分析：輸入「美股」'
