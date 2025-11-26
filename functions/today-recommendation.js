@@ -69,21 +69,28 @@ function calculateMA(prices, period) {
 async function analyzeStockTechnicals(stockId, stockData) {
   const closes = stockData.map(d => d.close);
   const latestPrice = closes[closes.length - 1];
-  
-  // 計算技術指標
-  const { K, D } = calculateKD(stockData);
-  const { MACD, Signal, Histogram } = calculateMACD(stockData);
-  
+
+  // 計算技術指標（返回的是陣列）
+  const kdResult = calculateKD(stockData);
+  const macdResult = calculateMACD(stockData);
+
+  // 取最新值（陣列最後一個元素）
+  const latestK = kdResult.K[kdResult.K.length - 1] || 50;
+  const latestD = kdResult.D[kdResult.D.length - 1] || 50;
+  const latestMACD = macdResult.MACD[macdResult.MACD.length - 1] || 0;
+  const latestSignal = macdResult.Signal[macdResult.Signal.length - 1] || 0;
+  const latestHistogram = macdResult.Histogram[macdResult.Histogram.length - 1] || 0;
+
   // 計算均線
   const ma5 = calculateMA(closes, 5);
   const ma20 = calculateMA(closes, 20);
   const ma60 = calculateMA(closes, 60);
-  
+
   // 技術面評分（滿分 100）
   let technicalScore = 50; // 基礎分
-  
-  // KD 評分（0-25分）
-  const kdAnalysis = analyzeKD(K, D);
+
+  // KD 評分（0-25分）- 傳入陣列給 analyzeKD
+  const kdAnalysis = analyzeKD(kdResult.K, kdResult.D);
   if (kdAnalysis.signal === '多頭' || kdAnalysis.signal === '黃金交叉') {
     technicalScore += 20;
   } else if (kdAnalysis.signal === '準備上攻') {
@@ -93,13 +100,13 @@ async function analyzeStockTechnicals(stockId, stockData) {
   } else if (kdAnalysis.signal === '空頭' || kdAnalysis.signal === '死亡交叉') {
     technicalScore -= 15;
   }
-  
-  // 避免超買超賣
-  if (K > 80) technicalScore -= 10; // 超買區
-  if (K < 20) technicalScore += 10; // 超賣區（可能反彈）
-  
-  // MACD 評分（0-25分）
-  const macdAnalysis = analyzeMACDSignal(MACD, Signal, Histogram);
+
+  // 避免超買超賣（使用最新 K 值）
+  if (latestK > 80) technicalScore -= 10; // 超買區
+  if (latestK < 20) technicalScore += 10; // 超賣區（可能反彈）
+
+  // MACD 評分（0-25分）- 傳入陣列給 analyzeMACDSignal
+  const macdAnalysis = analyzeMACDSignal(macdResult.MACD, macdResult.Signal, macdResult.Histogram);
   if (macdAnalysis.signal === '多頭' || macdAnalysis.signal === '強勢多頭') {
     technicalScore += 20;
   } else if (macdAnalysis.signal === '轉強') {
@@ -109,7 +116,7 @@ async function analyzeStockTechnicals(stockId, stockData) {
   } else if (macdAnalysis.signal === '空頭' || macdAnalysis.signal === '強勢空頭') {
     technicalScore -= 15;
   }
-  
+
   // 均線評分（0-25分）
   if (ma5 && ma20 && ma60) {
     // 多頭排列：股價 > MA5 > MA20 > MA60
@@ -123,21 +130,24 @@ async function analyzeStockTechnicals(stockId, stockData) {
       technicalScore -= 20; // 空頭排列
     }
   }
-  
+
   // 成交量評分（0-15分）
   const recentVolumes = stockData.slice(-5).map(d => d.Trading_Volume);
   const avgVolume20 = stockData.slice(-20).map(d => d.Trading_Volume).reduce((a, b) => a + b, 0) / 20;
   const avgVolume5 = recentVolumes.reduce((a, b) => a + b, 0) / 5;
-  
+
   if (avgVolume5 > avgVolume20 * 1.5) {
     technicalScore += 15; // 量增
   } else if (avgVolume5 > avgVolume20) {
     technicalScore += 10;
   }
-  
+
   return {
     score: Math.min(100, Math.max(0, technicalScore)),
-    K, D, MACD, Signal,
+    K: latestK,
+    D: latestD,
+    MACD: latestMACD,
+    Signal: latestSignal,
     kdSignal: kdAnalysis.signal,
     macdSignal: macdAnalysis.signal,
     ma5, ma20, ma60,
@@ -275,19 +285,25 @@ async function screenStocks() {
  */
 async function generateAIRecommendation(topStocks) {
   const stockSummaries = topStocks.map((stock, index) => {
+    // 安全取值，確保是數字
+    const kValue = typeof stock.technicalAnalysis.K === 'number' ? stock.technicalAnalysis.K.toFixed(1) : 'N/A';
+    const dValue = typeof stock.technicalAnalysis.D === 'number' ? stock.technicalAnalysis.D.toFixed(1) : 'N/A';
+    const epsValue = typeof stock.fundamentalAnalysis.eps === 'number' ? stock.fundamentalAnalysis.eps.toFixed(2) : '0.00';
+    const totalScoreValue = typeof stock.totalScore === 'number' ? stock.totalScore.toFixed(1) : '0.0';
+
     return `
 【第 ${index + 1} 名】${stock.stockName}（${stock.stockId}）
 - 股價：${stock.latestPrice} 元
 - 技術面評分：${stock.technicalAnalysis.score}/100
-  - KD：${stock.technicalAnalysis.kdSignal}（K=${stock.technicalAnalysis.K.toFixed(1)}, D=${stock.technicalAnalysis.D.toFixed(1)}）
+  - KD：${stock.technicalAnalysis.kdSignal}（K=${kValue}, D=${dValue}）
   - MACD：${stock.technicalAnalysis.macdSignal}
   - 均線：${stock.technicalAnalysis.priceAboveMA ? '站上 MA20' : '跌破 MA20'}
 - 基本面評分：${stock.fundamentalAnalysis.score}/100
-  - EPS：${stock.fundamentalAnalysis.eps.toFixed(2)} 元
+  - EPS：${epsValue} 元
   - 本益比：${stock.fundamentalAnalysis.peRatio || 'N/A'}
   - 現金股利：${stock.fundamentalAnalysis.cashDividend} 元
   - 殖利率：${stock.fundamentalAnalysis.yieldRate || 'N/A'}%
-- 綜合評分：${stock.totalScore.toFixed(1)}/100
+- 綜合評分：${totalScoreValue}/100
     `;
   }).join('\n');
 

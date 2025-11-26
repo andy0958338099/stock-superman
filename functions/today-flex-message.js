@@ -9,9 +9,15 @@
 function generateStockCard(recommendation, stockData) {
   const { rank, stockId, stockName, reason, targetPrice, buyPrice, risk, confidence, suggestedAmount, expectedReturn } = recommendation;
   const { latestPrice, technicalAnalysis, fundamentalAnalysis, totalScore } = stockData;
-  
+
+  // 安全取值
+  const safeTargetPrice = targetPrice || latestPrice * 1.05;
+  const safeBuyPrice = buyPrice || latestPrice * 0.97;
+  const safeSuggestedAmount = suggestedAmount || 16000;
+  const safeConfidence = confidence || 5;
+
   // 計算預期漲幅
-  const expectedGain = ((targetPrice - latestPrice) / latestPrice * 100).toFixed(1);
+  const expectedGain = ((safeTargetPrice - latestPrice) / latestPrice * 100).toFixed(1);
   
   // 信心指數顏色
   const getConfidenceColor = (conf) => {
@@ -50,9 +56,9 @@ function generateStockCard(recommendation, stockData) {
         },
         {
           type: 'text',
-          text: `信心 ${confidence}/10`,
+          text: `信心 ${safeConfidence}/10`,
           size: 'sm',
-          color: getConfidenceColor(confidence),
+          color: getConfidenceColor(safeConfidence),
           align: 'end'
         }
       ],
@@ -85,7 +91,7 @@ function generateStockCard(recommendation, stockData) {
             },
             {
               type: 'text',
-              text: `目標 ${targetPrice}`,
+              text: `目標 ${safeTargetPrice}`,
               size: 'lg',
               color: '#ffbb33',
               align: 'end'
@@ -156,7 +162,7 @@ function generateStockCard(recommendation, stockData) {
               layout: 'vertical',
               contents: [
                 { type: 'text', text: '建議買入', size: 'xs', color: '#aaaaaa' },
-                { type: 'text', text: `${buyPrice} 元`, size: 'sm', color: '#00C851', weight: 'bold' }
+                { type: 'text', text: `${safeBuyPrice} 元`, size: 'sm', color: '#00C851', weight: 'bold' }
               ]
             },
             {
@@ -164,7 +170,7 @@ function generateStockCard(recommendation, stockData) {
               layout: 'vertical',
               contents: [
                 { type: 'text', text: '建議金額', size: 'xs', color: '#aaaaaa' },
-                { type: 'text', text: `${(suggestedAmount / 10000).toFixed(1)} 萬`, size: 'sm', color: '#ffffff', weight: 'bold' }
+                { type: 'text', text: `${(safeSuggestedAmount / 10000).toFixed(1)} 萬`, size: 'sm', color: '#ffffff', weight: 'bold' }
               ]
             }
           ]
