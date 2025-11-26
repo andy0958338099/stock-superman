@@ -112,10 +112,12 @@ async function analyzeElectronicsStock(stock) {
     // 1. 技術面分析
     const kdResult = calculateKD(stockData);
     const macdResult = calculateMACD(stockData);
-    const latestK = kdResult.K[kdResult.K.length - 1] || 50;
-    const latestD = kdResult.D[kdResult.D.length - 1] || 50;
-    const latestMACD = macdResult.MACD[macdResult.MACD.length - 1] || 0;
-    const latestSignal = macdResult.signal[macdResult.signal.length - 1] || 0;
+
+    // 防護：確保陣列存在且有資料
+    const latestK = (kdResult?.K?.length > 0) ? kdResult.K[kdResult.K.length - 1] : 50;
+    const latestD = (kdResult?.D?.length > 0) ? kdResult.D[kdResult.D.length - 1] : 50;
+    const latestMACD = (macdResult?.MACD?.length > 0) ? macdResult.MACD[macdResult.MACD.length - 1] : 0;
+    const latestSignal = (macdResult?.Signal?.length > 0) ? macdResult.Signal[macdResult.Signal.length - 1] : 0;
 
     // 2. 價格位置（相對52週）
     const pricePosition = calculatePricePosition(stockData);

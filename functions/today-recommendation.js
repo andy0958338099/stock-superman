@@ -76,12 +76,12 @@ async function analyzeStockTechnicals(stockId, stockData) {
   const kdResult = calculateKD(stockData);
   const macdResult = calculateMACD(stockData);
 
-  // 取最新值（陣列最後一個元素）
-  const latestK = kdResult.K[kdResult.K.length - 1] || 50;
-  const latestD = kdResult.D[kdResult.D.length - 1] || 50;
-  const latestMACD = macdResult.MACD[macdResult.MACD.length - 1] || 0;
-  const latestSignal = macdResult.Signal[macdResult.Signal.length - 1] || 0;
-  const latestHistogram = macdResult.Histogram[macdResult.Histogram.length - 1] || 0;
+  // 取最新值（防護：確保陣列存在且有資料）
+  const latestK = (kdResult?.K?.length > 0) ? kdResult.K[kdResult.K.length - 1] : 50;
+  const latestD = (kdResult?.D?.length > 0) ? kdResult.D[kdResult.D.length - 1] : 50;
+  const latestMACD = (macdResult?.MACD?.length > 0) ? macdResult.MACD[macdResult.MACD.length - 1] : 0;
+  const latestSignal = (macdResult?.Signal?.length > 0) ? macdResult.Signal[macdResult.Signal.length - 1] : 0;
+  const latestHistogram = (macdResult?.Histogram?.length > 0) ? macdResult.Histogram[macdResult.Histogram.length - 1] : 0;
 
   // 計算均線
   const ma5 = calculateMA(closes, 5);
@@ -95,7 +95,10 @@ async function analyzeStockTechnicals(stockId, stockData) {
   let technicalScore = 40;
 
   // 1. KD 指標評分（-15 ~ +20）
-  const kdAnalysis = analyzeKD(kdResult.K, kdResult.D);
+  // 防護：確保 K 和 D 陣列存在
+  const kArray = kdResult?.K || [];
+  const dArray = kdResult?.D || [];
+  const kdAnalysis = analyzeKD(kArray, dArray);
   if (kdAnalysis.signal === '黃金交叉') {
     technicalScore += 20; // 最佳買點
   } else if (kdAnalysis.signal === '多頭') {
@@ -122,7 +125,11 @@ async function analyzeStockTechnicals(stockId, stockData) {
   }
 
   // 3. MACD 指標評分（-15 ~ +15）
-  const macdAnalysis = analyzeMACDSignal(macdResult.MACD, macdResult.Signal, macdResult.Histogram);
+  // 防護：確保 MACD 陣列存在
+  const macdArray = macdResult?.MACD || [];
+  const signalArray = macdResult?.Signal || [];
+  const histogramArray = macdResult?.Histogram || [];
+  const macdAnalysis = analyzeMACDSignal(macdArray, signalArray, histogramArray);
   if (macdAnalysis.signal === '強勢多頭') {
     technicalScore += 15;
   } else if (macdAnalysis.signal === '多頭') {
