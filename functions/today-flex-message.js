@@ -365,6 +365,30 @@ function generateTodayRecommendationFlexMessage(result) {
     contents: {
       type: 'carousel',
       contents: [summaryCard, ...stockCards]
+    },
+    quickReply: {
+      items: [
+        {
+          type: 'action',
+          action: { type: 'message', label: '🎯 今天', text: '今天' }
+        },
+        {
+          type: 'action',
+          action: { type: 'message', label: '🚀 高成長', text: '高成長' }
+        },
+        {
+          type: 'action',
+          action: { type: 'message', label: '🔥 瘋狂', text: '瘋狂' }
+        },
+        {
+          type: 'action',
+          action: {
+            type: 'uri',
+            label: '📤 分享給朋友',
+            uri: 'https://line.me/R/nv/recommendOA/@497yvtcy'
+          }
+        }
+      ]
     }
   };
 }
@@ -373,4 +397,3 @@ module.exports = {
   generateTodayRecommendationFlexMessage,
   generateStockCard
 };
-
