@@ -514,10 +514,11 @@ async function getTodayRecommendation() {
     // 4. AI 生成最終推薦
     const aiRecommendation = await generateAIRecommendation(top3);
 
-    // 5. 整合結果
+    // 5. 整合結果（使用台北時間 UTC+8）
+    const taipeiTime = moment().utcOffset(8);
     const result = {
-      date: moment().format('YYYY-MM-DD'),
-      updateTime: moment().format('HH:mm'),
+      date: taipeiTime.format('YYYY-MM-DD'),
+      updateTime: taipeiTime.format('HH:mm'),
       top3Stocks: top3,
       aiRecommendation,
       processingTime: Date.now() - startTime,
