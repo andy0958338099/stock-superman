@@ -1,19 +1,19 @@
 /**
  * 今日推薦 Flex Message 模板
- * 為小資族展示 TOP 3 推薦股票
+ * 展示 TOP 3 推薦股票
  */
 
 /**
  * 生成單一股票推薦卡片
  */
 function generateStockCard(recommendation, stockData) {
-  const { rank, stockId, stockName, reason, targetPrice, buyPrice, risk, confidence, suggestedAmount, expectedReturn } = recommendation;
+  const { rank, stockId, stockName, reason, targetPrice, buyPrice, risk, confidence, allocationPercent, expectedReturn } = recommendation;
   const { latestPrice, technicalAnalysis, fundamentalAnalysis, totalScore } = stockData;
 
   // 安全取值
   const safeTargetPrice = targetPrice || latestPrice * 1.05;
   const safeBuyPrice = buyPrice || latestPrice * 0.97;
-  const safeSuggestedAmount = suggestedAmount || 16000;
+  const safeAllocationPercent = allocationPercent || 33;
   const safeConfidence = confidence || 5;
 
   // 計算預期漲幅
@@ -169,8 +169,8 @@ function generateStockCard(recommendation, stockData) {
               type: 'box',
               layout: 'vertical',
               contents: [
-                { type: 'text', text: '建議金額', size: 'xs', color: '#aaaaaa' },
-                { type: 'text', text: `${(safeSuggestedAmount / 10000).toFixed(1)} 萬`, size: 'sm', color: '#ffffff', weight: 'bold' }
+                { type: 'text', text: '建議比例', size: 'xs', color: '#aaaaaa' },
+                { type: 'text', text: `${safeAllocationPercent}%`, size: 'sm', color: '#ffffff', weight: 'bold' }
               ]
             }
           ]
@@ -278,7 +278,7 @@ function generateTodayRecommendationFlexMessage(result) {
         // 資金配置
         {
           type: 'text',
-          text: '💰 5萬元資金配置建議',
+          text: '💰 建議資金配置比例',
           size: 'sm',
           color: '#00C851',
           weight: 'bold'
@@ -300,7 +300,7 @@ function generateTodayRecommendationFlexMessage(result) {
               },
               {
                 type: 'text',
-                text: `${(rec.suggestedAmount / 10000).toFixed(1)} 萬`,
+                text: `${rec.allocationPercent || 33}%`,
                 size: 'sm',
                 color: '#00ff88',
                 align: 'end',

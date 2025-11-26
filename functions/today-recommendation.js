@@ -259,17 +259,11 @@ async function analyzeStockFundamentals(stockId, financialData, dividendData, la
     fundamentalScore -= 3;
   }
 
-  // 4. 產業風險調整（金融股/傳產/電子不同風險）
-  // 這裡可以根據股票代號做產業分類調整
-  // 暫時不做，保持中性
-
-  // 5. 流動性風險（高價股風險）
-  if (latestPrice > 400) {
-    fundamentalScore -= 5; // 高價股，5萬元能買的張數少
-  } else if (latestPrice > 300) {
-    fundamentalScore -= 3;
+  // 4. 雞蛋水餃股風險（僅保留低價股風險）
+  if (latestPrice < 15) {
+    fundamentalScore -= 10; // 極低價股風險高
   } else if (latestPrice < 30) {
-    fundamentalScore -= 8; // 雞蛋水餃股風險
+    fundamentalScore -= 5; // 低價股需注意
   }
 
   return {
@@ -309,13 +303,6 @@ async function screenStocks() {
         }
 
         const latestPrice = stockData[stockData.length - 1].close;
-
-        // 價格篩選：5萬元至少能買 100 股（1張）
-        // 上限 500 元（5萬可買 1 張）
-        if (latestPrice > 500) {
-          console.log(`⚠️ ${stockId} 股價 ${latestPrice} 超過 500 元，跳過`);
-          return null;
-        }
 
         // 技術面分析
         const technicalAnalysis = await analyzeStockTechnicals(stockId, stockData);
@@ -387,7 +374,7 @@ async function generateAIRecommendation(topStocks) {
   }).join('\n');
 
   const prompt = `
-你是一位謹慎保守的投資顧問，專門為股市新手（本金 5 萬元）提供務實建議。
+你是一位謹慎保守的投資顧問，提供務實的股票分析建議。
 
 重要原則：
 - 股市有風險，沒有「必賺」的投資
@@ -412,7 +399,7 @@ ${stockSummaries}
 3. 建議買入價位（回檔 2-3% 再買）
 4. 風險提示（30字內，主要風險）
 5. 信心指數（1-10分，要合理！）
-6. 適合投資金額（以5萬元為基準，分散風險）
+6. 建議投資比例（以總資金 100% 計算，分散風險配置）
 
 請以 JSON 格式回覆：
 {
@@ -426,7 +413,7 @@ ${stockSummaries}
       "buyPrice": 建議買入價數字,
       "risk": "風險提示",
       "confidence": 信心指數數字,
-      "suggestedAmount": 建議投資金額數字,
+      "allocationPercent": 建議投資比例數字（如 35 代表 35%）,
       "expectedReturn": "預期報酬率"
     }
   ],
@@ -474,12 +461,12 @@ ${stockSummaries}
         stockId: stock.stockId,
         stockName: stock.stockName,
         reason: `技術面評分 ${stock.technicalAnalysis.score}，基本面評分 ${stock.fundamentalAnalysis.score}`,
-        targetPrice: Math.round(stock.latestPrice * 1.08),
+        targetPrice: Math.round(stock.latestPrice * 1.05),
         buyPrice: Math.round(stock.latestPrice * 0.97),
         risk: '市場波動風險',
-        confidence: Math.round(stock.totalScore / 10),
-        suggestedAmount: Math.round(50000 / 3),
-        expectedReturn: '+5-10%'
+        confidence: Math.min(7, Math.round(stock.totalScore / 15)),
+        allocationPercent: Math.round(100 / topStocks.length),
+        expectedReturn: '+3-5%'
       })),
       marketOutlook: '市場觀望中，建議分批布局',
       investmentStrategy: '分散投資，設定停損停利'
