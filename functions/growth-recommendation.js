@@ -114,10 +114,16 @@ async function analyzeElectronicsStock(stock) {
     const macdResult = calculateMACD(stockData);
 
     // 防護：確保陣列存在且有資料
-    const latestK = (kdResult?.K?.length > 0) ? kdResult.K[kdResult.K.length - 1] : 50;
-    const latestD = (kdResult?.D?.length > 0) ? kdResult.D[kdResult.D.length - 1] : 50;
-    const latestMACD = (macdResult?.MACD?.length > 0) ? macdResult.MACD[macdResult.MACD.length - 1] : 0;
-    const latestSignal = (macdResult?.Signal?.length > 0) ? macdResult.Signal[macdResult.Signal.length - 1] : 0;
+    const kArray = kdResult?.K || [];
+    const dArray = kdResult?.D || [];
+    const macdArray = macdResult?.MACD || [];
+    const signalArray = macdResult?.Signal || [];
+    const histogramArray = macdResult?.Histogram || [];
+
+    const latestK = kArray.length > 0 ? kArray[kArray.length - 1] : 50;
+    const latestD = dArray.length > 0 ? dArray[dArray.length - 1] : 50;
+    const latestMACD = macdArray.length > 0 ? macdArray[macdArray.length - 1] : 0;
+    const latestSignal = signalArray.length > 0 ? signalArray[signalArray.length - 1] : 0;
 
     // 2. 價格位置（相對52週）
     const pricePosition = calculatePricePosition(stockData);
@@ -196,8 +202,8 @@ async function analyzeElectronicsStock(stock) {
         D: latestD,
         MACD: latestMACD,
         signal: latestSignal,
-        kdSignal: analyzeKD(latestK, latestD),
-        macdSignal: analyzeMACDSignal(latestMACD, latestSignal)
+        kdSignal: kArray.length > 0 ? analyzeKD(kArray, dArray) : { signal: '資料不足', description: '' },
+        macdSignal: macdArray.length > 0 ? analyzeMACDSignal(macdArray, signalArray, histogramArray) : { signal: '資料不足', description: '' }
       },
       fundamentals: {
         eps,
@@ -281,7 +287,7 @@ async function generateGrowthAIRecommendation(topStocks) {
 - 殖利率：${stock.fundamentals.yieldRate}%
 - 52週位置：${stock.pricePosition.position}%（低=尚未啟動）
 - 近5日漲幅：${stock.recentGain.gain5d}%
-- KD：${stock.technicals.K.toFixed(0)}/${stock.technicals.D.toFixed(0)}
+- KD：${Math.round(stock.technicals.K || 50)}/${Math.round(stock.technicals.D || 50)}
 - 新聞情緒：${stock.newsSentiment.sentiment}（${stock.newsSentiment.score}分）
   `).join('\n');
 
