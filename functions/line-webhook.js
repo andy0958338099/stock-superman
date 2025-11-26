@@ -1055,32 +1055,19 @@ exports.handler = async function(event, context) {
       if (text === '今天' || text === '今日推薦' || text === '推薦') {
         console.log('📈 收到今日推薦請求');
         try {
-          // 先回覆處理中訊息
-          await client.replyMessage(replyToken, {
-            type: 'text',
-            text: '🔍 正在為您分析今日最佳投資機會...\n\n' +
-                  '⏳ 分析中，請稍候約 30-60 秒\n\n' +
-                  '📊 分析項目：\n' +
-                  '• 篩選 30+ 檔候選股票\n' +
-                  '• 技術面指標分析（KD/MACD/MA）\n' +
-                  '• 基本面評估（EPS/本益比/殖利率）\n' +
-                  '• AI 智能推薦 TOP 3\n\n' +
-                  '💰 為您的 5 萬元找出最佳投資標的！'
-          });
-          await recordReplyToken(replyToken);
-
-          // 使用 push message 發送結果（因為 reply token 已用）
+          // 直接分析並回覆（不使用 push message）
           const result = await getTodayRecommendation();
           const flexMessage = generateTodayRecommendationFlexMessage(result);
 
-          await client.pushMessage(userId, flexMessage);
+          await client.replyMessage(replyToken, flexMessage);
+          await recordReplyToken(replyToken);
           console.log('✅ 今日推薦發送完成');
         } catch (error) {
           console.error('❌ 今日推薦失敗:', error);
           captureError(error, { action: 'today_recommendation', userId });
 
           // 發送錯誤訊息
-          await client.pushMessage(userId, {
+          await client.replyMessage(replyToken, {
             type: 'text',
             text: '❌ 今日推薦暫時無法使用\n\n' +
                   '可能原因：\n' +
@@ -1088,6 +1075,7 @@ exports.handler = async function(event, context) {
                   '• 市場資料更新中\n\n' +
                   '請稍後再試，或直接輸入股票代號查詢！'
           });
+          await recordReplyToken(replyToken);
         }
         continue;
       }
@@ -1101,7 +1089,7 @@ exports.handler = async function(event, context) {
           type: 'text',
           text: '👋 歡迎使用股票超人！\n\n' +
                 '🎯 今日推薦：輸入「今天」\n' +
-                '為您篩選 TOP 3 高勝率股票（5萬元投資）\n\n' +
+                '為您篩選 TOP 3 高勝率股票\n\n' +
                 '📊 台股分析：輸入股票代號\n' +
                 '例如：2330、0050、3003\n\n' +
                 '🌎 美股分析：輸入「美股」\n' +
