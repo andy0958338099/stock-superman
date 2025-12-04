@@ -206,64 +206,71 @@ async function fetchUSStockPrice(symbol, startDate = null, endDate = null) {
 
   return retryWithBackoff(async () => {
     const url = `${FINMIND_BASE_URL}/data`;
-    const params = {
-      dataset: 'USStockPrice',
-      data_id: symbol,
-      start_date: startDate,
-      end_date: endDate
-    };
 
-    // 如果有 API Token，加入參數
-    if (FINMIND_API_TOKEN) {
-      params.token = FINMIND_API_TOKEN;
-    }
-
-    console.log(`📊 抓取美股資料：${symbol} (${startDate} ~ ${endDate})${FINMIND_API_TOKEN ? ' [使用 API Token]' : ''}`);
-
-    const response = await axios.get(url, {
-      params,
-      timeout: 20000, // 增加到 20 秒，避免超時
-      headers: {
-        'User-Agent': 'Stock-Superman-LineBot/1.0'
-      }
-    });
-
-    if (!response.data || !response.data.data || response.data.data.length === 0) {
-      throw new Error(`查無美股代號 ${symbol} 的資料`);
-    }
-
-    // 標準化資料格式
-    const data = response.data.data.map(item => {
-      // 處理不同的欄位名稱（FinMind API 可能使用不同的欄位名）
-      const high = parseFloat(item.high || item.max || item.High || 0);
-      const low = parseFloat(item.low || item.min || item.Low || 0);
-      const open = parseFloat(item.open || item.Open || 0);
-      const close = parseFloat(item.close || item.Close || 0);
-      const volume = parseFloat(item.volume || item.Trading_Volume || item.Volume || 0);
-
-      return {
-        date: item.date,
-        open: open,
-        high: high,
-        low: low,
-        close: close,
-        volume: volume,
-        stock_id: item.stock_id || symbol
+    async function fetchOnce(requestSymbol) {
+      const params = {
+        dataset: 'USStockPrice',
+        data_id: requestSymbol,
+        start_date: startDate,
+        end_date: endDate
       };
-    });
+      if (FINMIND_API_TOKEN) params.token = FINMIND_API_TOKEN;
 
-    // 過濾掉無效資料（close 為 0 或 undefined）
-    const validData = data.filter(item => item.close > 0 && item.high > 0 && item.low > 0);
+      console.log(`📊 抓取美股資料：${requestSymbol} (${startDate} ~ ${endDate})${FINMIND_API_TOKEN ? ' [使用 API Token]' : ''}`);
 
-    if (validData.length === 0) {
-      throw new Error(`${symbol} 資料無效：所有資料的價格都是 0`);
+      try {
+        const response = await axios.get(url, {
+          params,
+          timeout: 20000,
+          headers: { 'User-Agent': 'Stock-Superman-LineBot/1.0' }
+        });
+
+        const rows = response?.data?.data || [];
+        if (!rows || rows.length === 0) {
+          throw new Error(`查無美股代號 ${requestSymbol} 的資料`);
+        }
+
+        // 標準化資料格式
+        const data = rows.map(item => ({
+          date: item.date,
+          open: parseFloat(item.open || item.Open || 0),
+          high: parseFloat(item.high || item.max || item.High || 0),
+          low: parseFloat(item.low || item.min || item.Low || 0),
+          close: parseFloat(item.close || item.Close || item.Adj_Close || 0),
+          volume: parseFloat(item.volume || item.Trading_Volume || item.Volume || 0),
+          stock_id: item.stock_id || requestSymbol
+        }));
+
+        const validData = data.filter(item => item.close > 0 && item.high > 0 && item.low > 0);
+        if (validData.length === 0) {
+          throw new Error(`${requestSymbol} 資料無效：所有資料的價格都是 0`);
+        }
+
+        validData.sort((a, b) => new Date(a.date) - new Date(b.date));
+        console.log(`✅ 成功抓取美股 ${requestSymbol} ${validData.length} 筆有效資料（原始 ${data.length} 筆）`);
+        return validData;
+      } catch (err) {
+        // 將 400 詳細記錄
+        if (err.response) {
+          console.error(`❌ FinMind USStockPrice(${requestSymbol}) 失敗：HTTP ${err.response.status} - ${JSON.stringify(err.response.data).slice(0,200)}`);
+        } else {
+          console.error(`❌ FinMind USStockPrice(${requestSymbol}) 失敗：${err.message}`);
+        }
+        throw err;
+      }
     }
 
-    // 由舊到新排序
-    validData.sort((a, b) => new Date(a.date) - new Date(b.date));
-
-    console.log(`✅ 成功抓取美股 ${symbol} ${validData.length} 筆有效資料（原始 ${data.length} 筆）`);
-    return validData;
+    // 第一次使用原始 symbol，若失敗且帶有 ^，改用去除 ^ 的替代符號再嘗試一次
+    try {
+      return await fetchOnce(symbol);
+    } catch (firstErr) {
+      if (String(symbol).startsWith('^')) {
+        const alt = String(symbol).slice(1);
+        console.warn(`⚠️ 嘗試替代代號：${symbol} → ${alt}`);
+        return await fetchOnce(alt);
+      }
+      throw firstErr;
+    }
   }, MAX_RETRIES, `抓取美股資料 ${symbol}`);
 }
 
@@ -340,44 +347,54 @@ async function fetchVIX(startDate = null, endDate = null) {
 
   return retryWithBackoff(async () => {
     const url = `${FINMIND_BASE_URL}/data`;
-    const params = {
-      dataset: 'USStockPrice',
-      data_id: '^VIX',
-      start_date: startDate,
-      end_date: endDate
-    };
 
-    // 如果有 API Token，加入參數
-    if (FINMIND_API_TOKEN) {
-      params.token = FINMIND_API_TOKEN;
+    async function fetchVixOnce(symbol) {
+      const params = {
+        dataset: 'USStockPrice',
+        data_id: symbol,
+        start_date: startDate,
+        end_date: endDate
+      };
+      if (FINMIND_API_TOKEN) params.token = FINMIND_API_TOKEN;
+
+      console.log(`📊 抓取 VIX 指數（${symbol}）${FINMIND_API_TOKEN ? ' [使用 API Token]' : ''}`);
+      console.log(`   參數: dataset=${params.dataset}, data_id=${params.data_id}, start_date=${params.start_date}, end_date=${params.end_date}`);
+
+      try {
+        const response = await axios.get(url, { params, timeout: 15000 });
+        console.log(`   回應狀態: ${response.status}`);
+        const rows = response.data?.data || [];
+        if (!rows || rows.length === 0) {
+          console.warn(`⚠️ 查無 VIX(${symbol}) 資料`);
+          return [];
+        }
+        const data = rows.map(item => ({
+          date: item.date,
+          close: parseFloat(item.Close || item.close || item.Adj_Close || 0)
+        }));
+        data.sort((a, b) => new Date(a.date) - new Date(b.date));
+        console.log(`✅ 成功抓取 VIX(${symbol}) ${data.length} 筆資料，最新: ${JSON.stringify(data[data.length - 1])}`);
+        return data;
+      } catch (err) {
+        if (err.response) {
+          console.error(`❌ FinMind VIX(${symbol}) 失敗：HTTP ${err.response.status} - ${JSON.stringify(err.response.data).slice(0,200)}`);
+        } else {
+          console.error(`❌ FinMind VIX(${symbol}) 失敗：${err.message}`);
+        }
+        throw err;
+      }
     }
 
-    console.log(`📊 抓取 VIX 指數${FINMIND_API_TOKEN ? ' [使用 API Token]' : ''}`);
-    console.log(`   參數: dataset=${params.dataset}, data_id=${params.data_id}, start_date=${params.start_date}, end_date=${params.end_date}`);
-
-    const response = await axios.get(url, {
-      params,
-      timeout: 15000
-    });
-
-    console.log(`   回應狀態: ${response.status}`);
-    console.log(`   回應資料筆數: ${response.data?.data?.length || 0}`);
-
-    if (!response.data || !response.data.data || response.data.data.length === 0) {
-      console.warn('⚠️ 查無 VIX 資料，返回空陣列');
-      return [];
+    // 嘗試 ^VIX，若失敗再嘗試 VIX
+    try {
+      const data = await fetchVixOnce('^VIX');
+      if (data.length > 0) return data;
+      console.warn('⚠️ ^VIX 無資料，改用 VIX');
+      return await fetchVixOnce('VIX');
+    } catch (firstErr) {
+      console.warn('⚠️ ^VIX 取得失敗，改用 VIX 再試一次');
+      return await fetchVixOnce('VIX');
     }
-
-    // VIX 欄位：Close (大寫 C)
-    const data = response.data.data.map(item => ({
-      date: item.date,
-      close: parseFloat(item.Close || item.close || item.Adj_Close || 0)
-    }));
-
-    data.sort((a, b) => new Date(a.date) - new Date(b.date));
-
-    console.log(`✅ 成功抓取 VIX ${data.length} 筆資料，最新: ${JSON.stringify(data[data.length - 1])}`);
-    return data;
   }, MAX_RETRIES, '抓取 VIX 指數');
 }
 
