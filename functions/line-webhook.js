@@ -355,16 +355,198 @@ async function handleCacheCommand(replyToken, text) {
  * @param {object} financialData - 財務資料（可為 null）
  * @returns {object} - Flex Message 物件
  */
+/**
+ * 生成操盤建議（根據基本面數據）
+ * @param {number} price - 目前股價
+ * @param {object} financialData - 財務資料（EPS）
+ * @param {object} dividendData - 股利資料
+ * @param {object} kdAnalysis - KD 分析
+ * @param {object} macdAnalysis - MACD 分析
+ * @param {object} aiResult - AI 預測結果
+ * @returns {object} - 操盤建議
+ */
+function generateTradingAdvice(price, financialData, dividendData, kdAnalysis, macdAnalysis, aiResult) {
+  let score = 0; // 總分 -100 ~ +100
+  const reasons = [];
+  const warnings = [];
+
+  // ===== 1. 本益比分析 (權重: 25分) =====
+  let peRatio = null;
+  if (financialData && financialData.total_eps > 0) {
+    peRatio = price / financialData.total_eps;
+
+    if (peRatio < 10) {
+      score += 25;
+      reasons.push(`✅ 本益比 ${peRatio.toFixed(1)} 倍極低，股價被嚴重低估`);
+    } else if (peRatio < 15) {
+      score += 18;
+      reasons.push(`✅ 本益比 ${peRatio.toFixed(1)} 倍偏低，具投資價值`);
+    } else if (peRatio < 20) {
+      score += 10;
+      reasons.push(`📊 本益比 ${peRatio.toFixed(1)} 倍合理，估值適中`);
+    } else if (peRatio < 30) {
+      score -= 5;
+      warnings.push(`⚠️ 本益比 ${peRatio.toFixed(1)} 倍偏高，追價需謹慎`);
+    } else {
+      score -= 15;
+      warnings.push(`🚨 本益比 ${peRatio.toFixed(1)} 倍過高，估值泡沫風險`);
+    }
+  }
+
+  // ===== 2. EPS 獲利能力分析 (權重: 20分) =====
+  if (financialData && financialData.total_eps) {
+    const eps = financialData.total_eps;
+    const epsYield = (eps / price * 100); // 股票收益率
+
+    if (eps > 10) {
+      score += 20;
+      reasons.push(`✅ 年 EPS ${eps.toFixed(2)} 元，獲利能力極強`);
+    } else if (eps > 5) {
+      score += 15;
+      reasons.push(`✅ 年 EPS ${eps.toFixed(2)} 元，獲利穩健`);
+    } else if (eps > 2) {
+      score += 8;
+      reasons.push(`📊 年 EPS ${eps.toFixed(2)} 元，獲利尚可`);
+    } else if (eps > 0) {
+      score += 2;
+      warnings.push(`⚠️ 年 EPS ${eps.toFixed(2)} 元，獲利能力偏弱`);
+    } else {
+      score -= 20;
+      warnings.push(`🚨 年 EPS ${eps.toFixed(2)} 元，公司虧損中`);
+    }
+  }
+
+  // ===== 3. 殖利率分析 (權重: 20分) =====
+  if (dividendData && dividendData.cash_dividend > 0) {
+    const dividendYield = (dividendData.cash_dividend / price * 100);
+
+    if (dividendYield > 6) {
+      score += 20;
+      reasons.push(`✅ 殖利率 ${dividendYield.toFixed(1)}% 極高，存股首選`);
+    } else if (dividendYield > 4) {
+      score += 15;
+      reasons.push(`✅ 殖利率 ${dividendYield.toFixed(1)}%，配息優渥`);
+    } else if (dividendYield > 2.5) {
+      score += 8;
+      reasons.push(`📊 殖利率 ${dividendYield.toFixed(1)}%，配息穩定`);
+    } else if (dividendYield > 1) {
+      score += 2;
+      warnings.push(`⚠️ 殖利率 ${dividendYield.toFixed(1)}%，配息偏低`);
+    } else {
+      score -= 5;
+      warnings.push(`⚠️ 殖利率 ${dividendYield.toFixed(1)}%，幾乎不配息`);
+    }
+
+    // 配股加分
+    if (dividendData.stock_dividend > 0) {
+      score += 3;
+      reasons.push(`📈 另有配股 ${dividendData.stock_dividend} 元`);
+    }
+  }
+
+  // ===== 4. 技術面分析 (權重: 20分) =====
+  // KD 分析
+  const kValue = parseFloat(kdAnalysis.K);
+  const dValue = parseFloat(kdAnalysis.D);
+
+  if (kValue < 20 && dValue < 20) {
+    score += 12;
+    reasons.push(`✅ KD 超賣區（${kValue.toFixed(0)}/${dValue.toFixed(0)}），反彈機率高`);
+  } else if (kValue > 80 && dValue > 80) {
+    score -= 10;
+    warnings.push(`⚠️ KD 超買區（${kValue.toFixed(0)}/${dValue.toFixed(0)}），回檔風險`);
+  } else if (kdAnalysis.signal === '多頭' || kdAnalysis.signal === '黃金交叉') {
+    score += 8;
+    reasons.push(`📈 KD ${kdAnalysis.signal}，短線看漲`);
+  } else if (kdAnalysis.signal === '空頭' || kdAnalysis.signal === '死亡交叉') {
+    score -= 8;
+    warnings.push(`📉 KD ${kdAnalysis.signal}，短線偏空`);
+  }
+
+  // MACD 分析
+  if (macdAnalysis.signal === '多頭' || macdAnalysis.signal === '黃金交叉') {
+    score += 8;
+    reasons.push(`📈 MACD ${macdAnalysis.signal}，動能轉強`);
+  } else if (macdAnalysis.signal === '空頭' || macdAnalysis.signal === '死亡交叉') {
+    score -= 8;
+    warnings.push(`📉 MACD ${macdAnalysis.signal}，動能轉弱`);
+  }
+
+  // ===== 5. AI 預測加權 (權重: 15分) =====
+  if (aiResult) {
+    const upProb = aiResult.probability_up || 0;
+    const downProb = aiResult.probability_down || 0;
+
+    if (upProb >= 60) {
+      score += 15;
+      reasons.push(`🤖 AI 預測上漲機率 ${upProb}%`);
+    } else if (upProb >= 45) {
+      score += 5;
+    } else if (downProb >= 50) {
+      score -= 10;
+      warnings.push(`🤖 AI 預測下跌機率 ${downProb}%`);
+    }
+  }
+
+  // ===== 生成最終建議 =====
+  let verdict = '';
+  let verdictColor = '#666666';
+  let action = '';
+  let actionColor = '#666666';
+
+  if (score >= 50) {
+    verdict = '🟢 強力買進';
+    verdictColor = '#00C851';
+    action = '建議積極布局，可分批買進';
+  } else if (score >= 30) {
+    verdict = '🟢 建議買進';
+    verdictColor = '#00C851';
+    action = '基本面良好，可逢低承接';
+  } else if (score >= 10) {
+    verdict = '🟡 中性偏多';
+    verdictColor = '#ffbb33';
+    action = '可小量布局，設好停損';
+  } else if (score >= -10) {
+    verdict = '🟡 持平觀望';
+    verdictColor = '#ffbb33';
+    action = '建議觀望，等待更好買點';
+  } else if (score >= -30) {
+    verdict = '🟠 中性偏空';
+    verdictColor = '#ff8800';
+    action = '不建議追高，已持有者可續抱';
+  } else {
+    verdict = '🔴 建議賣出';
+    verdictColor = '#ff4444';
+    action = '風險偏高，建議減碼或出場';
+  }
+
+  return {
+    score,
+    verdict,
+    verdictColor,
+    action,
+    reasons: reasons.slice(0, 3), // 最多顯示 3 個正面理由
+    warnings: warnings.slice(0, 2), // 最多顯示 2 個警示
+    peRatio
+  };
+}
+
 function createFlexMessage(stockId, stockName, latestData, kdImageUrl, macdImageUrl, kdAnalysis, macdAnalysis, aiResult, dividendData, financialData) {
   const title = `${stockId} ${stockName}`;
   const priceInfo = `收盤價：${latestData.close} | ${latestData.date}`;
 
+  // 生成操盤建議
+  const tradingAdvice = generateTradingAdvice(
+    latestData.close,
+    financialData,
+    dividendData,
+    kdAnalysis,
+    macdAnalysis,
+    aiResult
+  );
+
   // 計算本益比（如果有 EPS 資料）
-  let peRatio = null;
-  if (financialData && financialData.total_eps > 0) {
-    // 用近4季 EPS（年度 EPS）計算本益比
-    peRatio = (latestData.close / financialData.total_eps).toFixed(2);
-  }
+  let peRatio = tradingAdvice.peRatio;
 
   // 建立技術指標摘要
   const kdSummary = `KD：${kdAnalysis.signal} (K=${kdAnalysis.K}, D=${kdAnalysis.D})`;
@@ -424,7 +606,7 @@ function createFlexMessage(stockId, stockName, latestData, kdImageUrl, macdImage
                     contents: [
                       {
                         type: 'text',
-                        text: `💰 ${dividendData.year}年`,
+                        text: `💰 ${dividendData.year}年第1季年`,
                         size: 'xxs',
                         color: '#999999'
                       },
@@ -465,7 +647,7 @@ function createFlexMessage(stockId, stockName, latestData, kdImageUrl, macdImage
                       },
                       ...(peRatio ? [{
                         type: 'text',
-                        text: `本益比 ${peRatio}`,
+                        text: `本益比 ${peRatio.toFixed ? peRatio.toFixed(2) : peRatio}`,
                         size: 'xs',
                         color: '#333333'
                       }] : [])
@@ -479,6 +661,76 @@ function createFlexMessage(stockId, stockName, latestData, kdImageUrl, macdImage
           type: 'separator',
           margin: 'lg'
         }] : []),
+        // ===== 操盤建議區塊 =====
+        {
+          type: 'box',
+          layout: 'vertical',
+          margin: 'lg',
+          spacing: 'sm',
+          backgroundColor: '#f8f9fa',
+          cornerRadius: 'md',
+          paddingAll: 'lg',
+          contents: [
+            {
+              type: 'box',
+              layout: 'horizontal',
+              contents: [
+                {
+                  type: 'text',
+                  text: '💼 操盤建議',
+                  weight: 'bold',
+                  size: 'md',
+                  color: '#333333',
+                  flex: 2
+                },
+                {
+                  type: 'text',
+                  text: tradingAdvice.verdict,
+                  weight: 'bold',
+                  size: 'md',
+                  color: tradingAdvice.verdictColor,
+                  align: 'end',
+                  flex: 3
+                }
+              ]
+            },
+            {
+              type: 'text',
+              text: tradingAdvice.action,
+              size: 'sm',
+              color: '#666666',
+              margin: 'md',
+              wrap: true
+            },
+            {
+              type: 'separator',
+              margin: 'md',
+              color: '#e0e0e0'
+            },
+            // 正面理由
+            ...tradingAdvice.reasons.map(reason => ({
+              type: 'text',
+              text: reason,
+              size: 'xs',
+              color: '#333333',
+              wrap: true,
+              margin: 'sm'
+            })),
+            // 警示
+            ...tradingAdvice.warnings.map(warning => ({
+              type: 'text',
+              text: warning,
+              size: 'xs',
+              color: '#ff6600',
+              wrap: true,
+              margin: 'sm'
+            }))
+          ]
+        },
+        {
+          type: 'separator',
+          margin: 'lg'
+        },
         {
           type: 'box',
           layout: 'vertical',
