@@ -44,6 +44,9 @@ const { generateCrazyRecommendationFlexMessage } = require('./crazy-flex-message
 // 熱門股票功能
 const { generateHotStocksFlexMessage } = require('./hot-stocks-flex-message');
 
+// 功能說明
+const { generateHelpFlexMessage } = require('./help-flex-message');
+
 // 互動式分析功能處理器
 const { handleNewsAnalysis } = require('./handlers/news-handler');
 const { handlePoliticsAnalysis } = require('./handlers/politics-handler');
@@ -1177,6 +1180,28 @@ exports.handler = async function(event, context) {
         continue;
       }
 
+      // 9.9. 處理「功能說明」指令
+      if (text === '功能' || text === '說明' || text === '功能說明' || text === '幫助' || text === 'help' || text === '?') {
+        console.log('📚 收到功能說明請求');
+        try {
+          const flexMessage = generateHelpFlexMessage();
+
+          await client.replyMessage(replyToken, flexMessage);
+          await recordReplyToken(replyToken);
+          console.log('✅ 功能說明發送完成');
+        } catch (error) {
+          console.error('❌ 功能說明發送失敗:', error);
+          captureError(error, { action: 'help', userId });
+
+          await client.replyMessage(replyToken, {
+            type: 'text',
+            text: '❌ 功能說明暫時無法顯示\n\n請稍後再試！'
+          });
+          await recordReplyToken(replyToken);
+        }
+        continue;
+      }
+
       // 10. 解析股票代號
       const stockIdMatch = text.match(/\d{3,5}/);
 
@@ -1224,11 +1249,7 @@ exports.handler = async function(event, context) {
               },
               {
                 type: 'action',
-                action: {
-                  type: 'uri',
-                  label: '📤 分享給朋友',
-                  uri: `https://line.me/R/share?text=${encodeURIComponent('🚀 推薦超好用的 AI 股票分析！\n\n📈 每日精選 TOP 3 高勝率股票\n🔥 高成長、瘋狂策略任你選\n\n立即加入 👉 https://line.me/R/ti/p/@754zptsk')}`
-                }
+                action: { type: 'message', label: '📚 功能說明', text: '功能說明' }
               }
             ]
           }

@@ -214,11 +214,7 @@ function generateCrazyRecommendationFlexMessage(result) {
         },
         {
           type: 'action',
-          action: {
-            type: 'uri',
-            label: '📤 分享給朋友',
-            uri: `https://line.me/R/share?text=${encodeURIComponent('🚀 推薦超好用的 AI 股票分析！\n\n📈 每日精選 TOP 3 高勝率股票\n🔥 高成長、瘋狂策略任你選\n\n立即加入 👉 https://line.me/R/ti/p/@754zptsk')}`
-          }
+          action: { type: 'message', label: '📚 功能說明', text: '功能說明' }
         }
       ]
     }
